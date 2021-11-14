@@ -2,6 +2,7 @@
 set -eu
 ROOT_DIR=${PWD}
 PROJECT_NAME="twitter-image-search-app"
+FIREBASE_PROJECT_ID="twitter-image-search-app"
 BUILD=0
 #BUILD=1
 
@@ -42,12 +43,12 @@ fi
 cd ${ROOT_DIR}/${PROJECT_NAME}
 
 # 各種 npm パッケージをインストール
-npm install --save react-router-dom                       # ルーティング（リダイレクト）用パッケージ
-npm install --save-dev @types/react-router-dom            # ルーティング（リダイレクト）用パッケージ
+npm install --save react-router-dom                       # ルーティング用パッケージ
+npm install --save-dev @types/react-router-dom            # ルーティング用パッケージ（TypeScript用）
 npm install --save @material-ui/core                      # Material-UI
 npm install --save @material-ui/icons                     # Material-UI
 npm install --save twitter                                # Twitter-API
-npm install -D typescript ts-node --save @types/twitter   # Twitter-API (TypeScript)
+npm install -D typescript ts-node --save @types/twitter   # Twitter-API (TypeScript用)
 npm ls --depth=0
 
 # プロジェクトをビルドする
@@ -55,5 +56,33 @@ if [ ${BUILD} != 0 ] ; then
   npm run build
 fi
 
+#----------------------------- 
+# Firebase のプロジェクトを作成する
+#-----------------------------
+cd ${ROOT_DIR}/${PROJECT_NAME}
+
+# Firebase CLI のインストール
+sudo npm install --save firebase-tools
+
+# Firebase へのログイン
+firebase login --project ${FIREBASE_PROJECT_ID}
+
+# Firebase プロジェクトを初期化
+firebase init --project ${FIREBASE_PROJECT_ID}
+
+# Cloud Funtion に各種 npm パッケージをインストール
+cd ${ROOT_DIR}/${PROJECT_NAME}/functions
+npm install --save request request-promise
+npm install --save twitter                                # Twitter-API
+npm install -D typescript ts-node --save @types/twitter   # Twitter-API (TypeScript用)
+npm ls --depth=0
+
+cd ${ROOT_DIR}/${PROJECT_NAME}
+firebase deploy --project ${FIREBASE_PROJECT_ID} --only functions
+
+#-----------------------------
+# React アプリを起動する
+#-----------------------------
 # 作成した React のプロジェクトのサーバーを起動する
+cd ${ROOT_DIR}/${PROJECT_NAME}
 npm start

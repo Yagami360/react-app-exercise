@@ -11,7 +11,8 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Link } from "react-router-dom";
 import Header from './components/Header'
 import ImagePage from './pages/ImagePage'
-import './twitter/InitTwitter'
+
+const cloudFunctionUrl = "https://us-central1-twitter-image-search-app.cloudfunctions.net/callTwiterAPI"
 
 const App: React.VFC = () => {
   // useTheme() でテーマ（画面全体のスタイル）のオブジェクトを作成
@@ -47,7 +48,7 @@ const App: React.VFC = () => {
     // submit イベント e の発生元であるフォームが持つデフォルトのイベント処理をキャンセル
     event.preventDefault();
 
-    // Twitter API を使用して
+    // Cloud Funtion 経由で Twitter API を呼び出す（Cloud Funtion をリバースプロキシとして利用）
 
     // 入力フォームのテキストをクリア
     setText("")

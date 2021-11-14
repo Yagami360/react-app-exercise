@@ -15,6 +15,7 @@ const twitterClient = new Twitter({
   access_token_secret: process.env.REACT_APP_TWITTER_ACCESS_SECRET || "",
 })
 
+/*
 var headers: {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type",
@@ -28,3 +29,4 @@ twitterClient.get('statuses/user_timeline', params, function(error, tweets, resp
     console.log(tweets);
   }
 });
+*/
