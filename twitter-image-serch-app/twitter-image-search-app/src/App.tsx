@@ -4,12 +4,14 @@ import Box from '@material-ui/core/Box';
 import { TextField } from '@material-ui/core'
 import { useTheme } from '@material-ui/core/styles';
 import { ThemeProvider　} from '@material-ui/core/styles';
+import { Grid } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import InputAdornment from "@material-ui/core/InputAdornment";
 import SearchIcon from "@material-ui/icons/Search";
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Link } from "react-router-dom";
 import Header from './components/Header'
+import ImageCard from './components/ImageCard'
 import ImagePage from './pages/ImagePage'
 
 const cloudFunctionUrl = "https://us-central1-twitter-image-search-app.cloudfunctions.net/callTwiterAPI"
@@ -65,7 +67,7 @@ const App: React.VFC = () => {
           <Route path="/image" element={<ImagePage />} />
         </Routes>
         {/* ヘッダー表示 */}      
-        <Header text="React Image Search App" />
+        <Header text="Twitter Image Search App" />
         {/* 検索ワード入力 */}
         <form onSubmit={onSubmitText}>
           <Box p={1} m={1} >
@@ -73,7 +75,7 @@ const App: React.VFC = () => {
             <TextField 
               onChange={onChangeText} 
               value={text} 
-              label="please type your word"
+              label="please type your search word"
               variant="outlined"
               InputProps={
                 {startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>)}
@@ -82,6 +84,20 @@ const App: React.VFC = () => {
             <Button type="submit" variant="contained">🔍 検索</Button>
           </Box>
         </form>
+        {/* 検索ヒット画像 */}
+        <Grid container direction="column">
+          <Grid item container spacing={2}>
+            <Grid item xs={10} sm={2}>   {/* xs : 画面の分割数, sm : 分割数に対しての使用する横幅数 */}
+              <ImageCard title="title1" subheader="subheader2" imageFileName="./panda.jpg" imageHeight="300px" imageWidth="300px" contentsText="contents1" />
+            </Grid>
+            <Grid item xs={10} sm={2}>
+              <ImageCard title="title2" subheader="subheader2" imageFileName="./panda.jpg" imageHeight="300px" imageWidth="300px" contentsText="contents2" />
+            </Grid>            
+            <Grid item xs={10} sm={2}>
+              <ImageCard title="title3" subheader="subheader3" imageFileName="./panda.jpg" imageHeight="300px" imageWidth="300px" contentsText="contents3" />
+            </Grid>            
+          </Grid>
+        </Grid>
       </BrowserRouter>
     </ThemeProvider>
     );
