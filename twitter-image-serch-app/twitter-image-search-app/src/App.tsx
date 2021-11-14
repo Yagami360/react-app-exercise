@@ -11,6 +11,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Link } from "react-router-dom";
 import Header from './components/Header'
 import ImagePage from './pages/ImagePage'
+import './twitter/InitTwitter'
 
 const App: React.VFC = () => {
   // useTheme() でテーマ（画面全体のスタイル）のオブジェクトを作成
@@ -45,6 +46,8 @@ const App: React.VFC = () => {
   const onSubmitText = (event: React.FormEvent<HTMLFormElement>)=> {
     // submit イベント e の発生元であるフォームが持つデフォルトのイベント処理をキャンセル
     event.preventDefault();
+
+    // Twitter API を使用して
 
     // 入力フォームのテキストをクリア
     setText("")

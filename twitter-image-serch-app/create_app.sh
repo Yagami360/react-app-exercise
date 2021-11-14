@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 ROOT_DIR=${PWD}
-PROJECT_NAME="image-search-app"
+PROJECT_NAME="twitter-image-search-app"
 BUILD=0
 #BUILD=1
 
@@ -46,6 +46,8 @@ npm install --save react-router-dom                       # ルーティング�
 npm install --save-dev @types/react-router-dom            # ルーティング（リダイレクト）用パッケージ
 npm install --save @material-ui/core                      # Material-UI
 npm install --save @material-ui/icons                     # Material-UI
+npm install --save twitter                                # Twitter-API
+npm install -D typescript ts-node --save @types/twitter   # Twitter-API (TypeScript)
 npm ls --depth=0
 
 # プロジェクトをビルドする

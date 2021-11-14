@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 ROOT_DIR=${PWD}
-PROJECT_NAME="image-search-app"
+PROJECT_NAME="twitter-image-search-app"
 
 # 作成した React のプロジェクトのサーバーを起動する
 cd ${ROOT_DIR}/${PROJECT_NAME}
