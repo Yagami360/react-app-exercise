@@ -8,12 +8,13 @@ console.log("process.env.REACT_APP_TWITTER_ACCESS_TOKEN_KEY : ", process.env.REA
 console.log("process.env.REACT_APP_TWITTER_ACCESS_SECRET : ", process.env.REACT_APP_TWITTER_ACCESS_SECRET )
 */
 
-const twitterClient = new Twitter({
+const client = new Twitter({
   consumer_key: process.env.REACT_APP_TWITTER_CONSUMER_KEY || "",           // 型が 'string | undefined' なので、"xxx" || "" で初期化
   consumer_secret: process.env.REACT_APP_TWITTER_CONSUMER_SECRET || "",
   access_token_key: process.env.REACT_APP_TWITTER_ACCESS_TOKEN_KEY || "",
   access_token_secret: process.env.REACT_APP_TWITTER_ACCESS_SECRET || "",
 })
+console.log("client : ", client )
 
 /*
 var headers: {
@@ -24,7 +25,7 @@ var headers: {
 
 // 特定のユーザーのツイートを取得する
 var params = {screen_name: 'yagami_360',count:20};
-twitterClient.get('statuses/user_timeline', params, function(error, tweets, response) {
+client.get('statuses/user_timeline', params, function(error, tweets, response) {
   if (!error) {
     console.log(tweets);
   }

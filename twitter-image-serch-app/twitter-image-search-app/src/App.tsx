@@ -11,7 +11,7 @@ import SearchIcon from "@material-ui/icons/Search";
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Link } from "react-router-dom";
 import Header from './components/Header'
-import ImageCard from './components/ImageCard'
+import TwitterCard from './components/TwitterCard'
 import ImagePage from './pages/ImagePage'
 
 const cloudFunctionUrl = "https://us-central1-twitter-image-search-app.cloudfunctions.net/callTwiterAPI"
@@ -27,16 +27,8 @@ const App: React.VFC = () => {
   const [text, setText] = useState('')
 
   // 検索ヒット画像のリスト 
-  const [images, setImages] = useState([]);
-
-  // 画像検索 API を呼び出す際のクエリパラメータの一部となる（＝検索ワードとなる）文字列
-  const [query, setQuery] = useState("cat");
-
-  // 検索ヒット画像の表示を行う副作用フック
-  useEffect(() => {
-    // fetch メソッドで画像検索APIと非同期通信
-    
-  }, [images])
+  const [seachResults, setSeachResults] = useState();
+  const [seachResultsJsx, setSeachResultsJsx] = useState();
 
   //------------------------
   // イベントハンドラ
@@ -47,10 +39,79 @@ const App: React.VFC = () => {
   }
 
   const onSubmitText = (event: React.FormEvent<HTMLFormElement>)=> {
+    console.log("call onSubmitText")
+
     // submit イベント e の発生元であるフォームが持つデフォルトのイベント処理をキャンセル
     event.preventDefault();
 
     // Cloud Funtion 経由で Twitter API を呼び出す（Cloud Funtion をリバースプロキシとして利用）
+    // Ajax 通信をするために、fetch API を使用（他にも axios を使用する方法もある）
+    // fetch() は非同期処理でのリクエストメソッドで戻り値は Promise なので、then() メソッド内にリクエスト処理完了後の処理を定義する
+    fetch(
+      cloudFunctionUrl,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          "search_word" : text + " " + "filter:images" + " " + "lang:ja",
+          "count": 100,
+        })
+      }
+    )
+      .then( (response) => {
+        console.log("response : ", response)
+        if ( !response.ok) {
+          throw new Error();
+        }
+        return response.json()
+      })
+      .then((data) => {        
+        //console.log("data : ", data)
+        const tweets = data["tweets"]
+        const statuses = tweets["statuses"]
+        //console.log("tweets : ", tweets)
+        //console.log("statuses : ", statuses)
+
+        let seachResults_: any = []
+        let seachResultsJsx_: any = []
+        statuses.forEach((statuse: any)=> {
+          console.log("statuse : ", statuse)
+
+          const userName = statuse["user"]["screen_name"]
+          console.log("userName : ", userName)
+          const tweetTime = statuse["created_at"]
+          console.log("tweetTime : ", tweetTime)
+          const tweetText = statuse["text"]
+          console.log("tweetText : ", tweetText)
+          let imageUrl = "" 
+          if (statuse["entities"]["media"] && statuse["entities"]["media"].indexOf(0)) {
+            imageUrl = statuse["entities"]["media"][0]["media_url"]
+          }
+          console.log("imageUrl : ", imageUrl)
+
+          seachResults_.push({
+            "userName" : userName,
+            "tweetTime" : tweetTime,
+            "tweetText" : tweetText,
+            "imageUrl" : imageUrl,          
+          })
+          seachResultsJsx_.push(
+            <Grid item xs={10} sm={2}>
+              <TwitterCard title={"@"+userName} subheader={tweetTime} imageFileName={imageUrl} imageHeight="300px" imageWidth="300px" contentsText={tweetText} />
+            </Grid>
+          )
+
+          console.log("seachResults_ : ", seachResults_)
+          console.log("seachResultsJsx_ : ", seachResultsJsx_)
+        })
+        setSeachResults(seachResults_)
+        setSeachResultsJsx(seachResultsJsx_)
+      })
+      .catch((reason) => {
+        console.log("Tweet の取得に失敗しました", reason)
+      });
 
     // 入力フォームのテキストをクリア
     setText("")
@@ -59,6 +120,9 @@ const App: React.VFC = () => {
   //------------------------
   // JSX での表示処理
   //------------------------
+  console.log("seachResults : ", seachResults)
+  console.log("seachResultsJsx : ", seachResultsJsx)
+
   return (
     <ThemeProvider theme={theme}>
       <BrowserRouter>
@@ -87,15 +151,7 @@ const App: React.VFC = () => {
         {/* 検索ヒット画像 */}
         <Grid container direction="column">
           <Grid item container spacing={2}>
-            <Grid item xs={10} sm={2}>   {/* xs : 画面の分割数, sm : 分割数に対しての使用する横幅数 */}
-              <ImageCard title="title1" subheader="subheader2" imageFileName="./panda.jpg" imageHeight="300px" imageWidth="300px" contentsText="contents1" />
-            </Grid>
-            <Grid item xs={10} sm={2}>
-              <ImageCard title="title2" subheader="subheader2" imageFileName="./panda.jpg" imageHeight="300px" imageWidth="300px" contentsText="contents2" />
-            </Grid>            
-            <Grid item xs={10} sm={2}>
-              <ImageCard title="title3" subheader="subheader3" imageFileName="./panda.jpg" imageHeight="300px" imageWidth="300px" contentsText="contents3" />
-            </Grid>            
+              {seachResultsJsx}
           </Grid>
         </Grid>
       </BrowserRouter>

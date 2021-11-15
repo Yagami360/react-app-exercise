@@ -11,7 +11,7 @@ import IconButton from '@material-ui/core/IconButton';
 import StarBorderOutlinedIcon from '@material-ui/icons/StarBorderOutlined';
 
 //-----------------------------------------------
-// ヘッダーのレイアウトを設定して表示するコンポーネント
+// ツイートをカード形式で表示するコンポーネント
 // [引数]
 //   text : ヘッダーの文字列
 //-----------------------------------------------
@@ -24,7 +24,7 @@ type Props = {
   contentsText: string;
 }
 
-const ImageCard: React.FC<Props> = ({ children, title, subheader, imageFileName, imageHeight, imageWidth, contentsText }) => {
+const TwitterCard: React.FC<Props> = ({ children, title, subheader, imageFileName, imageHeight, imageWidth, contentsText }) => {
   //------------------------
   // JSX での表示処理
   //------------------------
@@ -50,4 +50,4 @@ const ImageCard: React.FC<Props> = ({ children, title, subheader, imageFileName,
   )
 }
 
-export default ImageCard;
+export default TwitterCard;

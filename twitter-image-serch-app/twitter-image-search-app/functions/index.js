@@ -1,41 +1,88 @@
 const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-const Twitter = require('twitter');
+const Twitter = require('twitter');                 // Twitter for Node.js
 
-admin.initializeApp();
 const config = functions.config()
-console.log("config : ", config )
+const env = config["twitter-image-search-app"]
+console.log('config : ', config )
+console.log('env : ', env )
 
 const client = new Twitter({
-  consumer_key: config["twitter_consumer_key"] || "",           // 型が 'string | undefined' なので、"xxx" || "" で初期化
-  consumer_secret: config["twitter_consumer_secret"] || "",
-  access_token_key: config["twitter_access_token_key"] || "",
-  access_token_secret: config["twitter_access_secret"] || "",
+  consumer_key: env.twitter_consumer_key,
+  consumer_secret: env.twitter_consumer_secret,
+  access_token_key: env.twitter_access_token_key,
+  access_token_secret: env.twitter_access_secret,
 })
-
-// 通信テスト
-/*
-var params = {screen_name: 'yagami_360',count:20};
-client.get('statuses/user_timeline', params, function(error, tweets, response_api) {
-  if (!error) {
-    console.log("tweets", tweets);
-  }
-  else {
-    console.log("error", error);
-  }
-});
-*/
+console.log("client : ", client )
 
 // Twitter API を呼び出す
 exports.callTwiterAPI = functions.https.onRequest((request, response) => {
-  // 特定のユーザーのツイートを取得する
+  console.log( "call callTwiterAPI" )
+
+  // リクエストデータ解析
+  //functions.logger.info("request : ", request);
+  //functions.logger.info("request.body : ", request.body);
+
+  // CORS 設定（この処理を入れないと Cloud Funtion 呼び出さ元で No 'Access-Control-Allow-Origin' のエラーが出る）
+  response.set('Access-Control-Allow-Origin', '*');
+  if (request.method === 'OPTIONS') {
+      // Send response to OPTIONS requests
+      response.set('Access-Control-Allow-Methods', 'GET');
+      response.set('Access-Control-Allow-Headers', 'Content-Type');
+      response.set('Access-Control-Max-Age', '3600');
+      response.status(204).send('');
+  }
+
+  // Twitter for Node.js モジュールを使用して特定のユーザーのツイートを取得する
+  /*
   var params = {screen_name: 'yagami_360',count:20};
   client.get('statuses/user_timeline', params, function(error, tweets, response_api) {
     if (!error) {
       console.log("tweets", tweets);
+      // レスポンス処理
+      response.send(
+        JSON.stringify({
+            "status": "ok",
+            "tweets" : tweets.json(),                
+        })
+      );
     }
     else {
       console.log("error", error);
+      // レスポンス処理
+      response.send(
+        JSON.stringify({
+            "status": "ng",
+            "tweets" : undefined,                
+        })
+      );
+    }
+  });
+  */
+  var params = {
+    q: request.body["search_word"],
+    count : request.body["count"],
+  };
+
+  client.get('search/tweets', params, function(error, tweets, response_api) {
+    if (!error) {
+      console.log("tweets", tweets);
+      // レスポンス処理
+      response.send(
+        JSON.stringify({
+            "status": "ok",
+            "tweets" : tweets,                
+        })
+      );
+    }
+    else {
+      console.log("error", error);
+      // レスポンス処理
+      response.send(
+        JSON.stringify({
+            "status": "ng",
+            "tweets" : undefined,                
+        })
+      );
     }
   });
 });
