@@ -39,8 +39,6 @@ const App: React.VFC = () => {
   }
 
   const onSubmitText = (event: React.FormEvent<HTMLFormElement>)=> {
-    console.log("call onSubmitText")
-
     // submit イベント e の発生元であるフォームが持つデフォルトのイベント処理をキャンセル
     event.preventDefault();
 
@@ -55,13 +53,13 @@ const App: React.VFC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          "search_word" : text + " " + "filter:images" + " " + "lang:ja",
-          "count": 100,
+          "search_word" : text + " filter:images" + " lang:ja",
+          "count": 500,
         })
       }
     )
       .then( (response) => {
-        console.log("response : ", response)
+        //console.log("response : ", response)
         if ( !response.ok) {
           throw new Error();
         }
@@ -72,39 +70,41 @@ const App: React.VFC = () => {
         const tweets = data["tweets"]
         const statuses = tweets["statuses"]
         //console.log("tweets : ", tweets)
-        //console.log("statuses : ", statuses)
+        console.log("statuses : ", statuses)
 
         let seachResults_: any = []
         let seachResultsJsx_: any = []
         statuses.forEach((statuse: any)=> {
-          console.log("statuse : ", statuse)
-
-          const userName = statuse["user"]["screen_name"]
-          console.log("userName : ", userName)
-          const tweetTime = statuse["created_at"]
-          console.log("tweetTime : ", tweetTime)
-          const tweetText = statuse["text"]
-          console.log("tweetText : ", tweetText)
+          //console.log("statuse : ", statuse)
           let imageUrl = "" 
           if (statuse["entities"]["media"] && statuse["entities"]["media"].indexOf(0)) {
             imageUrl = statuse["entities"]["media"][0]["media_url"]
           }
-          console.log("imageUrl : ", imageUrl)
+          else {
+            return
+          }
+          //console.log("imageUrl : ", imageUrl)
+
+          const userName = statuse["user"]["screen_name"]
+          const profileImageUrl = statuse["user"]["profile_image_url"]
+          const tweetTime = statuse["created_at"].replace("+0000","")
+          const tweetText = statuse["text"]
+          const tweetId = statuse["id_str"]
+          //console.log("profileImageUrl : ", profileImageUrl)
 
           seachResults_.push({
             "userName" : userName,
+            "profileImageUrl" : profileImageUrl,
             "tweetTime" : tweetTime,
+            "tweetId": tweetId,
             "tweetText" : tweetText,
             "imageUrl" : imageUrl,          
           })
           seachResultsJsx_.push(
             <Grid item xs={10} sm={2}>
-              <TwitterCard title={"@"+userName} subheader={tweetTime} imageFileName={imageUrl} imageHeight="300px" imageWidth="300px" contentsText={tweetText} />
+              <TwitterCard userName={userName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileName={imageUrl} imageHeight="300px" imageWidth="300px" contentsText={tweetText} />
             </Grid>
           )
-
-          console.log("seachResults_ : ", seachResults_)
-          console.log("seachResultsJsx_ : ", seachResultsJsx_)
         })
         setSeachResults(seachResults_)
         setSeachResultsJsx(seachResultsJsx_)
@@ -114,15 +114,14 @@ const App: React.VFC = () => {
       });
 
     // 入力フォームのテキストをクリア
-    setText("")
+    //setText("")
   }
 
   //------------------------
   // JSX での表示処理
   //------------------------
-  console.log("seachResults : ", seachResults)
-  console.log("seachResultsJsx : ", seachResultsJsx)
-
+  //console.log("seachResults : ", seachResults)
+  //console.log("seachResultsJsx : ", seachResultsJsx)
   return (
     <ThemeProvider theme={theme}>
       <BrowserRouter>

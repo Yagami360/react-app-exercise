@@ -3,8 +3,8 @@ const Twitter = require('twitter');                 // Twitter for Node.js
 
 const config = functions.config()
 const env = config["twitter-image-search-app"]
-console.log('config : ', config )
-console.log('env : ', env )
+//console.log('config : ', config )
+//console.log('env : ', env )
 
 const client = new Twitter({
   consumer_key: env.twitter_consumer_key,
@@ -12,7 +12,7 @@ const client = new Twitter({
   access_token_key: env.twitter_access_token_key,
   access_token_secret: env.twitter_access_secret,
 })
-console.log("client : ", client )
+//console.log("client : ", client )
 
 // Twitter API を呼び出す
 exports.callTwiterAPI = functions.https.onRequest((request, response) => {
@@ -32,32 +32,6 @@ exports.callTwiterAPI = functions.https.onRequest((request, response) => {
       response.status(204).send('');
   }
 
-  // Twitter for Node.js モジュールを使用して特定のユーザーのツイートを取得する
-  /*
-  var params = {screen_name: 'yagami_360',count:20};
-  client.get('statuses/user_timeline', params, function(error, tweets, response_api) {
-    if (!error) {
-      console.log("tweets", tweets);
-      // レスポンス処理
-      response.send(
-        JSON.stringify({
-            "status": "ok",
-            "tweets" : tweets.json(),                
-        })
-      );
-    }
-    else {
-      console.log("error", error);
-      // レスポンス処理
-      response.send(
-        JSON.stringify({
-            "status": "ng",
-            "tweets" : undefined,                
-        })
-      );
-    }
-  });
-  */
   var params = {
     q: request.body["search_word"],
     count : request.body["count"],
