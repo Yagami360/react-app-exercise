@@ -49,6 +49,7 @@ npm install --save @material-ui/core                      # Material-UI
 npm install --save @material-ui/icons                     # Material-UI
 npm install --save twitter                                # Twitter-API
 npm install -D typescript ts-node --save @types/twitter   # Twitter-API (TypeScript用)
+npm install --save firebase@8.10.0  
 npm ls --depth=0
 
 # プロジェクトをビルドする
