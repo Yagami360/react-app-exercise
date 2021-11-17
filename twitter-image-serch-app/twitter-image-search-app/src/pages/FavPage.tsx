@@ -9,6 +9,7 @@ import { Grid } from '@material-ui/core';
 import firebase from "firebase";
 import '../firebase/initFirebase'
 
+import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
 import TwitterCard from '../components/TwitterCard'
 

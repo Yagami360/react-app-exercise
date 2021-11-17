@@ -14,9 +14,11 @@ import CardContent from '@material-ui/core/CardContent';
 import CardHeader from '@material-ui/core/CardHeader';
 import { CardMedia } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
-import StarBorderIcon from '@material-ui/icons/StarBorder';
 import StarBorderOutlinedIcon from '@material-ui/icons/StarBorderOutlined';
+import StarIcon from '@material-ui/icons/Star';
 import Avatar from '@material-ui/core/Avatar'
+
+import useLocalPersist from './LocalPersist';
 
 //-----------------------------------------------
 // ツイートをカード形式で表示するコンポーネント
@@ -44,19 +46,20 @@ const TwitterCard: React.FC<Props> = ({ children, userName, profileImageUrl, twe
   //------------------------
   // FireStore のコレクション名
   const [collectionName, setCollectionName] = useState('fav-tweets-database')
-  const [documentId, setdocumentId] = useState('')
 
-  // お気に入り追加状態
-  const [isFav, setIsFav] = useState(false)  
+  // お気に入り追加状態（ローカルディスクに保存）
+  const [savedFav, setSavedFav] = useLocalPersist("twitter-image-search-app:fav", tweetId, false)  
+  //const [savedFav, setSavedFav] = useLocalPersist("twitter-image-search-app", "fav", JSON.stringify({tweetId:false}))  
 
   //------------------------
   // イベントハンドラ
   //------------------------
   // お気に入りボタンクリック時のイベントハンドラ
   const onClickFav = ((event: any)=> {
+    console.log("savedFav : ", savedFav )
     // お気に入りに追加されていない場合
-    if( isFav === false ) {
-      setIsFav(true)
+    if( savedFav === false ) {
+      setSavedFav(true)
 
       // 新規に追加するドキュメントデータ
       const document = {
@@ -70,22 +73,24 @@ const TwitterCard: React.FC<Props> = ({ children, userName, profileImageUrl, twe
         tweetText: contentsText,
         tweetImageFileUrl: imageFileUrl,     
       }
-      console.log("document : ", document)
 
-      // db.collection(コレクション名).add(ドキュメントデータ) で、コレクションに新たなドキュメントを追加する
-      // この時ドキュメントIDは自動的に割り振られる
+      // db.collection(コレクション名).doc(ドキュメントID).set(ドキュメントデータ) で、コレクションに新たなドキュメントを追加する
+      // ドキュメントID は、"twitter-image-search-app:fav"+tweetId
       // 新規にコレクションを追加する場合も、このメソッドで作成できる
-      db.collection(collectionName).add(document).then((ref: any) => {
-        console.log("added tweet in fav-tweets-database : documend id = ", ref.id)
-        setdocumentId(ref.id)
+      db.collection(collectionName).doc("twitter-image-search-app:fav"+tweetId).set(document).then((ref: any) => {
+        console.log("added tweet in fav-tweets-database")
+        // ページ再読み込み（e.preventDefault() を追加したため）
+        //window.location.reload()
       })
     }
     // 既にお気に入りに追加している場合
     else {
-      setIsFav(false)
+      setSavedFav(false)
       // db.collection(コレクション名).doc(ドキュメントID).delete() で、ドキュメントを削除する
-      db.collection(collectionName).doc(documentId).delete().then((ref: any)=> {
+      db.collection(collectionName).doc("twitter-image-search-app:fav"+tweetId).delete().then((ref: any)=> {
         console.log("deleted tweet in fav-tweets-database")
+        // ページ再読み込み（e.preventDefault() を追加したため）
+        //window.location.reload()
       })
     }
   })
@@ -112,7 +117,7 @@ const TwitterCard: React.FC<Props> = ({ children, userName, profileImageUrl, twe
         subheader={<Typography variant="subtitle2">{tweetTime}</Typography>}
         action={
           <IconButton aria-label="settings" onClick={onClickFav} >
-            { (isFav ===  false) ? <StarBorderOutlinedIcon /> : <StarBorderIcon /> }
+            { (savedFav ===  false) ? <StarBorderOutlinedIcon /> : <StarIcon /> }
           </IconButton>
           }
       />

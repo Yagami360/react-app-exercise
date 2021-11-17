@@ -14,6 +14,7 @@ import Button from '@material-ui/core/Button';
 import InputAdornment from "@material-ui/core/InputAdornment";
 import SearchIcon from "@material-ui/icons/Search";
 
+import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
 import TwitterCard from '../components/TwitterCard'
 
@@ -28,10 +29,18 @@ const HomePage: React.VFC = () => {
   // フック
   //------------------------
   // 検索フォームの入力テキスト
-  const [searchWord, setSearchWord] = useState('')
+  const [searchWord, setSearchWord] = useLocalPersist("twitter-image-search-app", "searchWord", "")
 
   // 検索ヒット画像のリスト 
+  const [seachResults, setSeachResults] = useState();
   const [seachResultsJsx, setSeachResultsJsx] = useState();
+
+  // 副作用フック。
+  // ｛初期起動時・検索結果が更新される・お気に入り状態が更新される｝のタイミングで呼び出される
+  /*
+  useEffect(() => {
+  }, [seachResults])
+  */
 
   //------------------------
   // イベントハンドラ
@@ -75,7 +84,6 @@ const HomePage: React.VFC = () => {
         //console.log("tweets : ", tweets)
         //console.log("statuses : ", statuses)
 
-        let seachResults_: any = []
         let seachResultsJsx_: any = []
         statuses.forEach((statuse: any)=> {
           //console.log("statuse : ", statuse)
