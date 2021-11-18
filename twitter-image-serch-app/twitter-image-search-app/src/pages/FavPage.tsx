@@ -13,8 +13,11 @@ import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
 import TwitterCard from '../components/TwitterCard'
 
+// Auth オブジェクトの作成
+const auth: any = firebase.auth()
+
 // Firestore にアクセスするためのオブジェクト作成
-const db = firebase.firestore()
+const firestore = firebase.firestore()
 
 // お気に入りページを表示するコンポーネント
 const FavPage: React.VFC = () => {
@@ -24,6 +27,9 @@ const FavPage: React.VFC = () => {
   //------------------------
   // フック
   //------------------------
+  // メッセージ
+  const [message, setMessage] = useState('loading')
+
   // コレクション名入力フォームのステートフック
   const [collectionName, setCollectionName] = useState('fav-tweets-database')
 
@@ -32,29 +38,37 @@ const FavPage: React.VFC = () => {
 
   // コレクション名からコレクション内のデータを取得する副作用フック。
   useEffect(() => {
-    // db.collection(コレクション名) : コレクションにアクセスするためのオブジェクト取得
-    // db.collection(コレクション名).get() : コレクションにアクセスするためのオブジェクトからコレクションを取得。get() は非同期のメソッドで Promise を返す。そのため、非同期処理が完了した後 then() で非同期完了後の処理を定義する
-    db.collection(collectionName).get().then(
-      // snapshot には、Firestore のコレクションに関連するデータやオブジェクトが入る
-      (snapshot)=> {
-        let favListJsx_: any = []
+    console.log("auth.currentUser : ", auth.currentUser)
+    // ログイン済みに場合のみ表示
+    if (auth.currentUser !== null) {
+      // firestore.collection(コレクション名) : コレクションにアクセスするためのオブジェクト取得
+      // firestore.collection(コレクション名).get() : コレクションにアクセスするためのオブジェクトからコレクションを取得。get() は非同期のメソッドで Promise を返す。そのため、非同期処理が完了した後 then() で非同期完了後の処理を定義する
+      firestore.collection(collectionName).doc(auth.currentUser.email).collection(collectionName).get().then(
+        // snapshot には、Firestore のコレクションに関連するデータやオブジェクトが入る
+        (snapshot)=> {
+          let favListJsx_: any = []
 
-        // snapshot.forEach((document)=> {..}) : snapshot から順にデータを取り出して処理を行う。無名関数の引数 document には、コレクション内の各ドキュメントが入る
-        snapshot.forEach((document)=> {
-          // document.data() : ドキュメント内のフィールド
-          const field = document.data()
+          // snapshot.forEach((document)=> {..}) : snapshot から順にデータを取り出して処理を行う。無名関数の引数 document には、コレクション内の各ドキュメントが入る
+          snapshot.forEach((document)=> {
+            // document.data() : ドキュメント内のフィールド
+            const field = document.data()
 
-          // フィールドの値を TwitterCard の形式に変換して追加
-          favListJsx_.push(
-            <Grid item xs={10} sm={2}>
-              <TwitterCard userName={field.userName} profileImageUrl={field.userImageUrl} tweetTime={field.tweetTime} tweetId={field.tweetId} imageFileUrl={field.tweetImageFileUrl} imageHeight="500px" imageWidth="500px" contentsText={field.tweetText} />
-            </Grid>
-          )
-        })
-        
-        setFavListJsx(favListJsx_)
-      }
-    )
+            // フィールドの値を TwitterCard の形式に変換して追加
+            favListJsx_.push(
+              <Grid item xs={8} sm={4}>
+                <TwitterCard userName={field.userName} userScreenName={field.userScreenName} profileImageUrl={field.userImageUrl} tweetTime={field.tweetTime} tweetId={field.tweetId} imageFileUrl={field.tweetImageFileUrl} imageHeight="500px" imageWidth="2000px" contentsText={field.tweetText} />
+              </Grid>
+            )
+          })
+          
+          setFavListJsx(favListJsx_)
+        }
+      )
+      setMessage("")      
+    }
+    else {
+      setMessage("Please login")
+    }
   }, [])
   
   //------------------------
@@ -69,7 +83,7 @@ const FavPage: React.VFC = () => {
       {/* ヘッダー表示 */}
       <Header title="Twitter Image Search App"></Header>
       {/* ボディ表示 */}
-      <Typography variant="h5">お気に入りリスト</Typography>
+      <Typography variant="h6">{message}</Typography>
       <Grid container direction="column">
         <Grid item container spacing={2}>
             {favListJsx}

@@ -25,12 +25,16 @@ import useLocalPersist from './LocalPersist';
 // [引数]
 //   text : ヘッダーの文字列
 //-----------------------------------------------
+// Auth オブジェクトの作成
+const auth: any = firebase.auth()
+
 // Firestore にアクセスするためのオブジェクト作成
-const db = firebase.firestore()
+const firestore = firebase.firestore()
 
 // コンポーネントの引数
 type Props = {
   userName: string;
+  userScreenName: string;
   profileImageUrl: string;
   tweetTime: string;
   tweetId: string;
@@ -40,7 +44,7 @@ type Props = {
   contentsText: string;
 }
 
-const TwitterCard: React.FC<Props> = ({ children, userName, profileImageUrl, tweetTime, tweetId, imageFileUrl, imageHeight, imageWidth, contentsText }) => {
+const TwitterCard: React.FC<Props> = ({ children, userName, userScreenName, profileImageUrl, tweetTime, tweetId, imageFileUrl, imageHeight, imageWidth, contentsText }) => {
   //------------------------
   // フック
   //------------------------
@@ -57,6 +61,11 @@ const TwitterCard: React.FC<Props> = ({ children, userName, profileImageUrl, twe
   // お気に入りボタンクリック時のイベントハンドラ
   const onClickFav = ((event: any)=> {
     console.log("savedFav : ", savedFav )
+
+    if( auth.currentUser === null ) {
+      return
+    }
+
     // お気に入りに追加されていない場合
     if( savedFav === false ) {
       setSavedFav(true)
@@ -64,7 +73,7 @@ const TwitterCard: React.FC<Props> = ({ children, userName, profileImageUrl, twe
       // 新規に追加するドキュメントデータ
       const document = {
         userName: userName,     
-        userNameAt: "@" + userName,
+        userScreenName: userScreenName,
         userUrl: "https://twitter.com/" + userName,
         userImageUrl: profileImageUrl,
         tweetId: tweetId, 
@@ -74,10 +83,10 @@ const TwitterCard: React.FC<Props> = ({ children, userName, profileImageUrl, twe
         tweetImageFileUrl: imageFileUrl,     
       }
 
-      // db.collection(コレクション名).doc(ドキュメントID).set(ドキュメントデータ) で、コレクションに新たなドキュメントを追加する
+      // firestore.collection(コレクション名).doc(ドキュメントID).set(ドキュメントデータ) で、コレクションに新たなドキュメントを追加する
       // ドキュメントID は、"twitter-image-search-app:fav"+tweetId
       // 新規にコレクションを追加する場合も、このメソッドで作成できる
-      db.collection(collectionName).doc("twitter-image-search-app:fav"+tweetId).set(document).then((ref: any) => {
+      firestore.collection(collectionName).doc(auth.currentUser.email).collection(collectionName).doc("twitter-image-search-app:fav"+tweetId).set(document).then((ref: any) => {
         console.log("added tweet in fav-tweets-database")
         // ページ再読み込み（e.preventDefault() を追加したため）
         //window.location.reload()
@@ -86,8 +95,8 @@ const TwitterCard: React.FC<Props> = ({ children, userName, profileImageUrl, twe
     // 既にお気に入りに追加している場合
     else {
       setSavedFav(false)
-      // db.collection(コレクション名).doc(ドキュメントID).delete() で、ドキュメントを削除する
-      db.collection(collectionName).doc("twitter-image-search-app:fav"+tweetId).delete().then((ref: any)=> {
+      // firestore.collection(コレクション名).doc(ドキュメントID).delete() で、ドキュメントを削除する
+      firestore.collection(collectionName).doc(auth.currentUser.email).collection(collectionName).doc("twitter-image-search-app:fav"+tweetId).delete().then((ref: any)=> {
         console.log("deleted tweet in fav-tweets-database")
         // ページ再読み込み（e.preventDefault() を追加したため）
         //window.location.reload()
@@ -98,15 +107,15 @@ const TwitterCard: React.FC<Props> = ({ children, userName, profileImageUrl, twe
   //------------------------
   // JSX での表示処理
   //------------------------
-  let userNameAt: string = "@" + userName
-  let userUrl: string = "https://twitter.com/" + userName
-  let tweetUrl: string = "https://twitter.com/" + userName + "/status/" + tweetId
+  let userScreenNameAt: string = "@" + userScreenName
+  let userUrl: string = "https://twitter.com/" + userScreenName
+  let tweetUrl: string = "https://twitter.com/" + userScreenName + "/status/" + tweetId
   return (
     <Card variant="outlined">
       <CardHeader 
         title={
           <CardActionArea href={userUrl} target="_blank" >
-            <Typography variant="subtitle1">{userNameAt}</Typography>
+            <Typography variant="subtitle1">{userName}</Typography>
           </CardActionArea>
         }
         avatar={
@@ -114,7 +123,7 @@ const TwitterCard: React.FC<Props> = ({ children, userName, profileImageUrl, twe
             <Avatar aria-label="avatar" src={profileImageUrl} />
           </CardActionArea>
         }
-        subheader={<Typography variant="subtitle2">{tweetTime}</Typography>}
+        subheader={<Typography variant="subtitle2">{userScreenNameAt}</Typography>}
         action={
           <IconButton aria-label="settings" onClick={onClickFav} >
             { (savedFav ===  false) ? <StarBorderOutlinedIcon /> : <StarIcon /> }
@@ -125,6 +134,7 @@ const TwitterCard: React.FC<Props> = ({ children, userName, profileImageUrl, twe
         <CardMedia style={{ height: imageHeight, maxWidth : imageWidth }} image={imageFileUrl} />
       </CardActionArea>
       <CardContent>
+      <Typography variant="body2" component="p">{tweetTime}</Typography>
         <Typography variant="body2" component="p">{contentsText}</Typography>
       </CardContent>
       <CardActions>

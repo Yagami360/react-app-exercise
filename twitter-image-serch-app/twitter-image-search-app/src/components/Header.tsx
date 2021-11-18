@@ -25,9 +25,10 @@ import ListItemText from '@material-ui/core/ListItemText';
 const auth: any = firebase.auth()
 //auth.signOut()
 
-// 認証プロバイダー（Google）の作成
-const provider: any = new firebase.auth.GoogleAuthProvider();
+// Firestore にアクセスするためのオブジェクト作成
+const firestore = firebase.firestore()
 
+// コンポーネントの引数
 type Props = {
   title: string;
 }
@@ -41,39 +42,29 @@ const Header: React.FC<Props> = ({ children, title }) => {
   // メニューボタンの開閉状態
   const [isOpenDrawer, setIsOpenDrawer] = React.useState(false)
 
-  // ログインユーザー
-  const [loginUser, setLoginUser] = React.useState({
-    "uid": "",
-    "displayName": "",
-    "photoURL": "",
-    "email": "",
-    "phoneNumber": "",
-  })
-
   //------------------------
   // イベントハンドラ
   //------------------------
   const onClickLogIn = ((event: React.MouseEvent<HTMLInputElement>) => {
-    // auth.signInWithPopup(認証プロバイダー) : 
-    // ポップアップ画面で認証を行う。このメソッドは Promise オブジェクトを返すので、then(...) で認証後の処理を定義する。
-    // この時、result.user には以下の情報が入る
-    // result.user.providerID : 利用している認証プロバイダーのID
-    // result.user.uid : ユーザーID
-    // result.user.displayName : ユーザーの表示名
-    // result.user.email : ユーザーのEmail
-    // result.user.phoneNumber : ユーザーの電話番号
-    auth.signInWithPopup(provider).then((result: any) => {
-      console.log("succeed login for ", result.user.displayName )
-      setLoginUser({
-        "uid": result.user.uid,
-        "displayName": result.user.displayName,
-        "photoURL": result.user.photoURL,
-        "email": result.user.email,
-        "phoneNumber": result.user.phoneNumber,
+    // auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL) : ログイン状態を保持
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
+      // 認証プロバイダー（Google）の作成
+      const provider: any = new firebase.auth.GoogleAuthProvider();
+
+      // auth.signInWithPopup(認証プロバイダー) : 
+      // ポップアップ画面で認証を行う。このメソッドは Promise オブジェクトを返すので、then(...) で認証後の処理を定義する。
+      // この時、result.user には以下の情報が入る
+      // result.user.providerID : 利用している認証プロバイダーのID
+      // result.user.uid : ユーザーID
+      // result.user.displayName : ユーザーの表示名
+      // result.user.email : ユーザーのEmail
+      // result.user.phoneNumber : ユーザーの電話番号
+      auth.signInWithPopup(provider).then((result: any) => {
+        console.log("succeed login for ", result.user.displayName )
+      }).catch((error: any) => {
+        // ログイン失敗時の処理
+        console.log("faild login")
       })
-    }).catch((error: any) => {
-      // ログイン失敗時の処理
-      console.log("faild login")
     })
   })
 
@@ -127,7 +118,7 @@ const Header: React.FC<Props> = ({ children, title }) => {
         {/* <div style={{ flexGrow: 1 }}></div> : 右寄せ */}
         <div style={{ flexGrow: 1 }}></div>
         <div onClick={onClickLogIn}>
-          <Avatar aria-label="avatar" src={loginUser["photoURL"]} />
+          <Avatar aria-label="avatar" src={auth.currentUser !== null ? auth.currentUser.photoURL : ''} />
         </div>
       </Toolbar>        
     </AppBar>
