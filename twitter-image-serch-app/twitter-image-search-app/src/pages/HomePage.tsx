@@ -48,9 +48,7 @@ const HomePage: React.VFC = () => {
   // 検索ヒット画像のリスト 
   const [seachResults, setSeachResults] = useState();
   const [seachResultsJsx, setSeachResultsJsx] = useState();
-  
-  //const [seachHistorys, setSeachHistorys] = useState([]);
-  let seachHistorys: any = []
+  const [seachHistorys, setSeachHistorys] = useState([]);
 
   // 副作用フック。
   // ｛初期起動時・検索結果が更新される・お気に入り状態が更新される｝のタイミングで呼び出される
@@ -67,29 +65,32 @@ const HomePage: React.VFC = () => {
           seachHistorys_.push({ id: id, name: field.searchWord })
           id += 1
         })         
-        //setSeachHistorys(seachHistorys_)
-        seachHistorys = seachHistorys_
+        setSeachHistorys(seachHistorys_)
       })
     }
-  }, [seachResults])
+  }, [searchWord, seachResults, seachResultsJsx])
 
   //------------------------
   // イベントハンドラ
   //------------------------  
   // 入力フォーム更新時のイベントハンドラ
-  const onChangeSearchWord = (event: any) => {
+  const onChangeSearchWordTextField = (event: any) => {
     setSearchWord(event.currentTarget.value)
+  }
+
+  const onChangeSearchWordAutocomplete = (event: any, values: any) => {
+    setSearchWord(values)
   }
 
   const onSubmitSearchWord = (event: React.FormEvent<HTMLFormElement>)=> {
     // submit イベント e の発生元であるフォームが持つデフォルトのイベント処理をキャンセル
-    event.preventDefault();
+    event.preventDefault(); 
 
     // 検索履歴のデータベースに追加
     if( auth.currentUser !== null && searchWord != "" ) {
       // 新規に追加するドキュメントデータ
       const document = {
-        searchWord: searchWord,
+        searchWord: searchWord, 
         time: new Date(),   
       }
       firestore.collection(collectionNameSearchWord).doc(auth.currentUser.email).collection(collectionNameSearchWord).doc(searchWord).set(document).then((ref: any) => {
@@ -184,8 +185,9 @@ const HomePage: React.VFC = () => {
   //------------------------
   // JSX での表示処理
   //------------------------
+  console.log( "searchWord : ", searchWord )
   //console.log("seachResultsJsx : ", seachResultsJsx)
-  console.log( "seachHistorys : ", seachHistorys )
+  //console.log( "seachHistorys : ", seachHistorys )
   return (
     <ThemeProvider theme={theme}>
       {/* ヘッダー表示 */}      
@@ -193,29 +195,35 @@ const HomePage: React.VFC = () => {
       {/* 検索ワード入力 */}
       <form onSubmit={onSubmitSearchWord}>
         <Box p={1} m={1} >
-          {/* <TextField> : InputProps 属性の startAdornment キーで検索アイコン付きの入力フォームにする */}
-          <Autocomplete 
-            freeSolo
-            id="ツイート検索"
-            options={seachHistorys.map((option: any) => option.name)}
-            onChange={onChangeSearchWord} 
-            value={searchWord} 
-            renderInput={ (params: any) => (
-              <TextField 
-                {...params}
-//                onChange={onChangeSearchWord} 
-//                value={searchWord}
-                label="ツイート検索"
-                variant="outlined"
-                InputProps={
-                  {startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>)}
-                }
-              />            
-            )}
-            getOptionLabel={(option: any) => option.name}
-            style={{ width: 270 }}
-          />
-          <Button type="submit" variant="contained">🔍 検索</Button>
+          <Grid container={true}>
+            {/* <Autocomplete disableClearable > : x */}
+            {/* <TextField> : InputProps 属性の startAdornment キーで検索アイコン付きの入力フォームにする */}
+            <Autocomplete 
+              freeSolo
+              disableClearable
+              onChange={onChangeSearchWordAutocomplete}
+              id="ツイート検索"
+              options={seachHistorys.map((option: any) => option.name)}
+              renderInput={ (params: any) => (
+                <TextField 
+                  {...params}
+                  onChange={onChangeSearchWordTextField} 
+                  value={searchWord} 
+                  label="ツイート検索"
+                  variant="outlined"
+                  InputProps={{
+                    ...params.InputProps,
+                    type: 'search',
+                    startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>)
+                  }}
+                />            
+              )}
+              style={{ width: 270 }}
+            />
+            <Button type="submit" variant="contained" style={{ width: 100, borderRadius: 25 }}>
+              <Typography variant="subtitle1">🔍 検索</Typography>
+            </Button>
+          </Grid>
           <Typography variant="subtitle2">{searchMessage}</Typography>
         </Box>
       </form>
@@ -228,18 +236,5 @@ const HomePage: React.VFC = () => {
     </ThemeProvider>
     );
 }
-
-/*
-    <TextField 
-      {...params}
-      onChange={onChangeSearchWord} 
-      value={searchWord} 
-      label="ツイート検索"
-      variant="outlined"
-      InputProps={
-        {startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>)}
-      }
-    />            
-*/
 
 export default HomePage;

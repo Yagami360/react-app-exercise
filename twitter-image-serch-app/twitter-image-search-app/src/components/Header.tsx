@@ -105,6 +105,11 @@ const Header: React.FC<Props> = ({ children, title }) => {
                 <ListItemText primary="Home" />
               </ListItem>
             </Link>
+            <Link to="/follow" style={{ textDecoration: 'none', color: 'black' }}>
+              <ListItem button>
+                <ListItemText primary="タイムライン" />
+              </ListItem>
+            </Link>
             <Link to="/fav" style={{ textDecoration: 'none', color: 'black' }}>
               <ListItem button>
                 <ListItemText primary="お気に入り" />

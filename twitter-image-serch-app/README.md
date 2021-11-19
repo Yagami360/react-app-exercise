@@ -47,18 +47,4 @@
 
 - https://syncer.jp/Web/API/Twitter/REST_API/GET/search/tweets/
 - https://gist.github.com/cucmberium/e687e88565b6a9ca7039
-
-## ■ ToDo
-
-- [x] メニューバーから「お気に入り」ページと「設定」ページに移動出来るようにする
-- [ ] 検索履歴表示機能
-- [x] 右上アイコンでログイン機能
-- [ ] 右上アイコンでログアウト機能
-- [x] ☆ボタンクリック時のお気に入り保存機能
-- [ ] 検索ヒット数が少ない問題の修正。繰り返し検索
-  - https://blog.apar.jp/php/3007/
-- [ ] 無限スクロール機能追加
-- [ ] ダークモード機能
-- [ ] 設定画面で Twitter カードの画像サイズを設定出来るようにする
-- [ ] フォロー＆タイムライン表示機能
-- [ ] プロフィールとツイートの AND 検索機能
+- https://qiita.com/ryo-a/items/53fe9eadcf719b817c9a

@@ -17,7 +17,8 @@ import IconButton from '@material-ui/core/IconButton';
 import StarBorderOutlinedIcon from '@material-ui/icons/StarBorderOutlined';
 import StarIcon from '@material-ui/icons/Star';
 import Avatar from '@material-ui/core/Avatar'
-
+import PersonAddIcon from '@material-ui/icons/PersonAdd';
+import PersonAddOutlinedIcon from '@material-ui/icons/PersonAddOutlined';
 import useLocalPersist from './LocalPersist';
 
 //-----------------------------------------------
@@ -48,16 +49,52 @@ const TwitterCard: React.FC<Props> = ({ children, userName, userScreenName, prof
   //------------------------
   // フック
   //------------------------
-  // FireStore のコレクション名
-  const [collectionName, setCollectionName] = useState('fav-tweets-database')
+  // フォロー
+  const collectionNameFollow = 'follow-database'
+  const [savedFollow, setSavedFollow] = useLocalPersist("twitter-image-search-app:follow", userScreenName, false)  
 
-  // お気に入り追加状態（ローカルディスクに保存）
+  // お気に入り
+  const collectionNameFav = 'fav-tweets-database'
   const [savedFav, setSavedFav] = useLocalPersist("twitter-image-search-app:fav", tweetId, false)  
-  //const [savedFav, setSavedFav] = useLocalPersist("twitter-image-search-app", "fav", JSON.stringify({tweetId:false}))  
 
   //------------------------
   // イベントハンドラ
   //------------------------
+  // フォローボタンクリック時のイベントハンドラ
+  const onClickFollow = ((event: any)=> {
+    console.log("savedFollow : ", savedFollow )
+
+    if( auth.currentUser === null ) {
+      return
+    }
+
+    // お気に入りに追加されていない場合
+    if( savedFollow === false ) {
+      setSavedFollow(true)
+
+      // 新規に追加するドキュメントデータ
+      const document = {
+        userName: userName,     
+        userScreenName: userScreenName,
+        userUrl: "https://twitter.com/" + userName,
+        userImageUrl: profileImageUrl,
+      }
+
+      // firestore.collection(コレクション名).doc(ドキュメントID).set(ドキュメントデータ) で、コレクションに新たなドキュメントを追加する
+      firestore.collection(collectionNameFollow).doc(auth.currentUser.email).collection(collectionNameFollow).doc("twitter-image-search-app:follow:"+userScreenName).set(document).then((ref: any) => {
+        console.log("added tweet in ", collectionNameFollow)
+      })
+    }
+    // 既にお気に入りに追加している場合
+    else {
+      setSavedFollow(false)
+      // firestore.collection(コレクション名).doc(ドキュメントID).delete() で、ドキュメントを削除する
+      firestore.collection(collectionNameFollow).doc(auth.currentUser.email).collection(collectionNameFollow).doc("twitter-image-search-app:follow:"+userScreenName).delete().then((ref: any)=> {
+        console.log("deleted tweet in ", collectionNameFollow)
+      })
+    }
+  })
+
   // お気に入りボタンクリック時のイベントハンドラ
   const onClickFav = ((event: any)=> {
     console.log("savedFav : ", savedFav )
@@ -86,20 +123,16 @@ const TwitterCard: React.FC<Props> = ({ children, userName, userScreenName, prof
       // firestore.collection(コレクション名).doc(ドキュメントID).set(ドキュメントデータ) で、コレクションに新たなドキュメントを追加する
       // ドキュメントID は、"twitter-image-search-app:fav"+tweetId
       // 新規にコレクションを追加する場合も、このメソッドで作成できる
-      firestore.collection(collectionName).doc(auth.currentUser.email).collection(collectionName).doc("twitter-image-search-app:fav"+tweetId).set(document).then((ref: any) => {
-        console.log("added tweet in fav-tweets-database")
-        // ページ再読み込み（e.preventDefault() を追加したため）
-        //window.location.reload()
+      firestore.collection(collectionNameFav).doc(auth.currentUser.email).collection(collectionNameFav).doc("twitter-image-search-app:fav"+tweetId).set(document).then((ref: any) => {
+        console.log("added tweet in ", collectionNameFav)
       })
     }
     // 既にお気に入りに追加している場合
     else {
       setSavedFav(false)
       // firestore.collection(コレクション名).doc(ドキュメントID).delete() で、ドキュメントを削除する
-      firestore.collection(collectionName).doc(auth.currentUser.email).collection(collectionName).doc("twitter-image-search-app:fav"+tweetId).delete().then((ref: any)=> {
-        console.log("deleted tweet in fav-tweets-database")
-        // ページ再読み込み（e.preventDefault() を追加したため）
-        //window.location.reload()
+      firestore.collection(collectionNameFav).doc(auth.currentUser.email).collection(collectionNameFav).doc("twitter-image-search-app:fav"+tweetId).delete().then((ref: any)=> {
+        console.log("deleted tweet in ", collectionNameFav)
       })
     }
   })
@@ -125,22 +158,28 @@ const TwitterCard: React.FC<Props> = ({ children, userName, userScreenName, prof
         }
         subheader={<Typography variant="subtitle2">{userScreenNameAt}</Typography>}
         action={
-          <IconButton aria-label="settings" onClick={onClickFav} >
-            { (savedFav ===  false) ? <StarBorderOutlinedIcon /> : <StarIcon /> }
+          <IconButton aria-label="settings" onClick={onClickFollow} >
+            { (savedFollow ===  false) ? <PersonAddOutlinedIcon /> : <PersonAddIcon /> }
           </IconButton>
-          }
+        }
       />
       <CardActionArea href={imageFileUrl} target="_blank" >
         <CardMedia style={{ height: imageHeight, maxWidth : imageWidth }} image={imageFileUrl} />
       </CardActionArea>
       <CardContent>
-      <Typography variant="body2" component="p">{tweetTime}</Typography>
-        <Typography variant="body2" component="p">{contentsText}</Typography>
+      <Typography variant="subtitle2" component="p">{tweetTime}</Typography>
+        <Typography variant="body1" component="p">{contentsText}</Typography>
       </CardContent>
       <CardActions>
         <CardActionArea href={tweetUrl} target="_blank" >
           <Button size="small">...</Button>        
         </CardActionArea>
+        <IconButton aria-label="settings" onClick={onClickFollow} >
+            { (savedFollow ===  false) ? <PersonAddOutlinedIcon /> : <PersonAddIcon /> }
+          </IconButton>
+        <IconButton aria-label="settings" onClick={onClickFav} >
+          { (savedFav ===  false) ? <StarBorderOutlinedIcon /> : <StarIcon /> }
+        </IconButton>
       </CardActions>
     </Card>
   )

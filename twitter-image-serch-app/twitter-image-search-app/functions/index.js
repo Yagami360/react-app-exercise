@@ -154,3 +154,57 @@ exports.searchTweetRecursive = functions.https.onRequest((request, response) => 
     );
   }
 });
+
+
+//---------------------------------------------
+// Twitter API を使用して特定のユーザーのツイートを取得する Cloud Funtion
+// request.body["screen_name"] : 検索対象のユーザー名（@なし）
+// request.body["count"] : 検索数（最大100件）
+//---------------------------------------------
+exports.getUserTimelineTweet = functions.https.onRequest((request, response) => {
+  console.log( "call getUserTimelineTweet" )
+
+  // CORS 設定（この処理を入れないと Cloud Funtion 呼び出さ元で No 'Access-Control-Allow-Origin' のエラーが出る）
+  response.set('Access-Control-Allow-Origin', '*');
+  if (request.method === 'OPTIONS') {
+      // Send response to OPTIONS requests
+      response.set('Access-Control-Allow-Methods', 'GET');
+      response.set('Access-Control-Allow-Headers', 'Content-Type');
+      response.set('Access-Control-Max-Age', '3600');
+      response.status(204).send('');
+  }
+
+  // Twitter API へのリクエスト処理
+  var params = {
+    screen_name: request.body["screen_name"],
+    count : request.body["count"],
+    max_id: null,                                     // ツイートのIDを指定すると、これを含まず、これより過去のツイートを取得できる。
+    include_rts: request.body["include_rts"],         // リツイートを含めるか否か。
+    exclude_replies: request.body["exclude_replies"]  // リプライを除外するか。trueなら除外する、falseなら除外しない。
+  };
+  console.log( "params : ", params )
+
+  client.get('statuses/user_timeline', params, function(error, tweets, response_api) {
+    if (!error) {
+      console.log( "tweets : ", tweets )
+
+      // レスポンス処理
+      response.send(
+        JSON.stringify({
+            "status": "ok",
+            "tweets" : tweets,                
+        })
+      );
+    }
+    else {
+      console.log("error", error);
+      // レスポンス処理
+      response.send(
+        JSON.stringify({
+            "status": "ng",
+            "tweets" : undefined,                
+        })
+      );
+    }
+  });
+});
