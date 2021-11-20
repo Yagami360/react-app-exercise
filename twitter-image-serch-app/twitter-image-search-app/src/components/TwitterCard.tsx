@@ -34,6 +34,7 @@ const firestore = firebase.firestore()
 
 // コンポーネントの引数
 type Props = {
+  userId: string;
   userName: string;
   userScreenName: string;
   profileImageUrl: string;
@@ -45,7 +46,7 @@ type Props = {
   contentsText: string;
 }
 
-const TwitterCard: React.FC<Props> = ({ children, userName, userScreenName, profileImageUrl, tweetTime, tweetId, imageFileUrl, imageHeight, imageWidth, contentsText }) => {
+const TwitterCard: React.FC<Props> = ({ children, userId, userName, userScreenName, profileImageUrl, tweetTime, tweetId, imageFileUrl, imageHeight, imageWidth, contentsText }) => {
   //------------------------
   // フック
   //------------------------
@@ -74,6 +75,7 @@ const TwitterCard: React.FC<Props> = ({ children, userName, userScreenName, prof
 
       // 新規に追加するドキュメントデータ
       const document = {
+        userId: userId,
         userName: userName,     
         userScreenName: userScreenName,
         userUrl: "https://twitter.com/" + userName,
@@ -109,6 +111,7 @@ const TwitterCard: React.FC<Props> = ({ children, userName, userScreenName, prof
 
       // 新規に追加するドキュメントデータ
       const document = {
+        userId: userId,
         userName: userName,     
         userScreenName: userScreenName,
         userUrl: "https://twitter.com/" + userName,

@@ -22,6 +22,8 @@ const auth: any = firebase.auth()
 // Firestore にアクセスするためのオブジェクト作成
 const firestore = firebase.firestore()
 
+let collectionName = 'follow-database'
+
 // お気に入りページを表示するコンポーネント
 const Follow: React.VFC = () => {
   // useTheme() でテーマ（画面全体のスタイル）のオブジェクトを作成
@@ -33,25 +35,25 @@ const Follow: React.VFC = () => {
   // メッセージ
   const [message, setMessage] = useState('loading')
 
-  // コレクション名入力フォームのステートフック
-  const [collectionName, setCollectionName] = useState('follow-database')
-
   // フォローユーザーのツイートのタイムライン 
   const [timelineListJsx, setTimelineListJsx] = useState();
+  const [allUserTimelineListJsx, setAllUserTimelineListJsx] = useState();
 
   // 副作用フック
   useEffect(() => {
     if( auth.currentUser !== null ) {
+      let allUserTimelineListJsx_: any = []          
+      
       // フォロー済みユーザーを取得
       firestore.collection(collectionName).doc(auth.currentUser.email).collection(collectionName).get().then( (snapshot)=> {
-        let followList_: any = []
         snapshot.forEach((document)=> {
           // document.data() : ドキュメント内のフィールド
           const field = document.data()
-          console.log( "field : ", field )
-
+          //console.log( "field : ", field )
+          const userId = field.userId
           const userScreenName = field.userScreenName
-          console.log( "userScreenName : ", userScreenName )          
+          //console.log( "userId : ", userId )
+          //console.log( "userScreenName : ", userScreenName )          
           if( userScreenName != undefined ) {
             // フォローユーザーのツイートをタイムラインで表示
             fetch(
@@ -62,7 +64,7 @@ const Follow: React.VFC = () => {
                   'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                  "screen_name": userScreenName,
+                  "user_id": userId,
                   "count": searchCount,
                   "include_rts": true,
                   "exclude_replies": false,
@@ -77,34 +79,38 @@ const Follow: React.VFC = () => {
                 return response.json()
               })
               .then((data) => {        
-                console.log("data : ", data)
+                //console.log("data : ", data)
                 const tweets = data["tweets"]
-                const statuses = tweets["statuses"]
         
                 let timelineListJsx_: any = []
-                statuses.forEach((statuse: any)=> {
-                  console.log("statuse : ", statuse)  
-                  const userName = statuse["user"]["name"]
-                  const userScreenName = statuse["user"]["screen_name"]
-                  const profileImageUrl = statuse["user"]["profile_image_url"]
-                  const tweetTime = statuse["created_at"].replace("+0000","")
-                  const tweetText = statuse["text"]
-                  const tweetId = statuse["id_str"]
+                tweets.forEach((tweet: any)=> {
+                  //console.log("tweet : ", tweet)  
+                  const userId = tweet["user"]["id_str"]
+                  const userName = tweet["user"]["name"]
+                  const userScreenName = tweet["user"]["screen_name"]
+                  const profileImageUrl = tweet["user"]["profile_image_url"]
+                  const tweetTime = tweet["created_at"].replace("+0000","")
+                  const tweetText = tweet["text"]
+                  const tweetId = tweet["id_str"]
                   //console.log("profileImageUrl : ", profileImageUrl)
                   let imageUrl = "" 
-                  if (statuse["entities"]["media"] && statuse["entities"]["media"].indexOf(0)) {
-                    if(statuse["entities"]["media"][0]["media_url"]) {
-                      imageUrl = statuse["entities"]["media"][0]["media_url"]
-                    }
+                  if (tweet["entities"]["media"] && tweet["entities"]["media"].indexOf(0) && tweet["entities"]["media"][0]["media_url"]) {
+                    imageUrl = tweet["entities"]["media"][0]["media_url"]
+                  }
+                  else {
+                    return
                   }
                   
                   timelineListJsx_.push(
                     <Grid item xs={10} sm={2}>
-                      <TwitterCard userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="300px" imageWidth="300px" contentsText={tweetText} />
+                      <TwitterCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="300px" imageWidth="300px" contentsText={tweetText} />
                     </Grid>
                   )
                 })
                 setTimelineListJsx(timelineListJsx_)
+                setMessage("")
+
+                allUserTimelineListJsx_.append(timelineListJsx)
               })
               .catch((reason) => {
                 console.log("ツイートの取得に失敗しました", reason)
@@ -113,6 +119,7 @@ const Follow: React.VFC = () => {
           }
         })
       })
+      setAllUserTimelineListJsx(allUserTimelineListJsx_)
     }
   }, [])
 
@@ -130,6 +137,11 @@ const Follow: React.VFC = () => {
       {/* ボディ表示 */}
       <Typography variant="h4">Follow Page</Typography>
       <Typography variant="subtitle1">{message}</Typography>
+      <Grid container direction="column">
+        <Grid item container spacing={2}>
+            {timelineListJsx}
+        </Grid>
+      </Grid>
     </ThemeProvider>
   );
 }

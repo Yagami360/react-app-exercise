@@ -56,7 +56,7 @@ const FavPage: React.VFC = () => {
             // フィールドの値を TwitterCard の形式に変換して追加
             favListJsx_.push(
               <Grid item xs={8} sm={4}>
-                <TwitterCard userName={field.userName} userScreenName={field.userScreenName} profileImageUrl={field.userImageUrl} tweetTime={field.tweetTime} tweetId={field.tweetId} imageFileUrl={field.tweetImageFileUrl} imageHeight="500px" imageWidth="2000px" contentsText={field.tweetText} />
+                <TwitterCard userId={field.userId} userName={field.userName} userScreenName={field.userScreenName} profileImageUrl={field.userImageUrl} tweetTime={field.tweetTime} tweetId={field.tweetId} imageFileUrl={field.tweetImageFileUrl} imageHeight="500px" imageWidth="2000px" contentsText={field.tweetText} />
               </Grid>
             )
           })

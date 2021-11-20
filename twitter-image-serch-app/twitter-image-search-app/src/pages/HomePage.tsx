@@ -156,6 +156,7 @@ const HomePage: React.VFC = () => {
           }
           //console.log("imageUrl : ", imageUrl)
 
+          const userId = statuse["user"]["id_str"]
           const userName = statuse["user"]["name"]
           const userScreenName = statuse["user"]["screen_name"]
           const profileImageUrl = statuse["user"]["profile_image_url"]
@@ -166,7 +167,7 @@ const HomePage: React.VFC = () => {
 
           seachResultsJsx_.push(
             <Grid item xs={10} sm={2}>
-              <TwitterCard userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="300px" imageWidth="300px" contentsText={tweetText} />
+              <TwitterCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="300px" imageWidth="300px" contentsText={tweetText} />
             </Grid>
           )
         })
