@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import firebase from "firebase";
 import '../firebase/initFirebase'
 
+import Box from '@material-ui/core/Box';
+import { Grid } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';    // 文字表示を表現できるコンポーネント。文字位置や文字色、どのタグ（h1など）とするか、どのタグのスタイルをあてるかなどを設定できる。
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
@@ -15,6 +17,9 @@ import Avatar from '@material-ui/core/Avatar'
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
+import {Tabs, Tab } from "@material-ui/core";
+
+import useLocalPersist from './LocalPersist';
 
 //-----------------------------------------------
 // ヘッダーのレイアウトを設定して表示するコンポーネント
@@ -42,9 +47,29 @@ const Header: React.FC<Props> = ({ children, title }) => {
   // メニューボタンの開閉状態
   const [isOpenDrawer, setIsOpenDrawer] = React.useState(false)
 
+  // タブの選択状態
+  const [selectedTab, setSelectedTab] = useLocalPersist("twitter-image-search-app", "tab", 0)  
+
   //------------------------
   // イベントハンドラ
   //------------------------
+  // メニュー画面
+  const onClickDrawer = ((event: React.MouseEvent<HTMLInputElement>)=> {
+    // メニュー画面を開く
+    setIsOpenDrawer(true)
+  })
+
+  const onCloseDrawer = ((event: React.MouseEvent<HTMLInputElement>)=> {
+    // メニュー画面を閉じる
+    setIsOpenDrawer(false)
+  })
+
+  // タブ
+  const onChangeSelectedTab = (event: any, value: any) => {
+    setSelectedTab(value);
+  };
+
+  // ログインアイコン
   const onClickLogIn = ((event: React.MouseEvent<HTMLInputElement>) => {
     // auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL) : ログイン状態を保持
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
@@ -74,16 +99,6 @@ const Header: React.FC<Props> = ({ children, title }) => {
     console.log("logouted")
   })
 
-  const onClickDrawer = ((event: React.MouseEvent<HTMLInputElement>)=> {
-    // メニュー画面を開く
-    setIsOpenDrawer(true)
-  })
-
-  const onCloseDrawer = ((event: React.MouseEvent<HTMLInputElement>)=> {
-    // メニュー画面を閉じる
-    setIsOpenDrawer(false)
-  })
-
   //------------------------
   // JSX での表示処理
   //------------------------
@@ -102,10 +117,10 @@ const Header: React.FC<Props> = ({ children, title }) => {
             { /* textDecoration: 'none' : 下線を消す */ }
             <Link to="/" style={{ textDecoration: 'none', color: 'black'}}>
               <ListItem button>
-                <ListItemText primary="Home" />
+                <ListItemText primary="ホーム" />
               </ListItem>
             </Link>
-            <Link to="/follow" style={{ textDecoration: 'none', color: 'black' }}>
+            <Link to="/timeline" style={{ textDecoration: 'none', color: 'black' }}>
               <ListItem button>
                 <ListItemText primary="タイムライン" />
               </ListItem>
@@ -120,6 +135,15 @@ const Header: React.FC<Props> = ({ children, title }) => {
         <Link to="/" style={{ textDecoration: 'none', color: 'white'}}>
           <Typography variant="h6">{title}</Typography>
         </Link>
+        { /* タブ */}
+        <Box>
+          <Tabs value={selectedTab} onChange={onChangeSelectedTab} >
+            <Tab label="ホーム" component={Link} to="/" />
+            <Tab label="タイムライン" component={Link} to="/timeline" />
+            <Tab label="お気に入り" component={Link} to="/fav" />
+          </Tabs>
+        </Box>
+        { /* ログインアイコン */}
         {/* <div style={{ flexGrow: 1 }}></div> : 右寄せ */}
         <div style={{ flexGrow: 1 }}></div>
         <div onClick={onClickLogIn}>

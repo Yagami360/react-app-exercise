@@ -10,7 +10,7 @@ import { useTheme, ThemeProvider} from '@material-ui/core/styles';
 
 import HomePage from './pages/HomePage'
 import FavPage from './pages/FavPage'
-import FollowPage from './pages/FollowPage'
+import TimelinePage from './pages/TimelinePage'
 
 const App: React.VFC = () => {
   // useTheme() でテーマ（画面全体のスタイル）のオブジェクトを作成
@@ -26,7 +26,7 @@ const App: React.VFC = () => {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/fav" element={<FavPage />} />
-          <Route path="/follow" element={<FollowPage />} />
+          <Route path="/timeline" element={<TimelinePage />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

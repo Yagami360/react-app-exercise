@@ -25,7 +25,7 @@ const firestore = firebase.firestore()
 let collectionName = 'follow-database'
 
 // お気に入りページを表示するコンポーネント
-const Follow: React.VFC = () => {
+const TimelinePage: React.VFC = () => {
   // useTheme() でテーマ（画面全体のスタイル）のオブジェクトを作成
   const theme = useTheme();
 
@@ -36,14 +36,15 @@ const Follow: React.VFC = () => {
   const [message, setMessage] = useState('loading')
 
   // フォローユーザーのツイートのタイムライン 
-  const [timelineListJsx, setTimelineListJsx] = useState();
-  const [allUserTimelineListJsx, setAllUserTimelineListJsx] = useState();
+  const [timelineJsx, setTimelineJsx] = useState([]);                 // １人のユーザーのタイムライン
+  const [timelineListJsx, setTimelineListJsx] = useState([]);         // 各ユーザーのタイムラインをリストで保管
+  const [allUsertimelineJsx, setAllUsertimelineJsx] = useState([]);   // 全ユーザーのタイムライン（時系列順）
 
   // 副作用フック
   useEffect(() => {
     if( auth.currentUser !== null ) {
-      let allUserTimelineListJsx_: any = []          
-      
+      let timelineListJsx_: any = []          
+
       // フォロー済みユーザーを取得
       firestore.collection(collectionName).doc(auth.currentUser.email).collection(collectionName).get().then( (snapshot)=> {
         snapshot.forEach((document)=> {
@@ -52,10 +53,10 @@ const Follow: React.VFC = () => {
           //console.log( "field : ", field )
           const userId = field.userId
           const userScreenName = field.userScreenName
-          //console.log( "userId : ", userId )
-          //console.log( "userScreenName : ", userScreenName )          
-          if( userScreenName != undefined ) {
-            // フォローユーザーのツイートをタイムラインで表示
+          console.log( "userId : ", userId )
+          console.log( "userScreenName : ", userScreenName )          
+          if( userScreenName !== undefined ) {
+            // フォローユーザーのツイートをタイムラインで取得
             fetch(
               cloudFunctionUrl,
               {
@@ -81,8 +82,9 @@ const Follow: React.VFC = () => {
               .then((data) => {        
                 //console.log("data : ", data)
                 const tweets = data["tweets"]
-        
-                let timelineListJsx_: any = []
+                //console.log("tweets : ", tweets)  
+
+                let timelineJsx_: any = []
                 tweets.forEach((tweet: any)=> {
                   //console.log("tweet : ", tweet)  
                   const userId = tweet["user"]["id_str"]
@@ -101,25 +103,49 @@ const Follow: React.VFC = () => {
                     return
                   }
                   
-                  timelineListJsx_.push(
-                    <Grid item xs={10} sm={2}>
-                      <TwitterCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="300px" imageWidth="300px" contentsText={tweetText} />
-                    </Grid>
+                  timelineJsx_.push(
+                    <TwitterCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="300px" imageWidth="300px" contentsText={tweetText} />
                   )
                 })
-                setTimelineListJsx(timelineListJsx_)
-                setMessage("")
 
-                allUserTimelineListJsx_.append(timelineListJsx)
+                // １人のユーザーのタイムライン
+                setTimelineJsx(timelineJsx_)
+                
+                // 各ユーザーのタイムラインのリストに追加
+                timelineListJsx_.push(
+                  <Grid item xs={3}>
+                    {timelineJsx_}
+                  </Grid>
+                )                
               })
               .catch((reason) => {
                 console.log("ツイートの取得に失敗しました", reason)
                 setMessage("ツイートの取得に失敗しました")
               });
           }
+          else {
+            setMessage("please login")
+          }
         })
       })
-      setAllUserTimelineListJsx(allUserTimelineListJsx_)
+      
+      // 各ユーザーのタイムラインのリスト
+      setTimelineListJsx(timelineListJsx_)
+
+      // 全ユーザーのタイムライン
+      /*
+      let allUsertimelineJsx_: any = []
+      console.log( "timelineListJsx : ", timelineListJsx )
+      timelineListJsx_.forEach((timelineJsx_: any)=> {
+        console.log( "timelineJsx_ : ", timelineJsx_ )
+        allUsertimelineJsx_.push(timelineJsx_.flat())
+      })
+      setAllUsertimelineJsx(allUsertimelineJsx_)
+      */
+      //setAllUsertimelineJsx(timelineJsx)
+
+      // メッセージ更新
+      setMessage("")
     }
   }, [])
 
@@ -130,20 +156,32 @@ const Follow: React.VFC = () => {
   //------------------------
   // JSX での表示処理
   //------------------------
+  console.log( "timelineJsx : ", timelineJsx )
+  console.log( "timelineListJsx : ", timelineListJsx )
+  console.log( "allUsertimelineJsx : ", allUsertimelineJsx )
   return (
     <ThemeProvider theme={theme}>
       {/* ヘッダー表示 */}
       <Header title="Twitter Image Search App"></Header>
       {/* ボディ表示 */}
-      <Typography variant="h4">Follow Page</Typography>
       <Typography variant="subtitle1">{message}</Typography>
-      <Grid container direction="column">
-        <Grid item container spacing={2}>
-            {timelineListJsx}
+      { /* タイムライン表示 */ }
+      <Grid container direction="column" spacing={2}>
+        { /* 全フォローユーザーのタイムライン表示 */ }
+        <Grid item xs={3}>
+          {allUsertimelineJsx}
         </Grid>
+        { /* 各フォローユーザーのタイムライン表示 */ }
+        <Grid item xs={9}>
+          <Grid container>
+            {timelineListJsx}
+          </Grid>
+        </Grid>            
       </Grid>
     </ThemeProvider>
   );
 }
 
-export default Follow;
+export default TimelinePage;
+
+

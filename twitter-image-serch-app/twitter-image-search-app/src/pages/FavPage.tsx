@@ -18,6 +18,7 @@ const auth: any = firebase.auth()
 
 // Firestore にアクセスするためのオブジェクト作成
 const firestore = firebase.firestore()
+let collectionName: string = 'fav-tweets-database'
 
 // お気に入りページを表示するコンポーネント
 const FavPage: React.VFC = () => {
@@ -29,9 +30,6 @@ const FavPage: React.VFC = () => {
   //------------------------
   // メッセージ
   const [message, setMessage] = useState('loading')
-
-  // コレクション名入力フォームのステートフック
-  const [collectionName, setCollectionName] = useState('fav-tweets-database')
 
   // お気に入りリスト 
   const [favListJsx, setFavListJsx] = useState();
@@ -55,7 +53,7 @@ const FavPage: React.VFC = () => {
 
             // フィールドの値を TwitterCard の形式に変換して追加
             favListJsx_.push(
-              <Grid item xs={8} sm={4}>
+              <Grid item xs={4}>
                 <TwitterCard userId={field.userId} userName={field.userName} userScreenName={field.userScreenName} profileImageUrl={field.userImageUrl} tweetTime={field.tweetTime} tweetId={field.tweetId} imageFileUrl={field.tweetImageFileUrl} imageHeight="500px" imageWidth="2000px" contentsText={field.tweetText} />
               </Grid>
             )

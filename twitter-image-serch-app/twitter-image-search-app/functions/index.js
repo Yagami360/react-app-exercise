@@ -178,7 +178,6 @@ exports.getUserTimelineTweet = functions.https.onRequest((request, response) => 
   var params = {
     user_id: request.body["user_id"],
     count : request.body["count"],
-    max_id: null,                                     // ツイートのIDを指定すると、これを含まず、これより過去のツイートを取得できる。
     include_rts: request.body["include_rts"],         // リツイートを含めるか否か。
     exclude_replies: request.body["exclude_replies"]  // リプライを除外するか。trueなら除外する、falseなら除外しない。
   };
@@ -187,7 +186,7 @@ exports.getUserTimelineTweet = functions.https.onRequest((request, response) => 
   // Twitter for Node.js では、screen_name でツイートを取得できないことに注意。
   client.get('statuses/user_timeline', params, function(error, tweets, response_api) {
   if (!error) {
-      console.log( "tweets : ", tweets )
+      //console.log( "tweets : ", tweets )
 
       // レスポンス処理
       response.send(
