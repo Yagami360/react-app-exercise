@@ -13,12 +13,14 @@ import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
 import TwitterCard from '../components/TwitterCard'
 
+// コンフィグ値の定義
+let collectionName: string = 'fav-tweets-database'
+
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
 
 // Firestore にアクセスするためのオブジェクト作成
 const firestore = firebase.firestore()
-let collectionName: string = 'fav-tweets-database'
 
 // お気に入りページを表示するコンポーネント
 const FavPage: React.VFC = () => {

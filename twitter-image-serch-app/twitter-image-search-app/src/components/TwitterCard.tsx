@@ -22,17 +22,17 @@ import PersonAddOutlinedIcon from '@material-ui/icons/PersonAddOutlined';
 
 import useLocalPersist from './LocalPersist';
 
-//-----------------------------------------------
-// ツイートをカード形式で表示するコンポーネント
-// [引数]
-//   text : ヘッダーの文字列
-//-----------------------------------------------
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
 
 // Firestore にアクセスするためのオブジェクト作成
 const firestore = firebase.firestore()
 
+//-----------------------------------------------
+// ツイートをカード形式で表示するコンポーネント
+// [引数]
+//   text : ヘッダーの文字列
+//-----------------------------------------------
 // コンポーネントの引数
 type Props = {
   userId: string;

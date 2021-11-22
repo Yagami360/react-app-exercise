@@ -20,17 +20,19 @@ import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
 import TwitterCard from '../components/TwitterCard'
 
+// コンフィグ値の定義
 const cloudFunctionSearchTweetUrl: string = "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweet"
 //const cloudFunctionSearchTweetUrl: string = "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweetRecursive"
 const cloudFunctionSearchUserUrl: string = "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchUser"
 const searchCount: number = 100
+
+const collectionNameSearchWord = "search-word-database"
 
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
 
 // Firestore にアクセスするためのオブジェクト作成
 const firestore = firebase.firestore()
-const collectionNameSearchWord = "search-word-database"
 
 // トップページを表示するコンポーネント
 const HomePage: React.VFC = () => {

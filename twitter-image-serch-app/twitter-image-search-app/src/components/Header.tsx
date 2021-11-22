@@ -21,11 +21,6 @@ import {Tabs, Tab } from "@material-ui/core";
 
 import useLocalPersist from './LocalPersist';
 
-//-----------------------------------------------
-// ヘッダーのレイアウトを設定して表示するコンポーネント
-// [引数]
-//   text : ヘッダーの文字列
-//-----------------------------------------------
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
 //auth.signOut()
@@ -33,6 +28,11 @@ const auth: any = firebase.auth()
 // Firestore にアクセスするためのオブジェクト作成
 const firestore = firebase.firestore()
 
+//-----------------------------------------------
+// ヘッダーのレイアウトを設定して表示するコンポーネント
+// [引数]
+//   text : ヘッダーの文字列
+//-----------------------------------------------
 // コンポーネントの引数
 type Props = {
   title: string;
@@ -143,6 +143,7 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL }) 
             <Tab label="ホーム" component={Link} to="/" />
             <Tab label="タイムライン" component={Link} to="/timeline" />
             <Tab label="お気に入り" component={Link} to="/fav" />
+            <Tab label="テスト" component={Link} to="/test" />
           </Tabs>
         </Box>
         { /* ログインアイコン */}
