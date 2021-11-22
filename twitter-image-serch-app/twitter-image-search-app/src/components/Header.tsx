@@ -36,11 +36,13 @@ const firestore = firebase.firestore()
 // コンポーネントの引数
 type Props = {
   title: string;
+  selectedTabIdx: number;
+  photoURL: string;
 }
 
 // JavaSpcript でのコンポーネントの引数 props は、React.FC<Props> のようにして TypeScripts における Generic で定義出来る。（Generics は抽象的な型引数を使用して、実際に実行されるまで型が確定しないクラス・関数・インターフェイスを実現する為に使用される）
 // children 引数は React.FC でコンポーネント定義すると暗黙的に使えるようになる
-const Header: React.FC<Props> = ({ children, title }) => {
+const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL }) => {
   //------------------------
   // フック
   //------------------------
@@ -48,7 +50,7 @@ const Header: React.FC<Props> = ({ children, title }) => {
   const [isOpenDrawer, setIsOpenDrawer] = React.useState(false)
 
   // タブの選択状態
-  const [selectedTab, setSelectedTab] = useLocalPersist("twitter-image-search-app", "tab", 0)  
+  const [selectedTab, setSelectedTab] = React.useState(selectedTabIdx)
 
   //------------------------
   // イベントハンドラ
@@ -147,7 +149,7 @@ const Header: React.FC<Props> = ({ children, title }) => {
         {/* <div style={{ flexGrow: 1 }}></div> : 右寄せ */}
         <div style={{ flexGrow: 1 }}></div>
         <div onClick={onClickLogIn}>
-          <Avatar aria-label="avatar" src={auth.currentUser !== null ? auth.currentUser.photoURL : ''} />
+          <Avatar aria-label="avatar" src={photoURL} />
         </div>
       </Toolbar>        
     </AppBar>

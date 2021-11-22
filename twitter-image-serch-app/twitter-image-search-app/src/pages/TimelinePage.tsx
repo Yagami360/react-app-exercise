@@ -5,6 +5,8 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { useTheme, ThemeProvider} from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import { Grid } from '@material-ui/core';
+import Box from '@material-ui/core/Box';
+import Container from '@material-ui/core/Container';
 
 import firebase from "firebase";
 import '../firebase/initFirebase'
@@ -14,7 +16,11 @@ import Header from '../components/Header'
 import TwitterCard from '../components/TwitterCard'
 
 const cloudFunctionUrl: string = "https://us-central1-twitter-image-search-app.cloudfunctions.net/getUserTimelineTweet"
-const searchCount: number = 100
+const searchCount: number = 50
+//const searchCount: number = 200
+
+const layoutType: string = "Grid"   // フォローユーザー数が多いときに横に広がらない
+//const layoutType: string = "Box"      // フォローユーザー数が多いときでも横に広がらるがレイアウトが崩れる
 
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
@@ -44,6 +50,7 @@ const TimelinePage: React.VFC = () => {
   useEffect(() => {
     if( auth.currentUser !== null ) {
       let timelineListJsx_: any = []          
+      let allUsertimelineJsx_: any = []
 
       // フォロー済みユーザーを取得
       firestore.collection(collectionName).doc(auth.currentUser.email).collection(collectionName).get().then( (snapshot)=> {
@@ -53,8 +60,8 @@ const TimelinePage: React.VFC = () => {
           //console.log( "field : ", field )
           const userId = field.userId
           const userScreenName = field.userScreenName
-          console.log( "userId : ", userId )
-          console.log( "userScreenName : ", userScreenName )          
+          //console.log( "userId : ", userId )
+          //console.log( "userScreenName : ", userScreenName )          
           if( userScreenName !== undefined ) {
             // フォローユーザーのツイートをタイムラインで取得
             fetch(
@@ -104,7 +111,10 @@ const TimelinePage: React.VFC = () => {
                   }
                   
                   timelineJsx_.push(
-                    <TwitterCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="300px" imageWidth="300px" contentsText={tweetText} />
+                    <TwitterCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="250px" imageWidth="1000px" contentsText={tweetText} />
+                  )
+                  allUsertimelineJsx_.push(
+                    <TwitterCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="250px" imageWidth="1000px" contentsText={tweetText} />                    
                   )
                 })
 
@@ -112,11 +122,20 @@ const TimelinePage: React.VFC = () => {
                 setTimelineJsx(timelineJsx_)
                 
                 // 各ユーザーのタイムラインのリストに追加
-                timelineListJsx_.push(
-                  <Grid item xs={3}>
-                    {timelineJsx_}
-                  </Grid>
-                )                
+                if (layoutType == "Grid" ) {
+                  timelineListJsx_.push(
+                    <Grid item xs={1}>
+                      {timelineJsx_}
+                    </Grid>
+                  )
+                }                
+                else {
+                  timelineListJsx_.push(
+                    <Box sx={{ width: "10%", height: "100%"}}>
+                      {timelineJsx_}
+                    </Box>
+                  )                
+                }
               })
               .catch((reason) => {
                 console.log("ツイートの取得に失敗しました", reason)
@@ -133,16 +152,21 @@ const TimelinePage: React.VFC = () => {
       setTimelineListJsx(timelineListJsx_)
 
       // 全ユーザーのタイムライン
-      /*
-      let allUsertimelineJsx_: any = []
-      console.log( "timelineListJsx : ", timelineListJsx )
-      timelineListJsx_.forEach((timelineJsx_: any)=> {
-        console.log( "timelineJsx_ : ", timelineJsx_ )
-        allUsertimelineJsx_.push(timelineJsx_.flat())
+      //setAllUsertimelineJsx(allUsertimelineJsx_)
+      console.log( "[before] allUsertimelineJsx_ : ", allUsertimelineJsx_ )
+
+      allUsertimelineJsx_.sort( function(a: any, b: any){
+        // ツイート時間順にソート
+        //console.log( "a.props.tweetTime : ", a.props.tweetTime )
+        //console.log( "b.props.tweetTime : ", b.props.tweetTime )
+        if(a.props.tweetTime >= b.props.tweetTime){
+          return -1
+        }
+        else {
+          return 1
+        }
       })
       setAllUsertimelineJsx(allUsertimelineJsx_)
-      */
-      //setAllUsertimelineJsx(timelineJsx)
 
       // メッセージ更新
       setMessage("")
@@ -156,30 +180,54 @@ const TimelinePage: React.VFC = () => {
   //------------------------
   // JSX での表示処理
   //------------------------
-  console.log( "timelineJsx : ", timelineJsx )
+  //console.log( "timelineJsx : ", timelineJsx )
   console.log( "timelineListJsx : ", timelineListJsx )
   console.log( "allUsertimelineJsx : ", allUsertimelineJsx )
-  return (
-    <ThemeProvider theme={theme}>
-      {/* ヘッダー表示 */}
-      <Header title="Twitter Image Search App"></Header>
-      {/* ボディ表示 */}
-      <Typography variant="subtitle1">{message}</Typography>
-      { /* タイムライン表示 */ }
-      <Grid container direction="column" spacing={2}>
-        { /* 全フォローユーザーのタイムライン表示 */ }
-        <Grid item xs={3}>
-          {allUsertimelineJsx}
-        </Grid>
-        { /* 各フォローユーザーのタイムライン表示 */ }
-        <Grid item xs={9}>
-          <Grid container>
-            {timelineListJsx}
+  if (layoutType == "Grid" ) {
+    return (
+      <ThemeProvider theme={theme}>
+        <Box sx={{ width: "3600px" }}>
+          {/* ヘッダー表示 */}
+          <Header title="Twitter Image Search App" selectedTabIdx={1} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''}></Header>
+          {/* ボディ表示 */}
+          <Typography variant="subtitle1">{message}</Typography>
+          { /* タイムライン表示 */ }
+          <Grid container spacing={2}>
+            { /* 全フォローユーザーのタイムライン表示 */ }
+            <Grid item xs={1}>
+              {allUsertimelineJsx}
+            </Grid>
+            { /* 各フォローユーザーのタイムライン表示 */ }
+            <Grid item xs={11}>
+              <Grid container spacing={2} style={{margin: 0, width: '100%'}}>
+                {timelineListJsx}
+              </Grid>
+            </Grid>            
           </Grid>
-        </Grid>            
-      </Grid>
-    </ThemeProvider>
-  );
+        </Box>
+      </ThemeProvider>
+    );
+  }
+  else {
+    return (
+      <ThemeProvider theme={theme}>
+        {/* ヘッダー表示 */}
+        <Header title="Twitter Image Search App" selectedTabIdx={1} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''}></Header>
+        {/* ボディ表示 */}
+        <Typography variant="subtitle1">{message}</Typography>
+        <Box sx={{ width: "5000px", height: "1000px", overflow: "auto", display: "flex", margin: "16px" }}>  { /* display: "flex" で {allUsertimelineJsx} と {timelineListJsx} を左右に配置 */ }
+          { /* 全フォローユーザーのタイムライン表示 */ }
+          <Box sx={{ width: "10%", height: "100%"}}>
+            {allUsertimelineJsx}
+          </Box>
+          { /* 各フォローユーザーのタイムライン表示 */ }
+          <Box sx={{ width: "90%", height: "100%", display: "flex" }}>   { /* display: "flex" で {timelineListJsx} の各 {timelineJsx} を左右に配置 */ }
+            {timelineListJsx}         
+          </Box>
+        </Box>
+      </ThemeProvider>
+    );
+  }
 }
 
 export default TimelinePage;

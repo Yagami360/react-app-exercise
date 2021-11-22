@@ -208,3 +208,49 @@ exports.getUserTimelineTweet = functions.https.onRequest((request, response) => 
     }
   });
 });
+
+//---------------------------------------------
+// Twitter API を使用して指定したワードを含むツイートを検索する Cloud Funtion
+// request.body["search_word"] : 検索クエリ
+// request.body["count"] : 検索数（最大100件）
+//---------------------------------------------
+exports.searchUser = functions.https.onRequest((request, response) => {
+  console.log( "call searchUser" )
+
+  // CORS 設定（この処理を入れないと Cloud Funtion 呼び出さ元で No 'Access-Control-Allow-Origin' のエラーが出る）
+  response.set('Access-Control-Allow-Origin', '*');
+  if (request.method === 'OPTIONS') {
+      // Send response to OPTIONS requests
+      response.set('Access-Control-Allow-Methods', 'GET');
+      response.set('Access-Control-Allow-Headers', 'Content-Type');
+      response.set('Access-Control-Max-Age', '3600');
+      response.status(204).send('');
+  }
+
+  // Twitter API へのリクエスト処理
+  var params = {
+    q: request.body["search_word"],
+    count : request.body["count"],
+  };
+  client.get('users/search', params, function(error, users, response_api) {
+    if (!error) {
+      // レスポンス処理
+      response.send(
+        JSON.stringify({
+            "status": "ok",
+            "users" : users,                
+        })
+      );
+    }
+    else {
+      console.log("error", error);
+      // レスポンス処理
+      response.send(
+        JSON.stringify({
+            "status": "ng",
+            "users" : undefined,                
+        })
+      );
+    }
+  });
+});

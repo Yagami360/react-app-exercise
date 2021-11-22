@@ -79,7 +79,7 @@ const FavPage: React.VFC = () => {
   return (
     <ThemeProvider theme={theme}>
       {/* ヘッダー表示 */}
-      <Header title="Twitter Image Search App"></Header>
+      <Header title="Twitter Image Search App" selectedTabIdx={2} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''}></Header>
       {/* ボディ表示 */}
       <Typography variant="h6">{message}</Typography>
       <Grid container direction="column">
