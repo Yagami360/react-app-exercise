@@ -2,19 +2,20 @@ import React from 'react';
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
-import { useTheme, ThemeProvider} from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import { Grid } from '@material-ui/core';
+import { useTheme, createMuiTheme, ThemeProvider} from '@material-ui/core/styles';
 import Box from '@material-ui/core/Box';
+import { Grid } from '@material-ui/core';
 import Container from '@material-ui/core/Container';
+import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles'
 
 import firebase from "firebase";
 import '../firebase/initFirebase'
 
+import AppRoutes from '../Config'
 import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
-import TwitterCard from '../components/TwitterCard'
+import TweetCard from '../components/TweetCard'
 
 // スタイル定義
 const useStyles = makeStyles({
@@ -46,12 +47,20 @@ const firestore = firebase.firestore()
 
 // お気に入りページを表示するコンポーネント
 const TestPage: React.VFC = () => {
-  // useTheme() でテーマ（画面全体のスタイル）のオブジェクトを作成
-  const theme = useTheme();
-
   //------------------------
   // フック
   //------------------------
+  // ダークモード
+  const [darkMode, setDarkMode] = useLocalPersist("twitter-image-search-app", "darkMode", false)
+
+  // テーマ（画面全体のスタイル）の設定
+  //const theme = useTheme();
+  const theme = createMuiTheme({
+    palette: {
+      type: darkMode ? "dark" : "light",
+    },
+  });  
+
   // 独自スタイル
   const style = useStyles()
 
@@ -65,16 +74,17 @@ const TestPage: React.VFC = () => {
   //------------------------
   // JSX での表示処理
   //------------------------
+  console.log("darkMode : ", darkMode)
   return (
-    <ThemeProvider theme={theme}>
+    <Box>
       {/* ヘッダー表示 */}
-      <Header title="Twitter Image Search App" selectedTabIdx={3} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''}></Header>
+      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.testPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''}></Header>
       {/* ボディ表示 */}
       <Typography variant="subtitle1">{message}</Typography>
       {/* レイアウト確認用 */}
       <Box className={style.horizontalScroll}>
         <Box className={style.horizontalScrollColums}>
-          <Box className={style.horizontalScrollRaws}>Box1</Box>
+          <Box className={style.horizontalScrollRaws}><TweetCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>
           <Box className={style.horizontalScrollRaws}>Box1-1</Box>
           <Box className={style.horizontalScrollRaws}>Box1-2</Box>
           <Box className={style.horizontalScrollRaws}>Box1-3</Box>
@@ -121,7 +131,7 @@ const TestPage: React.VFC = () => {
           <Box className={style.horizontalScrollRaws}>Box9-2</Box>
         </Box>
       </Box>
-    </ThemeProvider>
+    </Box>
   );
 }
 
@@ -129,7 +139,7 @@ export default TestPage;
 
 /*
       <div className={style.horizontalScroll}>
-        <div className={style.horizontalScrollColums}><TwitterCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></div>
+        <div className={style.horizontalScrollColums}><TweetCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></div>
         <div className={style.horizontalScrollColums}>div2</div>
         <div className={style.horizontalScrollColums}>div3</div>
         <div className={style.horizontalScrollColums}>div4</div>
@@ -145,16 +155,16 @@ export default TestPage;
 
 /*
       <Box className={style.horizontalScroll}>
-        <Box className={style.horizontalScrollColums}><TwitterCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} /></Box>
-        <Box className={style.horizontalScrollColums}><TwitterCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>
-        <Box className={style.horizontalScrollColums}><TwitterCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box> 
-        <Box className={style.horizontalScrollColums}><TwitterCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>                   
-        <Box className={style.horizontalScrollColums}><TwitterCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>                   
-        <Box className={style.horizontalScrollColums}><TwitterCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>                   
-        <Box className={style.horizontalScrollColums}><TwitterCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box> 
-        <Box className={style.horizontalScrollColums}><TwitterCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>
-        <Box className={style.horizontalScrollColums}><TwitterCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>
-        <Box className={style.horizontalScrollColums}><TwitterCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>
+        <Box className={style.horizontalScrollColums}><TweetCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} /></Box>
+        <Box className={style.horizontalScrollColums}><TweetCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>
+        <Box className={style.horizontalScrollColums}><TweetCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box> 
+        <Box className={style.horizontalScrollColums}><TweetCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>                   
+        <Box className={style.horizontalScrollColums}><TweetCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>                   
+        <Box className={style.horizontalScrollColums}><TweetCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>                   
+        <Box className={style.horizontalScrollColums}><TweetCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box> 
+        <Box className={style.horizontalScrollColums}><TweetCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>
+        <Box className={style.horizontalScrollColums}><TweetCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>
+        <Box className={style.horizontalScrollColums}><TweetCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>
       </Box>
     </ThemeProvider>
 */

@@ -18,7 +18,11 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import {Tabs, Tab } from "@material-ui/core";
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from "@material-ui/core/Switch";
 
+import AppRoutes from '../Config'
 import useLocalPersist from './LocalPersist';
 
 // Auth オブジェクトの作成
@@ -52,6 +56,9 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL }) 
   // タブの選択状態
   const [selectedTab, setSelectedTab] = React.useState(selectedTabIdx)
 
+  // ダークモード
+  const [darkMode, setDarkMode] = useLocalPersist("twitter-image-search-app", "darkMode", false)
+
   //------------------------
   // イベントハンドラ
   //------------------------
@@ -69,6 +76,11 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL }) 
   // タブ
   const onChangeSelectedTab = (event: any, value: any) => {
     setSelectedTab(value);
+  };
+
+  // ダークモード切り替えボタン
+  const onChangeDarkMode = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setDarkMode(event.target.checked);
   };
 
   // ログインアイコン
@@ -108,50 +120,69 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL }) 
     <AppBar position="static">
       <Toolbar>
         <IconButton edge="start" color="inherit" aria-label="menu">
-          <div onClick={onClickDrawer}>
+          <Box onClick={onClickDrawer}>
             <MenuIcon />
-          </div>
+          </Box>
         </IconButton>
         {/* メニュー画面 */ }
         <Drawer anchor="left" open={isOpenDrawer} onClose={onCloseDrawer}>
           {/* メニューの各項目をリストで定義 */}
           <List component="nav">
             { /* textDecoration: 'none' : 下線を消す */ }
-            <Link to="/" style={{ textDecoration: 'none', color: 'black'}}>
+            <Link to={AppRoutes.imageSearchPage.path} style={{ textDecoration: 'none', color: 'black' }}>
               <ListItem button>
-                <ListItemText primary="ホーム" />
+                <ListItemText primary="画像検索" />
               </ListItem>
             </Link>
-            <Link to="/timeline" style={{ textDecoration: 'none', color: 'black' }}>
+            <Link to={AppRoutes.profileSearchPage.path} style={{ textDecoration: 'none', color: 'black' }}>
+              <ListItem button>
+                <ListItemText primary="プロフィール検索" />
+              </ListItem>
+            </Link>
+            <Link to={AppRoutes.timeLinePage.path} style={{ textDecoration: 'none', color: 'black' }}>
               <ListItem button>
                 <ListItemText primary="タイムライン" />
               </ListItem>
             </Link>
-            <Link to="/fav" style={{ textDecoration: 'none', color: 'black' }}>
+            <Link to={AppRoutes.favPage.path} style={{ textDecoration: 'none', color: 'black' }}>
               <ListItem button>
                 <ListItemText primary="お気に入り" />
               </ListItem>
             </Link>
           </List>
         </Drawer>
-        <Link to="/" style={{ textDecoration: 'none', color: 'white'}}>
-          <Typography variant="h6">{title}</Typography>
-        </Link>
+        { /* タイトル文字列 */}
+        <Box sx={{ml: 2, mr: 4}}>
+          <Link to="/" style={{ textDecoration: 'none', color: 'white'}}>
+            <Typography variant="h6">{title}</Typography>
+          </Link>
+        </Box>
         { /* タブ */}
         <Box>
           <Tabs value={selectedTab} onChange={onChangeSelectedTab} >
-            <Tab label="ホーム" component={Link} to="/" />
-            <Tab label="タイムライン" component={Link} to="/timeline" />
-            <Tab label="お気に入り" component={Link} to="/fav" />
-            <Tab label="テスト" component={Link} to="/test" />
+            <Tab label="画像検索" component={Link} to={AppRoutes.imageSearchPage.path} />
+            <Tab label="プロフィール検索" component={Link} to={AppRoutes.profileSearchPage.path} />
+            <Tab label="タイムライン" component={Link} to={AppRoutes.timeLinePage.path} />
+            <Tab label="お気に入り" component={Link} to={AppRoutes.favPage.path} />
+            <Tab label="テスト" component={Link} to={AppRoutes.testPage.path} />
           </Tabs>
         </Box>
+        { /* ダークモード切り替えボタン */ }
+        <Box style={{ flexGrow: 1 }}></Box>   {/* <div style={{ flexGrow: 1 }}></div> : 右寄せ */}
+        <Box mr={2}>
+          <FormGroup>
+            <FormControlLabel 
+              control={
+                <Switch checked={darkMode} onChange={onChangeDarkMode} inputProps={{ 'aria-label': 'controlled' }}/>
+              } 
+              label="ダークモード"
+            />
+          </FormGroup>
+        </Box>
         { /* ログインアイコン */}
-        {/* <div style={{ flexGrow: 1 }}></div> : 右寄せ */}
-        <div style={{ flexGrow: 1 }}></div>
-        <div onClick={onClickLogIn}>
+        <Box onClick={onClickLogIn}>
           <Avatar aria-label="avatar" src={photoURL} />
-        </div>
+        </Box>
       </Toolbar>        
     </AppBar>
   )

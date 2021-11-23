@@ -47,7 +47,7 @@ type Props = {
   contentsText: string;
 }
 
-const TwitterCard: React.FC<Props> = ({ children, userId, userName, userScreenName, profileImageUrl, tweetTime, tweetId, imageFileUrl, imageHeight, imageWidth, contentsText }) => {
+const TweetCard: React.FC<Props> = ({ children, userId, userName, userScreenName, profileImageUrl, tweetTime, tweetId, imageFileUrl, imageHeight, imageWidth, contentsText }) => {
   //------------------------
   // フック
   //------------------------
@@ -189,4 +189,4 @@ const TwitterCard: React.FC<Props> = ({ children, userId, userName, userScreenNa
   )
 }
 
-export default TwitterCard;
+export default TweetCard;

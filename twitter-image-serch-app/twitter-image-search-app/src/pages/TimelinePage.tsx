@@ -1,27 +1,18 @@
 import React from 'react';
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
-import { useTheme, ThemeProvider} from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import { Grid } from '@material-ui/core';
 import Box from '@material-ui/core/Box';
-import Container from '@material-ui/core/Container';
+import { Grid } from '@material-ui/core';
+import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles'
 
 import firebase from "firebase";
 import '../firebase/initFirebase'
 
+import AppRoutes, { TimeLinePageConfig } from '../Config'
 import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
-import TwitterCard from '../components/TwitterCard'
-
-// コンフィグ値の定義
-const cloudFunctionUrl: string = "https://us-central1-twitter-image-search-app.cloudfunctions.net/getUserTimelineTweet"
-//const searchCount: number = 50
-const searchCount: number = 200
-
-let collectionName = 'follow-database'
+import TweetCard from '../components/TweetCard'
 
 // 独自のスタイル定義
 const useStyles = makeStyles({
@@ -53,9 +44,6 @@ const firestore = firebase.firestore()
 
 // お気に入りページを表示するコンポーネント
 const TimelinePage: React.VFC = () => {
-  // useTheme() でテーマ（画面全体のスタイル）のオブジェクトを作成
-  const theme = useTheme();
-
   //------------------------
   // フック
   //------------------------
@@ -77,7 +65,7 @@ const TimelinePage: React.VFC = () => {
       let allUsertimelineJsx_: any = []
 
       // フォロー済みユーザーを取得
-      firestore.collection(collectionName).doc(auth.currentUser.email).collection(collectionName).get().then( (snapshot)=> {
+      firestore.collection(TimeLinePageConfig.collectionNameFollow).doc(auth.currentUser.email).collection(TimeLinePageConfig.collectionNameFollow).get().then( (snapshot)=> {
         snapshot.forEach((document)=> {
           // document.data() : ドキュメント内のフィールド
           const field = document.data()
@@ -89,7 +77,7 @@ const TimelinePage: React.VFC = () => {
           if( userScreenName !== undefined ) {
             // フォローユーザーのツイートをタイムラインで取得
             fetch(
-              cloudFunctionUrl,
+              TimeLinePageConfig.cloudFunctionGetTimelineUrl,
               {
                 method: 'POST',
                 headers: {
@@ -97,7 +85,7 @@ const TimelinePage: React.VFC = () => {
                 },
                 body: JSON.stringify({
                   "user_id": userId,
-                  "count": searchCount,
+                  "count": TimeLinePageConfig.searchCount,
                   "include_rts": true,
                   "exclude_replies": false,
                 })
@@ -136,12 +124,12 @@ const TimelinePage: React.VFC = () => {
                   
                   timelineJsx_.push(
                     <Box className={style.twitterCard}>
-                      <TwitterCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="250px" imageWidth="1000px" contentsText={tweetText} />
+                      <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="250px" imageWidth="1000px" contentsText={tweetText} />
                     </Box>
                   )
                   allUsertimelineJsx_.push(
                     <Box className={style.twitterCard}>
-                      <TwitterCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="250px" imageWidth="1000px" contentsText={tweetText} />                    
+                      <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="250px" imageWidth="1000px" contentsText={tweetText} />                    
                     </Box>
                   )
                 })
@@ -202,9 +190,9 @@ const TimelinePage: React.VFC = () => {
   console.log( "timelineListJsx : ", timelineListJsx )
   console.log( "allUsertimelineJsx : ", allUsertimelineJsx )
   return (
-    <ThemeProvider theme={theme}>
+    <Box>
       {/* ヘッダー表示 */}
-      <Header title="Twitter Image Search App" selectedTabIdx={1} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''}></Header>
+      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.timeLinePage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''}></Header>
       {/* ボディ表示 */}
       <Typography variant="subtitle1">{message}</Typography>
       {/* タイムライン表示 */}
@@ -218,7 +206,7 @@ const TimelinePage: React.VFC = () => {
           {timelineListJsx}
         </Box>
       </Box>
-    </ThemeProvider>
+    </Box>
   );
 }
 
