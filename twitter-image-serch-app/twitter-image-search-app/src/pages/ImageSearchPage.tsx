@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import firebase from "firebase";
 import '../firebase/initFirebase'
 
+import { ThemeProvider} from '@material-ui/core/styles';
+import CssBaseline from "@material-ui/core/CssBaseline";
 import Box from '@material-ui/core/Box';
 import { Grid } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
@@ -14,6 +16,7 @@ import SearchIcon from "@material-ui/icons/Search";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
 import AppRoutes, { ImageSearchPageConfig } from '../Config'
+import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
 import TweetCard from '../components/TweetCard'
@@ -25,10 +28,13 @@ const auth: any = firebase.auth()
 const firestore = firebase.firestore()
 
 // 画像検索ページを表示するコンポーネント
-const ImageSearchPage: React.VFC = () => {
+const ImageSearchPage: React.VFC = () => {  
   //------------------------
   // フック
   //------------------------
+  // ダークモード
+  const [darkMode, setDarkMode] = useLocalPersist("twitter-image-search-app", "darkMode", false)
+
   // 検索フォームの入力テキスト
   const [searchWord, setSearchWord] = useLocalPersist("twitter-image-search-app", "searchWord", "")
 
@@ -180,9 +186,11 @@ const ImageSearchPage: React.VFC = () => {
   //console.log("seachResultsJsx : ", seachResultsJsx)
   //console.log( "seachHistorys : ", seachHistorys )
   return (
-    <Box>
+    <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
+      {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
+      <CssBaseline />
       {/* ヘッダー表示 */}      
-      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.imageSearchPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''}/>
+      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.imageSearchPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
       {/* 検索ワード入力 */}
       <Box m={2}>
         <form onSubmit={onSubmitSearchWord}>
@@ -227,7 +235,7 @@ const ImageSearchPage: React.VFC = () => {
           {seachResultsJsx}
         </Grid>
       </Box>
-    </Box>
+    </ThemeProvider>
     );
 }
 

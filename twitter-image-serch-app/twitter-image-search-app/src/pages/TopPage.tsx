@@ -6,6 +6,8 @@ import { Link } from "react-router-dom";
 import firebase from "firebase";
 import '../firebase/initFirebase'
 
+import { ThemeProvider} from '@material-ui/core/styles';
+import CssBaseline from "@material-ui/core/CssBaseline";
 import Box from '@material-ui/core/Box';
 import { Grid } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
@@ -16,6 +18,7 @@ import SearchIcon from "@material-ui/icons/Search";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
 import AppRoutes, { TopPageConfig } from '../Config'
+import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
 import TweetCard from '../components/TweetCard'
@@ -31,6 +34,9 @@ const TopPage: React.VFC = () => {
   //------------------------
   // フック
   //------------------------
+  // ダークモード
+  const [darkMode, setDarkMode] = useLocalPersist("twitter-image-search-app", "darkMode", false)
+
   // 検索フォームの入力テキスト
   const [searchWord, setSearchWord] = useLocalPersist("twitter-image-search-app", "searchWord", "")
   const [searchWordProfile, setSearchWordProfile] = useLocalPersist("twitter-image-search-app", "searchWordProfile", "")
@@ -269,9 +275,11 @@ const TopPage: React.VFC = () => {
   //console.log("seachResultsJsx : ", seachResultsJsx)
   console.log( "seachResultsUsers : ", seachResultsUsers )
   return (
-    <Box>
+    <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
+      {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
+      <CssBaseline />
       {/* ヘッダー表示 */}      
-      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.topPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''}/>
+      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.topPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
       {/* 検索ワード入力 */}
       <Box m={2}>
         <form onSubmit={onSubmitSearchWord}>
@@ -340,7 +348,7 @@ const TopPage: React.VFC = () => {
           {seachResultsJsx}
         </Grid>
       </Box>
-    </Box>
+    </ThemeProvider>
     );
 }
 

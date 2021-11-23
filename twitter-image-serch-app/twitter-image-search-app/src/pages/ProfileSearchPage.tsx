@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import firebase from "firebase";
 import '../firebase/initFirebase'
 
+import { ThemeProvider} from '@material-ui/core/styles';
+import CssBaseline from "@material-ui/core/CssBaseline";
 import Box from '@material-ui/core/Box';
 import { Grid } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
@@ -14,8 +16,10 @@ import SearchIcon from "@material-ui/icons/Search";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
 import AppRoutes, { ProfileSearchPageConfig } from '../Config'
+import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
+import TwitterProfileCard from '../components/TwitterProfileCard'
 
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
@@ -28,6 +32,9 @@ const ProfileSearchPage: React.VFC = () => {
   //------------------------
   // フック
   //------------------------
+  // ダークモード
+  const [darkMode, setDarkMode] = useLocalPersist("twitter-image-search-app", "darkMode", false)
+
   // 検索フォームの入力テキスト
   const [searchWordProfile, setSearchWordProfile] = useLocalPersist("twitter-image-search-app", "searchWordProfile", "")
 
@@ -112,18 +119,37 @@ const ProfileSearchPage: React.VFC = () => {
         .then((data) => {        
           const users = data["users"]
           let seachResultsUsers_: any = []
+          let seachResultsUsersJsx_: any = []
           users.forEach((user: any)=> {
-            //const userId = user["id_str"]
-            //const userName = user["name"]
-            //const userScreenName = user["screen_name"]
-            //const description = user["description"]
+            const userId = user["id_str"]
+            const userName = user["name"]
+            const userScreenName = user["screen_name"]
+            const profileImageUrl = user["profile_image_url"]
+            const location = user["location"]
+            const followersCount = user["followers_count"]
+            const followsCount = user["friends_count"]
+            const profileBannerImageUrl = user["profile_banner_url"]
+            const createdAt = user["created_at"].replace("+0000","")
+            const description = user["description"]
             //console.log("userId : ", userId)            
             //console.log("userName : ", userName)
             //console.log("userScreenName : ", userScreenName)
             //console.log("description : ", description)
             seachResultsUsers_.push(user)
+
+            seachResultsUsersJsx_.push(
+              <Grid item xs={4}>
+                <TwitterProfileCard 
+                  userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} createdAt={createdAt} 
+                  location={location} followersCount={followersCount} followsCount={followsCount}
+                  profileBannerImageUrl={profileBannerImageUrl} imageHeight={300} imageWidth={2000} 
+                  description={description}
+                />
+              </Grid>
+            )            
           })
           setSeachResultsUsers(seachResultsUsers_)
+          setSeachResultsUsersJsx(seachResultsUsersJsx_)
         })
         .catch((reason) => {
           console.log("プロフィールの取得に失敗しました", reason)
@@ -132,6 +158,7 @@ const ProfileSearchPage: React.VFC = () => {
     }
     else {
       setSeachResultsUsers([])
+      setSeachResultsUsersJsx([])
       setSearchMessage("検索ワードを入力してください" ) 
     }
 
@@ -145,9 +172,11 @@ const ProfileSearchPage: React.VFC = () => {
   console.log( "searchWordProfile : ", searchWordProfile )
   console.log( "seachResultsUsers : ", seachResultsUsers )
   return (
-    <Box>
+    <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
+      {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
+      <CssBaseline />
       {/* ヘッダー表示 */}      
-      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.profileSearchPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''}/>
+      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.profileSearchPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
       {/* 検索ワード入力 */}
       <Box m={2}>
         <form onSubmit={onSubmitSearchWord}>
@@ -192,7 +221,7 @@ const ProfileSearchPage: React.VFC = () => {
           {seachResultsUsersJsx}
         </Grid>
       </Box>
-    </Box>
+    </ThemeProvider>
     );
 }
 

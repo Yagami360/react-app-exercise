@@ -21,6 +21,8 @@ import {Tabs, Tab } from "@material-ui/core";
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from "@material-ui/core/Switch";
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
 
 import AppRoutes from '../Config'
 import useLocalPersist from './LocalPersist';
@@ -39,38 +41,44 @@ const firestore = firebase.firestore()
 //-----------------------------------------------
 // コンポーネントの引数
 type Props = {
-  title: string;
-  selectedTabIdx: number;
-  photoURL: string;
+  title: string;            // ヘッダーのタイトル文字列
+  selectedTabIdx: number;   // ヘッダーのタブ番号
+  photoURL: string;         // ログインアイコンの画像URL
+  darkMode: any;            // ダークモードのステート
+  setDarkMode: any;         // ダークモードのステートを更新するメソッド
 }
 
 // JavaSpcript でのコンポーネントの引数 props は、React.FC<Props> のようにして TypeScripts における Generic で定義出来る。（Generics は抽象的な型引数を使用して、実際に実行されるまで型が確定しないクラス・関数・インターフェイスを実現する為に使用される）
 // children 引数は React.FC でコンポーネント定義すると暗黙的に使えるようになる
-const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL }) => {
+const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL, darkMode, setDarkMode }) => {
   //------------------------
   // フック
   //------------------------
   // メニューボタンの開閉状態
-  const [isOpenDrawer, setIsOpenDrawer] = React.useState(false)
+  const [isOpenMenuDrawer, setIsOpenMenuDrawer] = React.useState(false)
 
   // タブの選択状態
   const [selectedTab, setSelectedTab] = React.useState(selectedTabIdx)
 
   // ダークモード
-  const [darkMode, setDarkMode] = useLocalPersist("twitter-image-search-app", "darkMode", false)
+  //const [darkMode, setDarkMode] = useLocalPersist("twitter-image-search-app", "darkMode", false)
+
+  // ログインボタンの開閉状態
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const isOpenLoginMenu = Boolean(anchorEl);
 
   //------------------------
   // イベントハンドラ
   //------------------------
   // メニュー画面
-  const onClickDrawer = ((event: React.MouseEvent<HTMLInputElement>)=> {
+  const onClickMenuDrawer = ((event: React.MouseEvent<HTMLInputElement>)=> {
     // メニュー画面を開く
-    setIsOpenDrawer(true)
+    setIsOpenMenuDrawer(true)
   })
 
-  const onCloseDrawer = ((event: React.MouseEvent<HTMLInputElement>)=> {
+  const onCloseMenuDrawer = ((event: React.MouseEvent<HTMLInputElement>)=> {
     // メニュー画面を閉じる
-    setIsOpenDrawer(false)
+    setIsOpenMenuDrawer(false)
   })
 
   // タブ
@@ -84,6 +92,14 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL }) 
   };
 
   // ログインアイコン
+  const onClickLoginMenu = ((event: React.MouseEvent<HTMLButtonElement>)=> {
+    setAnchorEl(event.currentTarget)
+  })
+
+  const onCloseLoginMenu = (()=> {
+    setAnchorEl(null)
+  })
+
   const onClickLogIn = ((event: React.MouseEvent<HTMLInputElement>) => {
     // auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL) : ログイン状態を保持
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
@@ -120,12 +136,12 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL }) 
     <AppBar position="static">
       <Toolbar>
         <IconButton edge="start" color="inherit" aria-label="menu">
-          <Box onClick={onClickDrawer}>
+          <Box onClick={onClickMenuDrawer}>
             <MenuIcon />
           </Box>
         </IconButton>
         {/* メニュー画面 */ }
-        <Drawer anchor="left" open={isOpenDrawer} onClose={onCloseDrawer}>
+        <Drawer anchor="left" open={isOpenMenuDrawer} onClose={onCloseMenuDrawer}>
           {/* メニューの各項目をリストで定義 */}
           <List component="nav">
             { /* textDecoration: 'none' : 下線を消す */ }
@@ -159,7 +175,7 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL }) 
         </Box>
         { /* タブ */}
         <Box>
-          <Tabs value={selectedTab} onChange={onChangeSelectedTab} >
+          <Tabs value={selectedTab} onChange={onChangeSelectedTab} TabIndicatorProps={{style: {background:'#FFFFFF'}}}>
             <Tab label="画像検索" component={Link} to={AppRoutes.imageSearchPage.path} />
             <Tab label="プロフィール検索" component={Link} to={AppRoutes.profileSearchPage.path} />
             <Tab label="タイムライン" component={Link} to={AppRoutes.timeLinePage.path} />
@@ -173,19 +189,34 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL }) 
           <FormGroup>
             <FormControlLabel 
               control={
-                <Switch checked={darkMode} onChange={onChangeDarkMode} inputProps={{ 'aria-label': 'controlled' }}/>
+                <Switch checked={darkMode} onChange={onChangeDarkMode} color="default" style={{ color: "#000099"}} inputProps={{ 'aria-label': 'controlled' }}/>
               } 
               label="ダークモード"
             />
           </FormGroup>
         </Box>
         { /* ログインアイコン */}
-        <Box onClick={onClickLogIn}>
+        <Button id="login-button" aria-controls="basic-menu" aria-haspopup="true" aria-expanded={isOpenLoginMenu ? 'true' : undefined} onClick={onClickLoginMenu}>
           <Avatar aria-label="avatar" src={photoURL} />
-        </Box>
+        </Button>
+        <Menu id="login-menu" anchorEl={anchorEl} open={isOpenLoginMenu} onClose={onCloseLoginMenu} MenuListProps={{'aria-labelledby': 'basic-button',}}>
+          <MenuItem onClick={onCloseLoginMenu}>
+            <Box onClick={onClickLogIn}>ログイン</Box>
+          </MenuItem>
+          <MenuItem onClick={onCloseLoginMenu}>
+          <Box onClick={onClickLogOut}>ログアウト</Box>
+          </MenuItem>
+        </Menu>
       </Toolbar>        
     </AppBar>
   )
 }
 
 export default Header;
+
+
+/*
+        <Box onClick={onClickLogIn}>
+          <Avatar aria-label="avatar" src={photoURL} />
+        </Box>
+*/

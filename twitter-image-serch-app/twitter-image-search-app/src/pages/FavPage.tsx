@@ -1,6 +1,8 @@
 import React from 'react';
 import { useState, useEffect } from 'react'
 
+import { ThemeProvider} from '@material-ui/core/styles';
+import CssBaseline from "@material-ui/core/CssBaseline";
 import Box from '@material-ui/core/Box';
 import { Grid } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
@@ -9,6 +11,7 @@ import firebase from "firebase";
 import '../firebase/initFirebase'
 
 import AppRoutes, { FavPageConfig } from '../Config'
+import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
 import TweetCard from '../components/TweetCard'
@@ -24,6 +27,9 @@ const FavPage: React.VFC = () => {
   //------------------------
   // フック
   //------------------------
+  // ダークモード
+  const [darkMode, setDarkMode] = useLocalPersist("twitter-image-search-app", "darkMode", false)
+
   // メッセージ
   const [message, setMessage] = useState('loading')
 
@@ -73,17 +79,21 @@ const FavPage: React.VFC = () => {
   // JSX での表示処理
   //------------------------
   return (
-    <Box>
+    <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
+      {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
+      <CssBaseline />
       {/* ヘッダー表示 */}
-      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.favPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''}></Header>
+      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.favPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
       {/* ボディ表示 */}
       <Typography variant="h6">{message}</Typography>
-      <Grid container direction="column">
-        <Grid item container spacing={2}>
-            {favListJsx}
+      <Box m={2}>
+        <Grid container direction="column">
+          <Grid item container spacing={2}>
+              {favListJsx}
+          </Grid>
         </Grid>
-      </Grid>
-    </Box>
+      </Box>
+    </ThemeProvider>
   );
 }
 

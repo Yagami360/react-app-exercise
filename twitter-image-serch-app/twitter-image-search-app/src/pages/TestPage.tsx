@@ -1,8 +1,9 @@
 import React from 'react';
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import { useTheme, createMuiTheme, ThemeProvider} from '@material-ui/core/styles';
+import CssBaseline from "@material-ui/core/CssBaseline";
 import Box from '@material-ui/core/Box';
 import { Grid } from '@material-ui/core';
 import Container from '@material-ui/core/Container';
@@ -13,6 +14,7 @@ import firebase from "firebase";
 import '../firebase/initFirebase'
 
 import AppRoutes from '../Config'
+import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
 import TweetCard from '../components/TweetCard'
@@ -54,12 +56,27 @@ const TestPage: React.VFC = () => {
   const [darkMode, setDarkMode] = useLocalPersist("twitter-image-search-app", "darkMode", false)
 
   // テーマ（画面全体のスタイル）の設定
-  //const theme = useTheme();
-  const theme = createMuiTheme({
+  const lightTheme = createMuiTheme({
     palette: {
-      type: darkMode ? "dark" : "light",
+      type: "light",
     },
-  });  
+  });
+  const darkTheme = createMuiTheme({
+    palette: {
+      type: "dark",
+    },
+  });
+  /*
+  const theme = React.useMemo(
+    () =>
+      createMuiTheme({
+        palette: {
+          type: darkMode ? "dark" : "light",
+        },
+      }),
+    [darkMode],
+  );
+      */
 
   // 独自スタイル
   const style = useStyles()
@@ -76,9 +93,11 @@ const TestPage: React.VFC = () => {
   //------------------------
   console.log("darkMode : ", darkMode)
   return (
-    <Box>
+    <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
+      {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
+      <CssBaseline />
       {/* ヘッダー表示 */}
-      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.testPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''}></Header>
+      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.testPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
       {/* ボディ表示 */}
       <Typography variant="subtitle1">{message}</Typography>
       {/* レイアウト確認用 */}
@@ -131,7 +150,7 @@ const TestPage: React.VFC = () => {
           <Box className={style.horizontalScrollRaws}>Box9-2</Box>
         </Box>
       </Box>
-    </Box>
+    </ThemeProvider>
   );
 }
 
