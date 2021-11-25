@@ -51,6 +51,8 @@ npm install --save @material-ui/lab                       # Material-UI
 npm install --save twitter                                # Twitter-API
 npm install -D typescript ts-node --save @types/twitter   # Twitter-API (TypeScript用)
 npm install --save firebase@8.10.0  
+npm install --save @types/react-beautiful-dnd             # ドラック＆ドロップ用ライブラリ
+npm install --save react-beautiful-dnd
 npm ls --depth=0
 
 # プロジェクトをビルドする

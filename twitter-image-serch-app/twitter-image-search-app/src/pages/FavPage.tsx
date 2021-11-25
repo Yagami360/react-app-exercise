@@ -10,6 +10,8 @@ import Typography from '@material-ui/core/Typography';
 import firebase from "firebase";
 import '../firebase/initFirebase'
 
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+
 import AppRoutes, { FavPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
@@ -74,6 +76,9 @@ const FavPage: React.VFC = () => {
   //------------------------
   // イベントハンドラ
   //------------------------
+  const onDragEndTweetCard = ((result: any) => {
+    console.log('Drag ended');
+  })
 
   //------------------------
   // JSX での表示処理
@@ -86,13 +91,22 @@ const FavPage: React.VFC = () => {
       <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.favPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
       {/* ボディ表示 */}
       <Typography variant="h6">{message}</Typography>
-      <Box m={2}>
-        <Grid container direction="column">
-          <Grid item container spacing={2}>
-              {favListJsx}
-          </Grid>
-        </Grid>
-      </Box>
+      <DragDropContext onDragEnd={onDragEndTweetCard}>
+        <Droppable droppableId="droppable ">
+          {(provided, snapshot) => (
+            <div {...provided.droppableProps} ref={provided.innerRef}>  { /* provided 引数（＝この引数に含まれる値を元にどのアイテムがどの位置に移動されたかをトラッキング）を設定する範囲を div で設定 */ }
+              <Box m={2}>
+                <Grid container direction="column">
+                  <Grid item container spacing={2}>
+                    {favListJsx}
+                  </Grid>
+                </Grid>
+              </Box>
+            {provided.placeholder}  { /* placeholderを追加することで、ドラッグしたアイテムがドラッグされる前に使っていたスペースを埋めてくれる */ }
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
     </ThemeProvider>
   );
 }
