@@ -28,7 +28,7 @@ const useStyles = makeStyles({
   timeLine: {
     display: "inline-block",  // 横に配置（折り返さない）
     verticalAlign: "top",     // 上に配置
-    width: "300px",
+    width: TimeLinePageConfig.imageWidth,
     margin: "2px",
   },
   // 各ツイートのスタイル
@@ -165,8 +165,10 @@ const TimelinePage: React.VFC = () => {
       setTimelineListJsx(timelineListJsx_)
 
       // 全ユーザーのタイムライン
+      setAllUsertimelineJsx(allUsertimelineJsx_)      
       //console.log( "[before] allUsertimelineJsx_ : ", allUsertimelineJsx_ )
-      //setAllUsertimelineJsx(allUsertimelineJsx_)
+
+      allUsertimelineJsx_ = Array.from(allUsertimelineJsx); // deep copy した配列で操作
       allUsertimelineJsx_.sort( function(a: any, b: any){
         // ツイート時間順にソート
         //console.log( "a.props.tweetTime : ", a.props.tweetTime )

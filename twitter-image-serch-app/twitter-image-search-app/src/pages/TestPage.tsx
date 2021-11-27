@@ -13,6 +13,8 @@ import { makeStyles } from '@material-ui/core/styles'
 import firebase from "firebase";
 import '../firebase/initFirebase'
 
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+
 import AppRoutes from '../Config'
 import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
@@ -87,6 +89,20 @@ const TestPage: React.VFC = () => {
   //------------------------
   // イベントハンドラ
   //------------------------
+  const onDragEndTweetCard = ((result: any) => {
+    console.log('Drag ended');
+    // dropped outside the list
+    if (!result.destination) {
+      return;
+    }
+    console.log('result.source.index : ', result.source.index);
+    console.log('result.destination.index : ', result.destination.index);
+
+    //const cardListJsx_ = Array.from(cardListJsx);   // ステートの配列 favListJsx を deep copy して、コピーした配列で操作
+    //const [reorderedCardListJsx] = cardListJsx_.splice(result.source.index, 1);
+    //cardListJsx_.splice(result.destination.index, 0, reorderedCardListJsx);
+    //setCardListJsx(cardListJsx_)
+  })
 
   //------------------------
   // JSX での表示処理
@@ -101,55 +117,38 @@ const TestPage: React.VFC = () => {
       {/* ボディ表示 */}
       <Typography variant="subtitle1">{message}</Typography>
       {/* レイアウト確認用 */}
-      <Box className={style.horizontalScroll}>
-        <Box className={style.horizontalScrollColums}>
-          <Box className={style.horizontalScrollRaws}><TweetCard userId={"0"} userName={"ユーザー１"} userScreenName={"user1"} profileImageUrl={""} tweetTime={""} tweetId={""} imageFileUrl={""} imageHeight="250px" imageWidth="1000px" contentsText={"tweet text1"} /></Box>
-          <Box className={style.horizontalScrollRaws}>Box1-1</Box>
-          <Box className={style.horizontalScrollRaws}>Box1-2</Box>
-          <Box className={style.horizontalScrollRaws}>Box1-3</Box>
-          <Box className={style.horizontalScrollRaws}>Box1-4</Box>
-          <Box className={style.horizontalScrollRaws}>Box1-5</Box>
-        </Box>
-        <Box className={style.horizontalScrollColums}>
-          <Box className={style.horizontalScrollRaws}>Box2</Box>
-          <Box className={style.horizontalScrollRaws}>Box2-1</Box>
-          <Box className={style.horizontalScrollRaws}>Box2-2</Box>
-        </Box>
-        <Box className={style.horizontalScrollColums}>
-          <Box className={style.horizontalScrollRaws}>Box3</Box>
-          <Box className={style.horizontalScrollRaws}>Box3-1</Box>
-          <Box className={style.horizontalScrollRaws}>Box3-2</Box>
-        </Box>
-        <Box className={style.horizontalScrollColums}>
-          <Box className={style.horizontalScrollRaws}>Box4</Box>
-          <Box className={style.horizontalScrollRaws}>Box4-1</Box>
-        </Box>
-        <Box className={style.horizontalScrollColums}>
-          <Box className={style.horizontalScrollRaws}>Box5</Box>
-          <Box className={style.horizontalScrollRaws}>Box5-1</Box>
-          <Box className={style.horizontalScrollRaws}>Box5-2</Box>
-        </Box>
-        <Box className={style.horizontalScrollColums}>
-          <Box className={style.horizontalScrollRaws}>Box6</Box>
-          <Box className={style.horizontalScrollRaws}>Box6-1</Box>
-          <Box className={style.horizontalScrollRaws}>Box6-2</Box>
-        </Box>
-        <Box className={style.horizontalScrollColums}>
-          <Box className={style.horizontalScrollRaws}>Box7</Box>
-          <Box className={style.horizontalScrollRaws}>Box7-1</Box>
-          <Box className={style.horizontalScrollRaws}>Box7-2</Box>
-        </Box>
-        <Box className={style.horizontalScrollColums}>
-          <Box className={style.horizontalScrollRaws}>Box8</Box>
-          <Box className={style.horizontalScrollRaws}>Box8-1</Box>
-          <Box className={style.horizontalScrollRaws}>Box8-2</Box>
-        </Box>
-        <Box className={style.horizontalScrollColums}>
-          <Box className={style.horizontalScrollRaws}>Box9</Box>
-          <Box className={style.horizontalScrollRaws}>Box9-1</Box>
-          <Box className={style.horizontalScrollRaws}>Box9-2</Box>
-        </Box>
-      </Box>
+      <DragDropContext onDragEnd={onDragEndTweetCard}>
+        <Droppable droppableId="droppable ">
+          {(provided, snapshot) => (
+            <Grid container innerRef={provided.innerRef} {...provided.droppableProps}>
+              <Grid item container spacing={8}>   { /* <Grid item container></Grid> の範囲にドロップできるようにする。このタグ内に provided 引数を設定することで、この引数に含まれる値を元にどのアイテムがどの位置に移動されたかをトラッキングできるようになる */ }
+                <Draggable key="0" draggableId="0" index={0}>
+                  {(provided, snapshot) => (
+                    <Grid item xs={2} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>    { /* <Grid item></Grid> の範囲（＝カード）でドラックできるようにする。このタグ内に provided 引数を設定することで、この引数に含まれる値を元にどのアイテムがどの位置に移動されたかをトラッキングできるようになる */ }
+                      <TweetCard userId="0" userName={"aaa"} userScreenName={"aaa"} profileImageUrl={""} tweetTime="xx:xx:xx" tweetId="0" imageFileUrl="" imageHeight="100px" imageWidth="100px" contentsText="contentsText1" />
+                    </Grid>
+                  )}
+                </Draggable>
+                <Draggable key="1" draggableId="1" index={1}>
+                  {(provided, snapshot) => (
+                    <Grid item xs={2} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>    { /* <Grid item></Grid> の範囲（＝カード）でドラックできるようにする。このタグ内に provided 引数を設定することで、この引数に含まれる値を元にどのアイテムがどの位置に移動されたかをトラッキングできるようになる */ }
+                      <TweetCard userId="1" userName={"bbb"} userScreenName={"bbb"} profileImageUrl={""} tweetTime="xx:xx:xx" tweetId="1" imageFileUrl="" imageHeight="100px" imageWidth="100px" contentsText="contentsText2" />
+                    </Grid>
+                  )}
+                </Draggable>
+                <Draggable key="2" draggableId="2" index={2}>
+                  {(provided, snapshot) => (
+                    <Grid item xs={2} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>    { /* <Grid item></Grid> の範囲（＝カード）でドラックできるようにする。このタグ内に provided 引数を設定することで、この引数に含まれる値を元にどのアイテムがどの位置に移動されたかをトラッキングできるようになる */ }
+                      <TweetCard userId="2" userName={"ccc"} userScreenName={"ccc"} profileImageUrl={""} tweetTime="xx:xx:xx" tweetId="2" imageFileUrl="" imageHeight="100px" imageWidth="100px" contentsText="contentsText3" />
+                    </Grid>
+                  )}
+                </Draggable>
+                {provided.placeholder}  { /* placeholderを追加することで、ドラッグしたアイテムがドラッグされる前に使っていたスペースを埋めてくれる */ }
+              </Grid>
+            </Grid>
+          )}
+        </Droppable>
+      </DragDropContext>
     </ThemeProvider>
   );
 }

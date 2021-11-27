@@ -142,7 +142,7 @@ const ProfileSearchPage: React.VFC = () => {
                 <TwitterProfileCard 
                   userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} createdAt={createdAt} 
                   location={location} followersCount={followersCount} followsCount={followsCount}
-                  profileBannerImageUrl={profileBannerImageUrl} imageHeight={300} imageWidth={2000} 
+                  profileBannerImageUrl={profileBannerImageUrl} imageHeight={ProfileSearchPageConfig.imageHeight} imageWidth={ProfileSearchPageConfig.imageWidth} 
                   description={description}
                 />
               </Grid>

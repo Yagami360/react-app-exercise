@@ -155,7 +155,7 @@ const ImageSearchPage: React.VFC = () => {
 
             seachResultsJsx_.push(
               <Grid item xs={2}>
-                <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="300px" imageWidth="2000px" contentsText={tweetText} />
+                <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={ImageSearchPageConfig.imageHeight} imageWidth={ImageSearchPageConfig.imageWidth} contentsText={tweetText} />
               </Grid>
             )        
             nTweetsImage += 1    

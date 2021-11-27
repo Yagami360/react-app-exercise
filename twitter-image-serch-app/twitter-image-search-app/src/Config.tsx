@@ -20,12 +20,16 @@ export const ImageSearchPageConfig = {
   collectionNameSearchWord: "search-word-database",
   cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweet",
   searchCount: 100,
+  imageHeight: "300px",
+  imageWidth: "2000px",
 };
 
 export const ProfileSearchPageConfig = {
   collectionNameSearchWord: "search-word-database",
   cloudFunctionSearchUserUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchUser",
   searchCount: 20,
+  imageHeight: 300,
+  imageWidth: 2000,
 };
 
 export const TimeLinePageConfig = {
@@ -33,10 +37,14 @@ export const TimeLinePageConfig = {
   cloudFunctionGetTimelineUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/getUserTimelineTweet",
   searchCount: 50,
   //searchCount: 200,
+  imageWidth: "300px",
 };
 
 export const FavPageConfig = {
   collectionNameFav: 'fav-tweets-database',
+  imageHeight: "200px",
+  imageWidth: "1000px",
+  gridXs: 3,                  //  画面幅 12 分割に対して１つのカードで使用するグリッド数
 };
 
 export const TestPageConfig = {

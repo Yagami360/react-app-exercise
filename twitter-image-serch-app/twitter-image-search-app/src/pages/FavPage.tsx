@@ -36,9 +36,9 @@ const FavPage: React.VFC = () => {
   const [message, setMessage] = useState('loading')
 
   // お気に入りリスト 
-  const [favListJsx, setFavListJsx] = useState();
+  const [favListJsx, setFavListJsx] = useState([]);
 
-  // コレクション名からコレクション内のデータを取得する副作用フック。
+  // FireStore からお気に入りデータを読み込む副作用フック
   useEffect(() => {
     console.log("auth.currentUser : ", auth.currentUser)
     // ログイン済みに場合のみ表示
@@ -57,9 +57,7 @@ const FavPage: React.VFC = () => {
 
             // フィールドの値を TweetCard の形式に変換して追加
             favListJsx_.push(
-              <Grid item xs={4}>
-                <TweetCard userId={field.userId} userName={field.userName} userScreenName={field.userScreenName} profileImageUrl={field.userImageUrl} tweetTime={field.tweetTime} tweetId={field.tweetId} imageFileUrl={field.tweetImageFileUrl} imageHeight="500px" imageWidth="2000px" contentsText={field.tweetText} />
-              </Grid>
+              <TweetCard userId={field.userId} userName={field.userName} userScreenName={field.userScreenName} profileImageUrl={field.userImageUrl} tweetTime={field.tweetTime} tweetId={field.tweetId} imageFileUrl={field.tweetImageFileUrl} imageHeight={FavPageConfig.imageHeight} imageWidth={FavPageConfig.imageWidth} contentsText={field.tweetText} />
             )
           })
           
@@ -72,17 +70,47 @@ const FavPage: React.VFC = () => {
       setMessage("Please login")
     }
   }, [])
-  
+
+  // 更新されたお気に入りデータを FireStore に書き込む副作用フック
+  useEffect(() => {
+    // ログイン済みに場合のみ表示
+    if (auth.currentUser !== null) {
+    }
+  }, [favListJsx])
+
+  //------------------------
+  // スタイル定義
+  //------------------------
+  const tweetCardDraggingStyle = (isDragging: any, draggableStyle:any ) => ({
+    // change background colour if dragging
+    background: isDragging && "lightblue",
+
+    // styles we need to apply on draggables
+    ...draggableStyle,
+  });
+
   //------------------------
   // イベントハンドラ
   //------------------------
   const onDragEndTweetCard = ((result: any) => {
     console.log('Drag ended');
+    // dropped outside the list
+    if (!result.destination) {
+      return;
+    }
+    console.log('result.source.index : ', result.source.index);
+    console.log('result.destination.index : ', result.destination.index);
+
+    const favListJsx_ = Array.from(favListJsx);   // ステートの配列 favListJsx を deep copy して、コピーした配列で操作
+    const [reorderedFavListJsx] = favListJsx_.splice(result.source.index, 1);   // splice(index1,index2) : index1 ~ index2 までの要素を取り除く
+    favListJsx_.splice(result.destination.index, 0, reorderedFavListJsx);       // splice(index1,index2,array1) : 第1引数で指定した要素から、第2引数で指定した数を取り除き、第3引数の値を追加します。
+    setFavListJsx(favListJsx_)
   })
 
   //------------------------
   // JSX での表示処理
   //------------------------
+  console.log("favListJsx : ", favListJsx )
   return (
     <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
@@ -91,24 +119,31 @@ const FavPage: React.VFC = () => {
       <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.favPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
       {/* ボディ表示 */}
       <Typography variant="h6">{message}</Typography>
-      <DragDropContext onDragEnd={onDragEndTweetCard}>
-        <Droppable droppableId="droppable ">
-          {(provided, snapshot) => (
-            <div {...provided.droppableProps} ref={provided.innerRef}>  { /* provided 引数（＝この引数に含まれる値を元にどのアイテムがどの位置に移動されたかをトラッキング）を設定する範囲を div で設定 */ }
-              <Box m={2}>
-                <Grid container direction="column">
-                  <Grid item container spacing={2}>
-                    {favListJsx}
-                  </Grid>
+      <Box m={2}>
+        <Grid container>
+          <DragDropContext onDragEnd={onDragEndTweetCard}>
+            <Droppable droppableId="droppable">
+              {(provided, snapshot) => (
+                <Grid item container spacing={2} innerRef={provided.innerRef} {...provided.droppableProps}>   { /* <Grid item container></Grid> の範囲にドロップできるようにする。このタグ内に provided 引数を設定することで、この引数に含まれる値を元にどのアイテムがどの位置に移動されたかをトラッキングできるようになる */ }
+                  {favListJsx.map( (favJsx: any, index: any) => (
+                    <Draggable key={index.toString()} draggableId={index.toString()} index={index}>
+                      {(provided, snapshot) => (
+                        <Grid item xs={3} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} style={tweetCardDraggingStyle(snapshot.isDragging, provided.draggableProps.style)}>    { /* <Grid item></Grid> の範囲（＝カード）でドラックできるようにする。このタグ内に provided 引数を設定することで、この引数に含まれる値を元にどのアイテムがどの位置に移動されたかをトラッキングできるようになる */ }
+                          {favJsx}
+                        </Grid>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}  { /* placeholderを追加することで、ドラッグしたアイテムがドラッグされる前に使っていたスペースを埋めてくれる */ }
                 </Grid>
-              </Box>
-            {provided.placeholder}  { /* placeholderを追加することで、ドラッグしたアイテムがドラッグされる前に使っていたスペースを埋めてくれる */ }
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </Grid>
+      </Box>
     </ThemeProvider>
   );
 }
 
 export default FavPage;
+
