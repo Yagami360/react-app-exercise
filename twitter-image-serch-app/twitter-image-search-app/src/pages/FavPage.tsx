@@ -93,13 +93,13 @@ const FavPage: React.VFC = () => {
   // イベントハンドラ
   //------------------------
   const onDragEndTweetCard = ((result: any) => {
-    console.log('Drag ended');
+    //console.log('Drag ended');
     // dropped outside the list
     if (!result.destination) {
       return;
     }
-    console.log('result.source.index : ', result.source.index);
-    console.log('result.destination.index : ', result.destination.index);
+    //console.log('result.source.index : ', result.source.index);
+    //console.log('result.destination.index : ', result.destination.index);
 
     const favListJsx_ = Array.from(favListJsx);   // ステートの配列 favListJsx を deep copy して、コピーした配列で操作
     const [reorderedFavListJsx] = favListJsx_.splice(result.source.index, 1);   // splice(index1,index2) : index1 ~ index2 までの要素を取り除く

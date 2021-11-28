@@ -37,6 +37,7 @@ export const TimeLinePageConfig = {
   cloudFunctionGetTimelineUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/getUserTimelineTweet",
   searchCount: 50,
   //searchCount: 200,
+  imageHeight: "250px",
   imageWidth: "300px",
 };
 

@@ -11,6 +11,8 @@ import { makeStyles } from '@material-ui/core/styles'
 import firebase from "firebase";
 import '../firebase/initFirebase'
 
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+
 import AppRoutes, { TimeLinePageConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
@@ -38,6 +40,14 @@ const useStyles = makeStyles({
     whiteSpace: "normal",     // 折り返えす
   }
 })
+
+const timeLineDraggingStyle = (isDragging: any, draggableStyle:any ) => ({
+  // change background colour if dragging
+  background: isDragging && "lightblue",
+
+  // styles we need to apply on draggables
+  ...draggableStyle,
+});
 
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
@@ -130,17 +140,18 @@ const TimelinePage: React.VFC = () => {
                   
                   timelineJsx_.push(
                     <Box className={style.twitterCard}>
-                      <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="250px" imageWidth="1000px" contentsText={tweetText} />
+                      <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />
                     </Box>
                   )
                   allUsertimelineJsx_.push(
                     <Box className={style.twitterCard}>
-                      <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="250px" imageWidth="1000px" contentsText={tweetText} />                    
+                      <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />                    
                     </Box>
                   )
                 })
 
                 // １人のユーザーのタイムライン
+                console.log( "timelineJsx_ : ", timelineJsx_ )
                 setTimelineJsx(timelineJsx_)
                 
                 // 各ユーザーのタイムラインのリストに追加
@@ -148,7 +159,7 @@ const TimelinePage: React.VFC = () => {
                   <Box className={style.timeLine}>
                     {timelineJsx_}
                   </Box>
-                )                
+                )
               })
               .catch((reason) => {
                 console.log("ツイートの取得に失敗しました", reason)
@@ -165,10 +176,9 @@ const TimelinePage: React.VFC = () => {
       setTimelineListJsx(timelineListJsx_)
 
       // 全ユーザーのタイムライン
-      setAllUsertimelineJsx(allUsertimelineJsx_)      
+      //setAllUsertimelineJsx(allUsertimelineJsx_)      
+      //let allUsertimelineJsx__ = Array.from(allUsertimelineJsx); // deep copy した配列で操作
       //console.log( "[before] allUsertimelineJsx_ : ", allUsertimelineJsx_ )
-
-      allUsertimelineJsx_ = Array.from(allUsertimelineJsx); // deep copy した配列で操作
       allUsertimelineJsx_.sort( function(a: any, b: any){
         // ツイート時間順にソート
         //console.log( "a.props.tweetTime : ", a.props.tweetTime )
@@ -190,6 +200,20 @@ const TimelinePage: React.VFC = () => {
   //------------------------
   // イベントハンドラ
   //------------------------
+  const onDragEndTimeLine = ((result: any) => {
+    console.log('Drag ended');
+    // dropped outside the list
+    if (!result.destination) {
+      return;
+    }
+    console.log('result.source.index : ', result.source.index);
+    console.log('result.destination.index : ', result.destination.index);
+
+    const timelineListJsx__ = Array.from(timelineListJsx);   // ステートの配列 favListJsx を deep copy して、コピーした配列で操作
+    const [reorderedTimelineListJsx] = timelineListJsx__.splice(result.source.index, 1);   // splice(index1,index2) : index1 ~ index2 までの要素を取り除く
+    timelineListJsx__.splice(result.destination.index, 0, reorderedTimelineListJsx);       // splice(index1,index2,array1) : 第1引数で指定した要素から、第2引数で指定した数を取り除き、第3引数の値を追加します。
+    setTimelineListJsx(timelineListJsx__)
+  })
 
   //------------------------
   // JSX での表示処理
@@ -212,9 +236,24 @@ const TimelinePage: React.VFC = () => {
           {allUsertimelineJsx}
         </Box>
         { /* 各フォローユーザーのタイムライン表示 */ }
-        <Box className={style.timeLine}>
-          {timelineListJsx}
-        </Box>
+        <DragDropContext onDragEnd={onDragEndTimeLine}>
+          <Droppable droppableId="droppable">
+            {(provided, snapshot) => (
+              <div className={style.timeLine} ref={provided.innerRef} {...provided.droppableProps}>
+                {timelineListJsx.map( (timeLineJsx: any, index: any) => (
+                  <Draggable key={index.toString()} draggableId={index.toString()} index={index}>
+                    {(provided, snapshot) => (
+                      <div className={style.timeLine} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} style={timeLineDraggingStyle(snapshot.isDragging, provided.draggableProps.style)}>
+                        {timeLineJsx}
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}  { /* placeholderを追加することで、ドラッグしたアイテムがドラッグされる前に使っていたスペースを埋めてくれる */ }
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       </Box>
     </ThemeProvider>
   );

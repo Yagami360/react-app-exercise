@@ -2,3 +2,6 @@
 set_key.sh
 .runtimeconfig.json
 request_twitter_api.sh
+
+twitter-image-search-app/build/static/css
+twitter-image-search-app/build/static/js
