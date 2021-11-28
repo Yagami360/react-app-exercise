@@ -1,4 +1,4 @@
-# Twitter 画像検索アプリ（React + React Hooks での構成）
+# Twitter 画像検索アプリ（TypeScript + React + React Hooks での構成）
 
 ## ■ 使用法
 
