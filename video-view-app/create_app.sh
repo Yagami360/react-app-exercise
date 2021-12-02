@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 ROOT_DIR=${PWD}
-PROJECT_NAME="twitter-image-search-app"
-FIREBASE_PROJECT_ID="twitter-image-search-app"
+PROJECT_NAME="video-view-app"
+FIREBASE_PROJECT_ID="video-view-app-73d21"
 
 #-----------------------------
 # OS判定
@@ -43,14 +43,13 @@ cd ${ROOT_DIR}/${PROJECT_NAME}
 # 各種 npm パッケージをインストール
 npm install --save react-router-dom                       # ルーティング用パッケージ
 npm install --save-dev @types/react-router-dom            # ルーティング用パッケージ（TypeScript用）
+npm install --save firebase@8.10.0                        # Firebase
 npm install --save @material-ui/core                      # Material-UI
 npm install --save @material-ui/icons                     # Material-UI
 npm install --save @material-ui/lab                       # Material-UI
-npm install --save twitter                                # Twitter-API
-npm install -D typescript ts-node --save @types/twitter   # Twitter-API (TypeScript用)
-npm install --save firebase@8.10.0  
 npm install --save @types/react-beautiful-dnd             # ドラック＆ドロップ用ライブラリ
 npm install --save react-beautiful-dnd
+
 npm ls --depth=0
 
 #----------------------------- 
@@ -66,16 +65,6 @@ firebase login --project ${FIREBASE_PROJECT_ID}
 
 # Firebase プロジェクトを初期化
 firebase init --project ${FIREBASE_PROJECT_ID}
-
-# Cloud Funtion に各種 npm パッケージをインストール
-cd ${ROOT_DIR}/${PROJECT_NAME}/functions
-npm install --save request request-promise
-npm install --save twitter                                # Twitter-API
-npm install -D typescript ts-node --save @types/twitter   # Twitter-API (TypeScript用)
-npm ls --depth=0
-
-cd ${ROOT_DIR}/${PROJECT_NAME}
-firebase deploy --project ${FIREBASE_PROJECT_ID} --only functions
 
 #-----------------------------
 # React アプリを起動する

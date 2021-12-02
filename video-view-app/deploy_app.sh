@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 ROOT_DIR=${PWD}
-PROJECT_NAME="twitter-image-search-app"
-FIREBASE_PROJECT_ID="twitter-image-search-app"
+PROJECT_NAME="video-view-app"
+FIREBASE_PROJECT_ID="video-view-app-73d21"
 
 cd ${ROOT_DIR}/${PROJECT_NAME}
 

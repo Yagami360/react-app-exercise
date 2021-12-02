@@ -1,5 +1,7 @@
 # Twitter 画像検索アプリ（TypeScript + React + React Hooks での構成）
 
+Twitter-API を用いて、指定したワードを含む画像付きツイートを検索するアプリです。画像付きツイートのお気に入り保存機能や簡易的なフォロー機能もあります。
+
 ## ■ 使用法
 
 ### 1. 事前準備
@@ -19,6 +21,9 @@
       <img src="https://user-images.githubusercontent.com/25688193/141665748-3ca3a280-eb78-49e8-b33f-28a1ff28f0c3.png" width=500 />
 
 1. Firebase プロジェクトを作成する<br>
+    「[Firebase のコンソール画面](https://console.firebase.google.com/?hl=ja)」から `twitter-image-search-app` の名前でプロジェクトを作成する。<br>
+
+    > "Authentication", "Firestore Database", "Hositing", "Functions" の機能を有効する
 
 1. アプリのプロジェクトを作成する<br>
     ```sh
