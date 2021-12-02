@@ -112,7 +112,7 @@ const TestPage: React.VFC = () => {
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
       <CssBaseline />
       {/* ヘッダー表示 */}
-      <Header title="Video View App" selectedTabIdx={AppConfig.testPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
+      <Header title="YouTube Video View App" selectedTabIdx={AppConfig.testPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
       {/* ボディ表示 */}
       <Typography variant="subtitle1">{message}</Typography>
     </ThemeProvider>

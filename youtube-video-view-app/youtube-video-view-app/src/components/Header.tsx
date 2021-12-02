@@ -150,6 +150,11 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL, da
                 <ListItemText primary="ホーム" />
               </ListItem>
             </Link>
+            <Link to={AppConfig.videoSearchPage.path} style={{ textDecoration: 'none', color: 'black' }}>
+              <ListItem button>
+                <ListItemText primary="動画検索" />
+              </ListItem>
+            </Link>
             <Link to={AppConfig.testPage.path} style={{ textDecoration: 'none', color: 'black' }}>
               <ListItem button>
                 <ListItemText primary="テスト" />
@@ -167,6 +172,7 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL, da
         <Box>
           <Tabs value={selectedTab} onChange={onChangeSelectedTab} TabIndicatorProps={{style: {background:'#FFFFFF'}}}>
             <Tab label="ホーム" component={Link} to={AppConfig.topPage.path} />
+            <Tab label="動画検索" component={Link} to={AppConfig.videoSearchPage.path} />
             <Tab label="テスト" component={Link} to={AppConfig.testPage.path} />
           </Tabs>
         </Box>
@@ -200,10 +206,3 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL, da
 }
 
 export default Header;
-
-
-/*
-        <Box onClick={onClickLogIn}>
-          <Avatar aria-label="avatar" src={photoURL} />
-        </Box>
-*/

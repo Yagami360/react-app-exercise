@@ -19,6 +19,12 @@ import StarIcon from '@material-ui/icons/Star';
 import Avatar from '@material-ui/core/Avatar'
 import PersonAddIcon from '@material-ui/icons/PersonAdd';
 import PersonAddOutlinedIcon from '@material-ui/icons/PersonAddOutlined';
+import PlayCircleOutlineRoundedIcon from '@material-ui/icons/PlayCircleOutlineRounded';
+import ThumbUpOutlinedIcon from '@material-ui/icons/ThumbUpOutlined';
+import ThumbUpIcon from '@material-ui/icons/ThumbUp';
+import ThumbDownAltOutlinedIcon from '@material-ui/icons/ThumbDownAltOutlined';
+import ThumbDownAltRoundedIcon from '@material-ui/icons/ThumbDownAltRounded';
+import FavoriteBorderOutlinedIcon from '@material-ui/icons/FavoriteBorderOutlined';
 
 import AppConfig from '../Config'
 import useLocalPersist from './LocalPersist';
@@ -158,7 +164,9 @@ const YouTubeVideoInfoCard: React.FC<Props> = ({
   // JSX での表示処理
   //------------------------
   const channelURL = "https://www.youtube.com/channel/" + channelId
-  const videoURL = "https://www.youtube.com/watch?v=" + videoId
+  const youtubeVideoURL = "https://www.youtube.com/watch?v=" + videoId
+  const watchVideoURL = "/video_watch/" + videoId
+
   return (
     <Card variant="outlined">
       <CardHeader 
@@ -179,22 +187,36 @@ const YouTubeVideoInfoCard: React.FC<Props> = ({
           </IconButton>
         }
       />
-      <CardActionArea href={videoURL} target="_blank" >
+      <CardActionArea href={watchVideoURL} target="_blank" >
         <CardMedia style={{ height: imageHeight, maxWidth : imageWidth }} image={thumbnailsUrl} />
       </CardActionArea>
       <CardContent>
         <Typography variant="subtitle2" component="p">{publishTime}</Typography>
         <Typography variant="subtitle1" component="p">{title}</Typography>
-        <Typography variant="subtitle2" component="p">{description}</Typography>
-      </CardContent>
-      <CardActions>
-        <CardActionArea href={videoURL} target="_blank" >
+        <Typography variant="subtitle2">{description}</Typography>
+        { /* 詳細 */ }
+        <CardActionArea href={youtubeVideoURL} target="_blank">
           <Button size="small">...</Button>        
         </CardActionArea>
-        <Button size="small">{viewCount}</Button>
+      </CardContent>
+      <CardActions>
+        { /* 再生回数 */ }
+        <PlayCircleOutlineRoundedIcon />
+        <Typography variant="subtitle2">{viewCount}</Typography>
+        { /* 高評価 */ }
+        <ThumbUpOutlinedIcon />
+        <Typography variant="subtitle2">{likeCount}</Typography>
+        { /* 低評価 */ }
+        <ThumbDownAltOutlinedIcon />
+        <Typography variant="subtitle2">{dislikeCount}</Typography>
+        { /* お気に入り数 */ }
+        <FavoriteBorderOutlinedIcon />
+        <Typography variant="subtitle2">{favoriteCount}</Typography>
+        { /* フォロー */ }
         <IconButton aria-label="settings" onClick={onClickFollow} >
-            { (savedFollow ===  false) ? <PersonAddOutlinedIcon /> : <PersonAddIcon /> }
-          </IconButton>
+          { (savedFollow ===  false) ? <PersonAddOutlinedIcon /> : <PersonAddIcon /> }
+        </IconButton>
+        { /* お気に入り */ }
         <IconButton aria-label="settings" onClick={onClickFav} >
           { (savedFav ===  false) ? <StarBorderOutlinedIcon /> : <StarIcon /> }
         </IconButton>

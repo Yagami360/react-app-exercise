@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 ROOT_DIR=${PWD}
-PROJECT_NAME="video-view-app"
-FIREBASE_PROJECT_ID="video-view-app-73d21"
+PROJECT_NAME="youtube-video-view-app"
+FIREBASE_PROJECT_ID="video-view-app-684c0"
 
 #-----------------------------
 # OS判定

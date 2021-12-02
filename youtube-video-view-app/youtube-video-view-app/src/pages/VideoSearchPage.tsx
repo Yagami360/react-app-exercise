@@ -17,7 +17,7 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 import SearchIcon from "@material-ui/icons/Search";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
-import AppConfig, { TopPageConfig, YouTubeDataAPIConfig } from '../Config'
+import AppConfig, { VideoSearchPageConfig, YouTubeDataAPIConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
@@ -29,8 +29,8 @@ const auth: any = firebase.auth()
 // Firestore にアクセスするためのオブジェクト作成
 const firestore = firebase.firestore()
 
-// トップページを表示するコンポーネント
-const TopPage: React.VFC = () => {
+// 動画検索を表示するコンポーネント
+const VideoSearchPage: React.VFC = () => {
   //------------------------
   // フック
   //------------------------
@@ -51,7 +51,7 @@ const TopPage: React.VFC = () => {
   useEffect(() => {
     // 検索履歴
     if( auth.currentUser !== null && searchWord != "" ) {
-      firestore.collection(TopPageConfig.collectionNameSearchWord).doc(auth.currentUser.email).collection(TopPageConfig.collectionNameSearchWord).get().then( (snapshot)=> {
+      firestore.collection(VideoSearchPageConfig.collectionNameSearchWord).doc(auth.currentUser.email).collection(VideoSearchPageConfig.collectionNameSearchWord).get().then( (snapshot)=> {
         let id = 1
         let seachHistorys_: any = []
         snapshot.forEach((document)=> {
@@ -90,8 +90,8 @@ const TopPage: React.VFC = () => {
           searchWord: searchWord, 
           time: new Date(),   
         }
-        firestore.collection(TopPageConfig.collectionNameSearchWord).doc(auth.currentUser.email).collection(TopPageConfig.collectionNameSearchWord).doc(searchWord).set(document).then((ref: any) => {
-          console.log("added search word in ", TopPageConfig.collectionNameSearchWord)
+        firestore.collection(VideoSearchPageConfig.collectionNameSearchWord).doc(auth.currentUser.email).collection(VideoSearchPageConfig.collectionNameSearchWord).doc(searchWord).set(document).then((ref: any) => {
+          console.log("added search word in ", VideoSearchPageConfig.collectionNameSearchWord)
         })
       }
 
@@ -160,7 +160,7 @@ const TopPage: React.VFC = () => {
                     console.log("itemVideo : ", itemVideo)
                     tags = itemVideo["snippet"]["tags"]
                     viewCount = itemVideo["statistics"]["viewCount"]
-                    likeCount = itemVideo["statistics"]["viewCount"]
+                    likeCount = itemVideo["statistics"]["likeCount"]
                     dislikeCount = itemVideo["statistics"]["dislikeCount"]
                     favoriteCount = itemVideo["statistics"]["favoriteCount"]
 
@@ -179,7 +179,7 @@ const TopPage: React.VFC = () => {
                         <YouTubeVideoInfoCard 
                           channelId={channelId} channelTitle={channelTitle} profileImageUrl={profileImageUrl} subscriberCount={subscriberCount}
                           videoId={videoId} title={title} publishTime={publishTime} description={description}
-                          thumbnailsUrl={thumbnailsHightUrl} imageHeight={TopPageConfig.imageHeight} imageWidth={TopPageConfig.imageWidth}
+                          thumbnailsUrl={thumbnailsHightUrl} imageHeight={VideoSearchPageConfig.imageHeight} imageWidth={VideoSearchPageConfig.imageWidth}
                           viewCount={viewCount} likeCount={likeCount} dislikeCount={dislikeCount} favoriteCount={favoriteCount}
                           tags={tags}
                         />
@@ -209,7 +209,7 @@ const TopPage: React.VFC = () => {
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
       <CssBaseline />
       {/* ヘッダー表示 */}      
-      <Header title="Video View App" selectedTabIdx={AppConfig.topPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
+      <Header title="YouTube Video View App" selectedTabIdx={AppConfig.videoSearchPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
       {/* 検索ワード入力 */}
       <Box m={2}>
         <form onSubmit={onSubmitSearchWord}>
@@ -258,4 +258,4 @@ const TopPage: React.VFC = () => {
   );
 }
 
-export default TopPage;
+export default VideoSearchPage;

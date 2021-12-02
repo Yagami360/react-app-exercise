@@ -14,6 +14,8 @@ import AppTheme from './components/Theme';
 import useLocalPersist from './components/LocalPersist';
 
 import TopPage from './pages/TopPage'
+import VideoSearchPage from './pages/VideoSearchPage'
+import VideoWatchPage from './pages/VideoWatchPage'
 import TestPage from './pages/TestPage'
 
 const App: React.VFC = () => {
@@ -41,6 +43,8 @@ const App: React.VFC = () => {
       <BrowserRouter>
         <Routes>
           <Route path={AppConfig.topPage.path} element={<TopPage />} />
+          <Route path={AppConfig.videoSearchPage.path} element={<VideoSearchPage />} />
+          <Route path={AppConfig.videoWatchPage.path} element={<VideoWatchPage />} />
           <Route path={AppConfig.testPage.path} element={<TestPage />} />
         </Routes>
       </BrowserRouter>
