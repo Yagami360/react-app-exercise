@@ -1,4 +1,4 @@
-# YouTube 動画視聴アプリ
+# YouTube 動画視聴アプリ（TypeScript + React + React Hooks での構成）
 
 ## ■ 使用法
 
@@ -28,6 +28,8 @@
 
     > Firebase の初期化時には、"Firestore", "Hosting", "Function" を有効化して初期化してください
 
+    > FireBase Hosting のディレクトリは、build を指定してください。
+
 ### 2. アプリのデバッグ処理
 
 1. アプリを起動する<br>
@@ -37,22 +39,6 @@
     ```
 
 ### 3. デプロイ処理（アプリの外部公開）
-
-1. `firebase.json` を以下のように修正する。
-    ```json
-    {
-        "firestore": {
-            "rules": "firestore.rules",
-            "indexes": "firestore.indexes.json"
-        },
-        "storage": {
-            "rules": "storage.rules"
-        },
-        "hosting": {
-            "public": "build"
-        }
-    }
-    ```
 
 1. React アプリをビルドする<br>
     ```sh
