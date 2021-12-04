@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import firebase from "firebase";
 import '../firebase/initFirebase'
 
+import Box from '@material-ui/core/Box';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
@@ -25,7 +26,7 @@ import ThumbDownAltOutlinedIcon from '@material-ui/icons/ThumbDownAltOutlined';
 import ThumbDownAltRoundedIcon from '@material-ui/icons/ThumbDownAltRounded';
 import FavoriteBorderOutlinedIcon from '@material-ui/icons/FavoriteBorderOutlined';
 
-import AppConfig from '../Config'
+import AppConfig, {YouTubeDataAPIConfig} from '../Config'
 import useLocalPersist from './LocalPersist';
 
 // Auth オブジェクトの作成
@@ -50,6 +51,7 @@ type Props = {
   publishTime: string;
   title: string;
   description: string;
+  categoryTitle: string;
   thumbnailsUrl: string;
   imageHeight: string;
   imageWidth: string;
@@ -65,7 +67,7 @@ type Props = {
 const YouTubeVideoInfoCard: React.FC<Props> = ({ 
   children, 
   channelId, channelTitle, profileImageUrl, subscriberCount, 
-  videoId, publishTime, title, description,
+  videoId, publishTime, title, description, categoryTitle,
   thumbnailsUrl, imageHeight, imageWidth, 
   viewCount, likeCount, dislikeCount, favoriteCount,
   tags,
@@ -139,6 +141,7 @@ const YouTubeVideoInfoCard: React.FC<Props> = ({
         publishTime: publishTime,
         title: title,
         description: description,
+        categoryTitle: categoryTitle,
         thumbnailsUrl: thumbnailsUrl,     
       }
 
@@ -165,7 +168,6 @@ const YouTubeVideoInfoCard: React.FC<Props> = ({
   const channelURL = "https://www.youtube.com/channel/" + channelId
   const youtubeVideoURL = "https://www.youtube.com/watch?v=" + videoId
   const watchVideoURL = "/video_watch/" + videoId
-
   return (
     <Card variant="outlined">
       <CardHeader 
@@ -190,10 +192,18 @@ const YouTubeVideoInfoCard: React.FC<Props> = ({
         <CardMedia style={{ height: imageHeight, maxWidth : imageWidth }} image={thumbnailsUrl} />
       </CardActionArea>
       <CardContent>
-        <Typography variant="subtitle2" component="p">{publishTime}</Typography>
+        <Box style={{display:"flex"}}>
+          { /* 日付 */ }        
+          <Typography variant="subtitle2" component="p">{publishTime}</Typography>
+          { /* 動画カテゴリ */ }
+          <Box mx={2}>
+            <Typography variant="subtitle2">{"動画カテゴリ : " + categoryTitle}</Typography>
+          </Box>
+        </Box>
+        { /* 動画タイトル */ }        
         <Typography variant="subtitle1" component="p">{title}</Typography>
-        <Typography variant="subtitle2">{description}</Typography>
         { /* 詳細 */ }
+        <Typography variant="subtitle2">{description}</Typography>
         <CardActionArea href={youtubeVideoURL} target="_blank">
           <Button size="small">...</Button>        
         </CardActionArea>

@@ -62,7 +62,12 @@
     - https://developers.google.com/youtube/v3/docs/?apix=true
     - https://cly7796.net/blog/javascript/try-using-the-youtube-data-api/
     - https://qiita.com/koki_develop/items/4cd7de3898dae2c33f20#youtube-%E5%8B%95%E7%94%BB%E3%82%92%E6%A4%9C%E7%B4%A2%E3%81%99%E3%82%8B
+    - https://qiita.com/yaju/items/3bec88dbd544502e1343
 
 - IFrame Player API / YouTube Player API
     - https://developers.google.com/youtube/player_parameters?hl=ja
     - https://qiita.com/rei67/items/25fa4a069157fd6c34b4#%E6%BA%96%E5%82%9
+
+- YouTube Live Streaming API
+    - https://developers.google.com/youtube/v3/live/docs
+    - 

@@ -124,6 +124,7 @@ const VideoSearchPage: React.VFC = () => {
             const publishTime = itemSearch["snippet"]["publishTime"]
             const thumbnailsHightUrl = itemSearch["snippet"]["thumbnails"]["high"]["url"]
             const description = itemSearch["snippet"]["description"]
+
             let profileImageUrl: any = undefined
             let subscriberCount: any = undefined
             let tags:any = []
@@ -131,6 +132,9 @@ const VideoSearchPage: React.VFC = () => {
             let likeCount:any = undefined
             let dislikeCount:any = undefined
             let favoriteCount:any = undefined
+            let categoryId:any = undefined
+
+            let categoryTitle:any = undefined
 
             // YouTube Data API を使用してチャンネル情報を取得
             fetch(YouTubeDataAPIConfig.url+"channels" + '?key='+YouTubeDataAPIConfig.apiKey + '&part=snippet,statistics' + '&id='+channelId )
@@ -158,34 +162,51 @@ const VideoSearchPage: React.VFC = () => {
                   .then((dataVideos) => {
                     const itemVideo = dataVideos["items"][0]
                     console.log("itemVideo : ", itemVideo)
+                    categoryId = itemVideo["snippet"]["categoryId"]
                     tags = itemVideo["snippet"]["tags"]
                     viewCount = itemVideo["statistics"]["viewCount"]
                     likeCount = itemVideo["statistics"]["likeCount"]
                     dislikeCount = itemVideo["statistics"]["dislikeCount"]
                     favoriteCount = itemVideo["statistics"]["favoriteCount"]
 
-                    // 検索結果を元に JSX 形式での Card 追加
-                    console.log( "kind : ", kind )
-                    console.log( "videoId : ", videoId )
-                    console.log( "channelId : ", channelId )            
-                    console.log( "channelTitle : ", channelTitle )
-                    console.log( "description : ", description )
-                    console.log( "thumbnailsHightUrl : ", thumbnailsHightUrl )
-                    console.log( "profileImageUrl : ", profileImageUrl )
-                    console.log( "subscriberCount : ", subscriberCount )
+                    // YouTube Data API を使用して動画カテゴリ情報を取得
+                    fetch(YouTubeDataAPIConfig.url+"videoCategories" + '?key='+YouTubeDataAPIConfig.apiKey + '&part=snippet' + '&id='+categoryId )
+                    .then( (response) => {
+                      if ( !response.ok) {
+                        throw new Error();
+                      }
+                      return response.json()
+                    })
+                    .then((dataVideoCategories) => {
+                      console.log("dataVideoCategories : ", dataVideoCategories)
+                      const itemVideoCategorie = dataVideoCategories["items"][0]
+                      categoryTitle = itemVideoCategorie["snippet"]["title"]
 
-                    seachResultsJsx_.push(
-                      <Grid item xs={3}>
-                        <YouTubeVideoInfoCard 
-                          channelId={channelId} channelTitle={channelTitle} profileImageUrl={profileImageUrl} subscriberCount={subscriberCount}
-                          videoId={videoId} title={title} publishTime={publishTime} description={description}
-                          thumbnailsUrl={thumbnailsHightUrl} imageHeight={VideoSearchPageConfig.imageHeight} imageWidth={VideoSearchPageConfig.imageWidth}
-                          viewCount={viewCount} likeCount={likeCount} dislikeCount={dislikeCount} favoriteCount={favoriteCount}
-                          tags={tags}
-                        />
-                      </Grid>
-                    )     
-                    //console.log( "seachResultsJsx_ : ", seachResultsJsx_ )  
+                      // 検索結果を元に JSX 形式での Card 追加
+                      console.log( "kind : ", kind )
+                      console.log( "videoId : ", videoId )
+                      console.log( "channelId : ", channelId )            
+                      console.log( "channelTitle : ", channelTitle )
+                      console.log( "description : ", description )
+                      console.log( "thumbnailsHightUrl : ", thumbnailsHightUrl )
+                      console.log( "profileImageUrl : ", profileImageUrl )
+                      console.log( "subscriberCount : ", subscriberCount )
+                      console.log( "categoryId : ", categoryId )
+                      console.log( "categoryTitle : ", categoryTitle )
+
+                      seachResultsJsx_.push(
+                        <Grid item xs={3}>
+                          <YouTubeVideoInfoCard 
+                            channelId={channelId} channelTitle={channelTitle} profileImageUrl={profileImageUrl} subscriberCount={subscriberCount}
+                            videoId={videoId} title={title} publishTime={publishTime} description={description} categoryTitle={categoryTitle}
+                            thumbnailsUrl={thumbnailsHightUrl} imageHeight={VideoSearchPageConfig.imageHeight} imageWidth={VideoSearchPageConfig.imageWidth}
+                            viewCount={viewCount} likeCount={likeCount} dislikeCount={dislikeCount} favoriteCount={favoriteCount}
+                            tags={tags}
+                          />
+                        </Grid>
+                      )     
+                      //console.log( "seachResultsJsx_ : ", seachResultsJsx_ )  
+                    })
                   })
               })
           })
