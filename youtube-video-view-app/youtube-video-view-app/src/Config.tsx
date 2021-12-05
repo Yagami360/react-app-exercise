@@ -22,7 +22,7 @@ export const VideoSearchPageConfig = {
   imageWidth: "2000px",
   //maxResults: 2,
   maxResults: 50,
-  maxIterSearchVideo: 1,
+  iterSearchVideo: 2,
 };
 
 export const VideoWatchPageConfig = {
@@ -31,4 +31,8 @@ export const VideoWatchPageConfig = {
   videoHeight: "720",
   videoWidth: "1280",
   autoPlay: 1,
+  maxResultsComment: 100,
+  iterComment: 2,
+  maxResultsChat: 100,
+  iterChat: 2,
 };

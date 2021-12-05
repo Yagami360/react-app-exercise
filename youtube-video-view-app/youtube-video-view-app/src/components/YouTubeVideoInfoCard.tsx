@@ -204,8 +204,8 @@ const YouTubeVideoInfoCard: React.FC<Props> = ({
         { /* 動画タイトル */ }        
         <Typography variant="subtitle1" component="p">{title}</Typography>
         { /* 詳細 */ }
-        <Typography variant="subtitle2">{description}</Typography>
-        <CardActionArea href={youtubeVideoURL} target="_blank">
+        <Typography variant="subtitle2">{description.substring(0,100)+" ..."}</Typography>
+        <CardActionArea href={watchVideoURL} target="_blank">
           <Button size="small">...</Button>        
         </CardActionArea>
       </CardContent>

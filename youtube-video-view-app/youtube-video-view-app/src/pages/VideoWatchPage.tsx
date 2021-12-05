@@ -31,7 +31,7 @@ import AppConfig, { VideoWatchPageConfig, YouTubeDataAPIConfig } from '../Config
 import AppTheme from '../components/Theme';
 import Header from '../components/Header'
 import useLocalPersist from '../components/LocalPersist';
-import { getChannelIdFromVideoId, getChannelInfo, getVideoInfo } from '../components/YouTubeDataAPI';
+import { getChannelIdFromVideoId, getChannelInfo, getVideoInfo, getVideoCategoryInfo, getVideoCommentInfos, getVideoChatInfos } from '../youtube_api/YouTubeDataAPI';
 
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
@@ -117,6 +117,12 @@ const VideoWatchPage: React.VFC = () => {
   const [messageComment, setMessageComment] = useState("")
   const [messageChat, setMessageChat] = useState("")
 
+  // チャンネル情報
+  const [channelId, setChannelId] = useState()
+  const [channelTitle, setChannelTitle] = useState()
+  const [subscriberCount, setSubscriberCount] = useState()
+  const [profileImageUrl, setProfileImageUrl] = useState()
+
   // 動画情報
   const [title, setTitle] = useState()
   const [description, setDescription] = useState()
@@ -126,15 +132,11 @@ const VideoWatchPage: React.VFC = () => {
   const [likeCount, setLikeCount] = useState()
   const [dislikeCount, setDislikeCount] = useState()
   const [favoriteCount, setFavoriteCount] = useState()
+
+  // 動画カテゴリ情報
   const [categoryId, setCategoryId] = useState()  
   const [categoryTitle, setCategoryTitle] = useState()
   const [guideCategoryTitle, setGuideCategoryTitle] = useState()
-
-  // チャンネル情報
-  const [channelId, setChannelId] = useState()
-  const [channelTitle, setChannelTitle] = useState()
-  const [subscriberCount, setSubscriberCount] = useState()
-  const [profileImageUrl, setProfileImageUrl] = useState()
 
   // 動画コメント情報
   const [commentsNumber, setCommentsNumber] = useState()
@@ -153,10 +155,18 @@ const VideoWatchPage: React.VFC = () => {
       let channelId_ = undefined
       let channelInfo_ = undefined
       let videoInfo_ = undefined
+      let categoryId_ = undefined
+      let videoCategoryInfo_ = undefined
+      let videoCommentInfos_ = []
+      let liveBroadcastContent_ = undefined
+      let liveChatId_ = undefined
+      let commentsNumber_ = undefined
+      let videoChatInfos_ = []
+      let chatNumber_ = undefined
 
       // 動画ID からチャンネルIDを取得
       try {
-        channelId_ = await getChannelIdFromVideoId(videoId)
+        channelId_ = await getChannelIdFromVideoId(YouTubeDataAPIConfig.apiKey, videoId)
         console.log( "channelId_ : ", channelId_ )    
         setChannelId(channelId_)
       }
@@ -166,7 +176,7 @@ const VideoWatchPage: React.VFC = () => {
 
       // チャンネル情報を取得
       try {
-        channelInfo_ = await getChannelInfo(channelId_)
+        channelInfo_ = await getChannelInfo(YouTubeDataAPIConfig.apiKey, channelId_)
         console.log( "channelInfo_ : ", channelInfo_ )    
         setChannelTitle(channelInfo_["title"])
         setSubscriberCount(channelInfo_["subscriberCount"])
@@ -178,13 +188,140 @@ const VideoWatchPage: React.VFC = () => {
 
       // 動画情報を取得
       try {
-        videoInfo_ = await getVideoInfo(videoId)
+        videoInfo_ = await getVideoInfo(YouTubeDataAPIConfig.apiKey, videoId)
         console.log( "videoInfo_ : ", videoInfo_ )    
         setTitle(videoInfo_["title"])
         setDescription(videoInfo_["description"])
+        setPublishedAt(videoInfo_["publishedAt"])
+        setTags(videoInfo_["tags"])
+        setViewCount(videoInfo_["viewCount"])
+        setLikeCount(videoInfo_["likeCount"])
+        setDislikeCount(videoInfo_["dislikeCount"])
+        setFavoriteCount(videoInfo_["favoriteCount"])
+
+        categoryId_ = videoInfo_["categoryId"]
+        setCategoryId(videoInfo_["categoryId"])
+
+        liveBroadcastContent_ = videoInfo_["liveBroadcastContent"]
+        liveChatId_ = videoInfo_["activeLiveChatId"]
+        setLiveBroadcastContent(videoInfo_["liveBroadcastContent"])
+        setLiveChatId(videoInfo_["activeLiveChatId"])
+        setConcurrentViewers(videoInfo_["concurrentViewers"])
       }
       catch (err) {
         console.error(err);
+      }
+
+      // 動画カテゴリ情報を取得
+      try {
+        videoCategoryInfo_ = await getVideoCategoryInfo(YouTubeDataAPIConfig.apiKey, categoryId_)
+        console.log( "videoCategoryInfo_ : ", videoCategoryInfo_ )    
+        setCategoryTitle(videoCategoryInfo_["title"])
+      }
+      catch (err) {
+        console.error(err);
+      }
+
+      // 動画コメント情報を取得
+      if ( liveBroadcastContent_ === undefined || liveBroadcastContent_ === "none" ) {
+        try {
+          [videoCommentInfos_, commentsNumber_] = await getVideoCommentInfos(YouTubeDataAPIConfig.apiKey, videoId, VideoWatchPageConfig.maxResultsComment, VideoWatchPageConfig.iterComment)
+          setCommentsNumber(commentsNumber_)
+          console.log( "videoCommentInfos_ : ", videoCommentInfos_ )    
+        }
+        catch (err) {
+          console.error(err);
+        }
+  
+        let commentsJsx_: any = []
+        videoCommentInfos_.forEach((videoCommentInfo_: any)=> {
+          commentsJsx_.push(<>
+            <ListItem alignItems="flex-start">
+              { /* アイコン画像 */ }
+              <ListItemAvatar>
+                <Link href={videoCommentInfo_["authorChannelUrl"]}><Avatar aria-label="avatar" src={videoCommentInfo_["authorProfileImageUrl"]} style={{ width: 60, height: 60 }} /></Link>
+              </ListItemAvatar>
+              <ListItemText 
+                primary={<>
+                  <Box mx={1} style={{display:"flex"}}>
+                    { /* ユーザー名 */ }
+                    <Typography component="span" variant="body2" color="textPrimary" style={{display: "inline"}}>{videoCommentInfo_["authorDisplayName"]}</Typography>
+                    { /* コメント投稿日 */ }
+                    <Box mx={2} style={{display:"flex"}}>
+                      <Typography component="span" variant="body2" color="textSecondary" style={{display: "inline"}}>{videoCommentInfo_["publishedAt"]}</Typography>
+                    </Box>
+                  </Box>
+                </>}
+                secondary={<>
+                  <Box mx={2}>
+                    { /* コメント */ }
+                    <Typography variant="subtitle2">{convertCommentToJsx(videoCommentInfo_["textDisplay"])}</Typography>
+                    <Box mt={1} style={{display:"flex"}}>
+                      { /* いいね数 */ }
+                      <Box mx={0} style={{display:"flex"}}>
+                        <ThumbUpOutlinedIcon />
+                      </Box>
+                      <Box mx={1} style={{display:"flex"}}>
+                        <Typography variant="subtitle2">{videoCommentInfo_["likeCount"]}</Typography>
+                      </Box>
+                      { /* 返信 */ }
+                      <Box mx={1} style={{display:"flex"}}>
+                        <Typography variant="subtitle2">返信</Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </>}
+              />
+            </ListItem>
+            <Divider variant="inset" component="li" />
+          </>)
+        })
+        setCommentsJsx(commentsJsx_)
+      }
+
+      // ライブチャット情報を取得
+      if ( liveBroadcastContent_ === "live" && liveChatId_ !== undefined ) {
+        try {
+          [videoChatInfos_, chatNumber_] = await getVideoChatInfos(YouTubeDataAPIConfig.apiKey, liveChatId_, VideoWatchPageConfig.maxResultsChat, VideoWatchPageConfig.iterChat)
+          console.log( "videoChatInfos_ : ", videoChatInfos_ )    
+        }
+        catch (err) {
+          console.error(err);
+        }
+
+        let chatsJsx_: any = []
+        videoChatInfos_.forEach((videoChatInfo_: any)=> {
+          chatsJsx_.push(<>
+            <ListItem>
+              <Box style={{display:"flex"}}>
+                { /* アイコン画像 */ }
+                <ListItemAvatar>
+                  <Link href={videoChatInfo_["channelUrl"]}><Avatar aria-label="avatar" src={videoChatInfo_["profileImageUrl"]} style={{ width: 60, height: 60 }} /></Link>
+                </ListItemAvatar>
+                <ListItemText 
+                  primary={<>
+                    <Box mx={1} style={{display:"flex"}}>
+                      { /* ユーザー名 */ }
+                      <Typography component="span" variant="body2" color="textPrimary" style={{display: "inline"}}>{videoChatInfo_["displayName"]}</Typography>
+                      { /* チャット投稿日 */ }
+                      <Box mx={2} style={{display:"flex"}}>
+                        <Typography component="span" variant="body2" color="textSecondary" style={{display: "inline"}}>{videoChatInfo_["publishedAt"]}</Typography>
+                      </Box>
+                    </Box>
+                  </>}
+                  secondary={<>
+                    <Box mx={2}>
+                      { /* コメント */ }
+                      <Typography variant="subtitle2">{videoChatInfo_["displayMessage"]}</Typography>
+                    </Box>
+                  </>}
+                />
+              </Box>
+            </ListItem>
+            <Divider variant="inset" component="li" />
+          </>)
+        })
+        setChatsJsx(chatsJsx_)
       }
 
     })()
@@ -210,12 +347,12 @@ const VideoWatchPage: React.VFC = () => {
         <Grid container spacing={0}>
           { /* 動画表示 */ }
           <Typography variant="subtitle2">{messageVideo}</Typography>
-          <Grid item xs={10}>
+          <Grid item xs={9}>
             <iframe id="ytplayer" data-type="text/html" width={VideoWatchPageConfig.videoWidth} height={VideoWatchPageConfig.videoHeight} src={videoURL} frameBorder="0"></iframe>  { /* IFrame Player API では、<iframe> タグで動画プレイヤーを埋め込むことで動画再生できるようになる。<iframe> は、HTML の標準機能でインラインフレーム要素を表す */ }
           </Grid>
           { /* チャット表示 */ }
           <Typography variant="subtitle2">{messageChat}</Typography>
-          <Grid item xs={2}>
+          <Grid item xs={3}>
             {liveBroadcastContent !== "none" ? chatsJsx : ""}
           </Grid>
         </Grid>
