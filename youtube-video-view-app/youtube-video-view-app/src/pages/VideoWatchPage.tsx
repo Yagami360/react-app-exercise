@@ -26,6 +26,7 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemAvatar from '@material-ui/core/ListItemAvatar';
+import Paper from '@material-ui/core/Paper';
 
 import AppConfig, { VideoWatchPageConfig, YouTubeDataAPIConfig } from '../Config'
 import AppTheme from '../components/Theme';
@@ -44,6 +45,10 @@ const useStyles = makeStyles({
   // 各ユーザーのタイムラインのスタイル
   videoInfoStatistics: {
     display: "flex",          // 横に配置
+  },
+  chatTimeLineStyle: {
+    height: "780px",
+    overflowY: "scroll",      // 縦スクロールバー
   },
 })
 
@@ -344,18 +349,25 @@ const VideoWatchPage: React.VFC = () => {
       <Header title="YouTube Video View App" selectedTabIdx={AppConfig.videoWatchPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
       {/* ボディ入力 */}
       <Box m={2}>
-        <Grid container spacing={0}>
+        <Typography variant="subtitle2">{messageVideo}</Typography>
+        <Box style={{display: "flex"}}>
           { /* 動画表示 */ }
-          <Typography variant="subtitle2">{messageVideo}</Typography>
-          <Grid item xs={9}>
-            <iframe id="ytplayer" data-type="text/html" width={VideoWatchPageConfig.videoWidth} height={VideoWatchPageConfig.videoHeight} src={videoURL} frameBorder="0"></iframe>  { /* IFrame Player API では、<iframe> タグで動画プレイヤーを埋め込むことで動画再生できるようになる。<iframe> は、HTML の標準機能でインラインフレーム要素を表す */ }
-          </Grid>
+          <iframe id="ytplayer" data-type="text/html" width={VideoWatchPageConfig.videoWidth} height={VideoWatchPageConfig.videoHeight} src={videoURL} frameBorder="0"></iframe>  { /* IFrame Player API では、<iframe> タグで動画プレイヤーを埋め込むことで動画再生できるようになる。<iframe> は、HTML の標準機能でインラインフレーム要素を表す */ }
           { /* チャット表示 */ }
           <Typography variant="subtitle2">{messageChat}</Typography>
-          <Grid item xs={3}>
-            {liveBroadcastContent !== "none" ? chatsJsx : ""}
-          </Grid>
-        </Grid>
+          <Box style={{width: "400px"}} ml={2}>
+            <Paper variant="outlined" square>
+              <Box m={1}>
+                <Typography variant="h6">{liveBroadcastContent !== "none" ? "チャット" : ""}</Typography>
+              </Box>
+            </Paper>
+            <Box className={style.chatTimeLineStyle}>
+              <Paper elevation={1} variant="outlined" square>
+                {liveBroadcastContent !== "none" ? chatsJsx : ""}
+              </Paper>
+            </Box>
+          </Box>
+        </Box>
         { /* 動画情報表示 */ }
         <Box m={2}>
           { /* 動画タイトル */ }
