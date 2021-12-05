@@ -16,6 +16,9 @@
 
         > JavaScript のコードで直接 API キーの値を設定すると、GitHub で外部公開する際に値がリークするので、環境変数で管理する。(この .env ファイルは GitHub 管理しないようにする）
 
+        > YouTube Data API の１日の利用上限は、10,000 Queries / day になっている。各エンドポイント旅のクエリポイント使用量は、https://developers.google.com/youtube/v3/determine_quota_cost に記載されている。
+        > 利用上限に達してしまう場合は、割当て量の増加申請するか、別の GCP プロジェクトで別の API キーを作成してそれを利用すればよい。
+
 1. Firebase プロジェクトを作成する<br>
     「[Firebase のコンソール画面](https://console.firebase.google.com/?hl=ja)」から `video-view-app-684c0` のプロジェクト ID でプロジェクトを作成する。
 
@@ -63,6 +66,7 @@
     - https://cly7796.net/blog/javascript/try-using-the-youtube-data-api/
     - https://qiita.com/koki_develop/items/4cd7de3898dae2c33f20#youtube-%E5%8B%95%E7%94%BB%E3%82%92%E6%A4%9C%E7%B4%A2%E3%81%99%E3%82%8B
     - https://qiita.com/yaju/items/3bec88dbd544502e1343
+    - https://developers.google.com/youtube/v3/determine_quota_cost
 
 - IFrame Player API / YouTube Player API
     - https://developers.google.com/youtube/player_parameters?hl=ja
@@ -71,3 +75,8 @@
 - YouTube Live Streaming API
     - https://developers.google.com/youtube/v3/live/docs
     - 
+
+- デザイン
+    - https://zenn.dev/mone9610/articles/f4548546fb8e81
+
+- https://github.com/y-endo/nicovideo-like

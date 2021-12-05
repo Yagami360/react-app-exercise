@@ -1,3 +1,4 @@
+/* eslint-disable */
 export const AppConfig = {
   appName: "youtube-video-view-app",
   topPage: { index : 0, path : "/" },
@@ -19,6 +20,9 @@ export const VideoSearchPageConfig = {
   collectionNameSearchWord: "search-word-database",
   imageHeight: "300px",
   imageWidth: "2000px",
+  //maxResults: 2,
+  maxResults: 50,
+  maxIterSearchVideo: 1,
 };
 
 export const VideoWatchPageConfig = {
@@ -26,4 +30,5 @@ export const VideoWatchPageConfig = {
   //videoWidth: "1920",
   videoHeight: "720",
   videoWidth: "1280",
+  autoPlay: 1,
 };
