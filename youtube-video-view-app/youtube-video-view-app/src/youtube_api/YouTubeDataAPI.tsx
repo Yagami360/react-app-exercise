@@ -136,7 +136,7 @@ export async function getVideoCategoryInfo(apiKey: any, categoryId: any) {
 //--------------------------------------------------------
 // YouTubeAPI を使用して動画のコメント情報を返す非同期関数
 //--------------------------------------------------------
-export async function getVideoCommentInfos(apiKey: any, videoId: any, maxResults:Number, iter: Number ) {
+export async function getVideoCommentInfos(apiKey: any, videoId: any, maxResults:Number = 100, iter: Number = 1 ) {
   let videoCommentInfos: any = []
   let commentsNumber = undefined
   if( videoId !== undefined && videoId !== "") {
@@ -146,7 +146,7 @@ export async function getVideoCommentInfos(apiKey: any, videoId: any, maxResults
       //console.log("dataCommentThreads : ", dataCommentThreads)
       commentsNumber = dataCommentThreads["pageInfo"]["totalResults"]
       dataCommentThreads["items"].forEach((itemCommentThread: any)=> {
-        videoCommentInfos.push({
+        videoCommentInfos.unshift({
           "commentId": itemCommentThread["id"],
           "textDisplay": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["textDisplay"],
           "publishedAt": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["publishedAt"],
@@ -169,18 +169,18 @@ export async function getVideoCommentInfos(apiKey: any, videoId: any, maxResults
 //--------------------------------------------------------
 // YouTubeAPI を使用してライブチャット情報を返す非同期関数
 //--------------------------------------------------------
-export async function getVideoChatInfos(apiKey: any, liveChatId: any, maxResults:Number, iter: Number ) {
+export async function getVideoChatInfos(apiKey: any, liveChatId: any, maxResults:Number = 100, iter: Number = 1, nextPageToken: any = "" ) {
   let videoChatInfos: any = []
   let chatNumber = undefined
 
   if( liveChatId !== undefined && liveChatId !== "") {
     try {
-      const response = await fetch(YOUTUBE_DATA_API_URL+"liveChat/messages" + '?key='+apiKey + '&part=snippet,authorDetails' + '&liveChatId='+liveChatId + '&maxResults='+maxResults )
+      const response = await fetch(YOUTUBE_DATA_API_URL+"liveChat/messages" + '?key='+apiKey + '&part=snippet,authorDetails' + '&liveChatId='+liveChatId + '&maxResults='+maxResults + '&pageToken='+nextPageToken)
       const dataLiveChatMessages = await response.json()
-      console.log("dataLiveChatMessages : ", dataLiveChatMessages)
+      //console.log("dataLiveChatMessages : ", dataLiveChatMessages)
       chatNumber = dataLiveChatMessages["pageInfo"]["totalResults"]
       dataLiveChatMessages["items"].forEach((itemLiveChatMessage: any)=> {
-        videoChatInfos.push({
+        videoChatInfos.unshift({
           "liveChatId": liveChatId,
           "displayName": itemLiveChatMessage["authorDetails"]["displayName"],
           "channelId": itemLiveChatMessage["authorDetails"]["channelId"],
@@ -188,6 +188,7 @@ export async function getVideoChatInfos(apiKey: any, liveChatId: any, maxResults
           "profileImageUrl": itemLiveChatMessage["authorDetails"]["profileImageUrl"],
           "publishedAt": itemLiveChatMessage["snippet"]["publishedAt"],
           "displayMessage": itemLiveChatMessage["snippet"]["displayMessage"],
+          "nextPageToken": dataLiveChatMessages["nextPageToken"],
         })
       })      
     }
@@ -196,15 +197,14 @@ export async function getVideoChatInfos(apiKey: any, liveChatId: any, maxResults
     }    
   }
 
-  return [videoChatInfos, chatNumber]
+  return [videoChatInfos, chatNumber, nextPageToken]
 }
 
 //--------------------------------------------------------
 // YouTubeAPI を使用して動画検索結果を返す非同期関数
 //--------------------------------------------------------
-export async function searchVideos(apiKey: any, searchWord: any, maxResults:Number, iter: Number ) {
+export async function searchVideos(apiKey: any, searchWord: any, maxResults:Number = 50, iter: Number = 1, nextPageToken: any = "") {
   let searchVideoInfos: any = []
-  let nextPageToken = ""
   let totalNumber = undefined
   let searchNumber = 0
   if( searchWord !== undefined && searchWord !== "") {
@@ -218,7 +218,7 @@ export async function searchVideos(apiKey: any, searchWord: any, maxResults:Numb
         totalNumber = dataSearch["pageInfo"]["totalResults"]
   
         dataSearch["items"].forEach((itemSearch: any)=> {
-          searchVideoInfos.push({
+          searchVideoInfos.unshift({
             "channelId": itemSearch["snippet"]["channelId"],
             "channelTitle": itemSearch["snippet"]["channelTitle"],
             "videoId": itemSearch["id"]["videoId"],

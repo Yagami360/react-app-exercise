@@ -203,6 +203,16 @@ const VideoSearchPage: React.VFC = () => {
               })
           })
 
+          /*
+          const seachResultsJsx__ = seachResultsJsx_.slice();
+          setSeachResultsJsx(seachResultsJsx__)
+
+          const seachResultsLiveJsx__ = seachResultsLiveJsx_.slice();
+          setSeachResultsLiveJsx(seachResultsLiveJsx__)
+
+          const seachResultsUpcomingJsx__ = seachResultsUpcomingJsx_.slice();
+          setSeachResultsUpcomingJsx(seachResultsUpcomingJsx__)
+          */
           setSeachResultsJsx(seachResultsJsx_)
           setSeachResultsLiveJsx(seachResultsLiveJsx_)
           setSeachResultsUpcomingJsx(seachResultsUpcomingJsx_)

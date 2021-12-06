@@ -38,4 +38,6 @@ export const VideoWatchPageConfig = {
   iterComment: 2,
   maxResultsChat: 100,
   iterChat: 2,
+  intervalTimeChat: 100,
+  maxResultsIntervalChat: 10,
 };

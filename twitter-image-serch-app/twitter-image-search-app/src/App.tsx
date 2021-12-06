@@ -27,7 +27,7 @@ const App: React.VFC = () => {
 
   // アプリのブラウザタイトルを変更
   useEffect(() => {
-    document.title = "Twitter Image Serch App"
+    document.title = "Twitter Image Search App"
   });
 
   //------------------------
