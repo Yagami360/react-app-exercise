@@ -1,6 +1,6 @@
 /* eslint-disable */
 import React from 'react';
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useParams, useLocation } from 'react-router-dom';
 
 import firebase from "firebase";
@@ -28,29 +28,19 @@ import ListItemText from '@material-ui/core/ListItemText';
 import ListItemAvatar from '@material-ui/core/ListItemAvatar';
 import Paper from '@material-ui/core/Paper';
 
-import AppConfig, { VideoWatchPageConfig, YouTubeDataAPIConfig } from '../Config'
+import AppConfig, { VideoWatchPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import Header from '../components/Header'
+import CommentList from '../components/CommentList'
+import LiveChatList from '../components/LiveChatList'
 import useLocalPersist from '../components/LocalPersist';
-import { getChannelIdFromVideoId, getChannelInfo, getVideoInfo, getVideoCategoryInfo, getVideoCommentInfos, getVideoChatInfos } from '../youtube_api/YouTubeDataAPI';
+import { getAPIKey, getChannelIdFromVideoId, getChannelInfo, getVideoInfo, getVideoCategoryInfo, getVideoCommentInfos, getVideoChatInfos } from '../youtube_api/YouTubeDataAPI';
 
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
 
 // Firestore にアクセスするためのオブジェクト作成
 const firestore = firebase.firestore()
-
-// 独自のスタイル定義
-const useStyles = makeStyles({
-  // 各ユーザーのタイムラインのスタイル
-  videoInfoStatistics: {
-    display: "flex",          // 横に配置
-  },
-  chatTimeLineStyle: {
-    height: "780px",
-    overflowY: "scroll",      // 縦スクロールバー
-  },
-})
 
 // 文字列を改行コードで分割して改行タグに置換する関数
 const convertDescriptionToJsx = (text: any) => {
@@ -66,17 +56,6 @@ const convertDescriptionToJsx = (text: any) => {
       textJsx.push(t.match(/<[^>]*>|[^<>]+/g))
     })
     */
-  }
-  //console.log( "textJsx : ", textJsx )
-  return textJsx
-}
-const convertCommentToJsx = (text: any) => {
-  let textJsx: any = []
-  if( text != undefined ) {
-    // [正規表現] 
-    // / : 正規表現の開始と終了
-    // オプションフラグ g : グローバルサーチ。文字列全体に対してマッチングするか
-    textJsx = text.split(/(<br>)/g).map((t:any) => (t === '<br>') ? <br/> : t)  // <br> を区切り文字として配列に分割し、分割した配列の \n を <br/> タグに変換する
   }
   //console.log( "textJsx : ", textJsx )
   return textJsx
@@ -97,14 +76,11 @@ const VideoWatchPage: React.VFC = () => {
   //------------------------
   // パスパラメーター
   //------------------------
-  const location = useLocation();   // URL path や パラメータなど
-  const params = useParams();       // パスパラメーター取得
-  const videoId = params["video_id"]
-  const videoURL = 'https://www.youtube.com/embed/' + videoId + '?autoplay='+VideoWatchPageConfig.autoPlay;
+  const params_ = useParams();       // パスパラメーター取得
+  const videoId_ = params_["video_id"]
+  const videoURL_ = 'https://www.youtube.com/embed/' + videoId_ + '?autoplay='+VideoWatchPageConfig.autoPlay;
   //console.log( "location : ", location )
   //console.log( "params : ", params )
-  console.log( "videoId : ", videoId )
-  console.log( "videoURL : ", videoURL )
 
   //------------------------
   // フック
@@ -112,26 +88,19 @@ const VideoWatchPage: React.VFC = () => {
   // ダークモード
   const [darkMode, setDarkMode] = useLocalPersist(AppConfig.appName, "darkMode", false)
 
-  // 独自スタイル
-  const style = useStyles()
-
   // 処理結果メッセージ
   const [messageVideo, setMessageVideo] = useState("")
   const [messageChannel, setMessageChannel] = useState("")
   const [messageVideoCategory, setMessageVideoCategory] = useState("")
-  const [messageComment, setMessageComment] = useState("")
-  const [messageChat, setMessageChat] = useState("")
 
   // チャンネル情報
-  let channelId_: any = undefined
-  let channelInfo_: any = undefined
   const [channelId, setChannelId] = useState()
   const [channelTitle, setChannelTitle] = useState()
   const [subscriberCount, setSubscriberCount] = useState()
   const [profileImageUrl, setProfileImageUrl] = useState()
 
   // 動画情報
-  let videoInfo_: any = undefined
+  const [videoId, setVideoId] = useState(videoId_)
   const [title, setTitle] = useState()
   const [description, setDescription] = useState()
   const [publishedAt, setPublishedAt] = useState()
@@ -142,30 +111,14 @@ const VideoWatchPage: React.VFC = () => {
   const [favoriteCount, setFavoriteCount] = useState()
 
   // 動画カテゴリ情報
-  let categoryId_: any = undefined
-  let videoCategoryInfo_: any = undefined
   const [categoryId, setCategoryId] = useState()  
   const [categoryTitle, setCategoryTitle] = useState()
   const [guideCategoryTitle, setGuideCategoryTitle] = useState()
-
-  // 動画コメント情報
-  let videoCommentInfos_: any = []
-  let commentsNumber_: any = undefined
-  let commentsJsx_: any = []
-  const [commentsNumber, setCommentsNumber] = useState()
-  const [commentsJsx, setCommentsJsx] = useState([])
   
   // チャット情報
-  let liveBroadcastContent_: any = undefined
-  let liveChatId_: any = undefined
-  let videoChatInfos_: any = []
-  let chatNumber_: any = undefined
-  let chatsJsx_: any = []
-  let chatNextPageToken_: any = ""
-  const [liveBroadcastContent, setLiveBroadcastContent] = useState()
+  const [liveChatId, setLiveChatId] = useState("")
+  const [liveBroadcastContent, setLiveBroadcastContent] = useState("")
   const [concurrentViewers, setConcurrentViewers] = useState()
-  const [liveChatId, setLiveChatId] = useState()
-  const [chatsJsx, setChatsJsx] = useState([])
 
   // ページ読み込み時の副作用フック
   useEffect( () => {
@@ -174,9 +127,11 @@ const VideoWatchPage: React.VFC = () => {
     // useEffect 内で非同期処理の関数を定義
     const initPageAsync = async () => {
       console.log( "call async" )
+
       // 動画ID からチャンネルIDを取得
+      let channelId_: any = undefined
       try {
-        channelId_ = await getChannelIdFromVideoId(YouTubeDataAPIConfig.apiKey, videoId)
+        channelId_ = await getChannelIdFromVideoId(getAPIKey(), videoId)
         console.log( "channelId_ : ", channelId_ )    
         setChannelId(channelId_)
       }
@@ -185,8 +140,9 @@ const VideoWatchPage: React.VFC = () => {
       }      
 
       // チャンネル情報を取得
+      let channelInfo_: any = undefined
       try {
-        channelInfo_ = await getChannelInfo(YouTubeDataAPIConfig.apiKey, channelId_)
+        channelInfo_ = await getChannelInfo(getAPIKey(), channelId_)
         console.log( "channelInfo_ : ", channelInfo_ )    
         setChannelTitle(channelInfo_["title"])
         setSubscriberCount(channelInfo_["subscriberCount"])
@@ -197,8 +153,12 @@ const VideoWatchPage: React.VFC = () => {
       }
 
       // 動画情報を取得
+      let videoInfo_: any = undefined
+      let categoryId_: any = undefined
+      let liveChatId_: any = undefined
+      let liveBroadcastContent_: any = undefined
       try {
-        videoInfo_ = await getVideoInfo(YouTubeDataAPIConfig.apiKey, videoId)
+        videoInfo_ = await getVideoInfo(getAPIKey(), videoId)
         console.log( "videoInfo_ : ", videoInfo_ )    
         setTitle(videoInfo_["title"])
         setDescription(videoInfo_["description"])
@@ -212,10 +172,12 @@ const VideoWatchPage: React.VFC = () => {
         categoryId_ = videoInfo_["categoryId"]
         setCategoryId(videoInfo_["categoryId"])
 
-        liveBroadcastContent_ = videoInfo_["liveBroadcastContent"]
         liveChatId_ = videoInfo_["activeLiveChatId"]
-        setLiveBroadcastContent(videoInfo_["liveBroadcastContent"])
         setLiveChatId(videoInfo_["activeLiveChatId"])
+
+        liveBroadcastContent_ = videoInfo_["liveBroadcastContent"]        
+        setLiveBroadcastContent(videoInfo_["liveBroadcastContent"])
+
         setConcurrentViewers(videoInfo_["concurrentViewers"])
       }
       catch (err) {
@@ -224,187 +186,17 @@ const VideoWatchPage: React.VFC = () => {
 
       // 動画カテゴリ情報を取得
       try {
-        videoCategoryInfo_ = await getVideoCategoryInfo(YouTubeDataAPIConfig.apiKey, categoryId_)
+        const videoCategoryInfo_ = await getVideoCategoryInfo(getAPIKey(), categoryId_)
         console.log( "videoCategoryInfo_ : ", videoCategoryInfo_ )    
         setCategoryTitle(videoCategoryInfo_["title"])
       }
       catch (err) {
         console.error(err);
       }
-
-      // 動画コメント情報を取得
-      if ( liveBroadcastContent_ === undefined || liveBroadcastContent_ === "none" ) {
-        try {
-          [videoCommentInfos_, commentsNumber_] = await getVideoCommentInfos(YouTubeDataAPIConfig.apiKey, videoId, VideoWatchPageConfig.maxResultsComment, VideoWatchPageConfig.iterComment)
-          setCommentsNumber(commentsNumber_)
-          console.log( "videoCommentInfos_ : ", videoCommentInfos_ )    
-        }
-        catch (err) {
-          console.error(err);
-        }
-  
-        videoCommentInfos_.forEach((videoCommentInfo_: any)=> {
-          commentsJsx_.unshift(<>
-            <ListItem alignItems="flex-start">
-              { /* アイコン画像 */ }
-              <ListItemAvatar>
-                <Link href={videoCommentInfo_["authorChannelUrl"]}><Avatar aria-label="avatar" src={videoCommentInfo_["authorProfileImageUrl"]} style={{ width: 60, height: 60 }} /></Link>
-              </ListItemAvatar>
-              <ListItemText 
-                primary={<>
-                  <Box mx={1} style={{display:"flex"}}>
-                    { /* ユーザー名 */ }
-                    <Typography component="span" variant="body2" color="textPrimary" style={{display: "inline"}}>{videoCommentInfo_["authorDisplayName"]}</Typography>
-                    { /* コメント投稿日 */ }
-                    <Box mx={2} style={{display:"flex"}}>
-                      <Typography component="span" variant="body2" color="textSecondary" style={{display: "inline"}}>{videoCommentInfo_["publishedAt"]}</Typography>
-                    </Box>
-                  </Box>
-                </>}
-                secondary={<>
-                  <Box mx={2}>
-                    { /* コメント */ }
-                    <Typography variant="subtitle2">{convertCommentToJsx(videoCommentInfo_["textDisplay"])}</Typography>
-                    <Box mt={1} style={{display:"flex"}}>
-                      { /* いいね数 */ }
-                      <Box mx={0} style={{display:"flex"}}>
-                        <ThumbUpOutlinedIcon />
-                      </Box>
-                      <Box mx={1} style={{display:"flex"}}>
-                        <Typography variant="subtitle2">{videoCommentInfo_["likeCount"]}</Typography>
-                      </Box>
-                      { /* 返信 */ }
-                      <Box mx={1} style={{display:"flex"}}>
-                        <Typography variant="subtitle2">返信</Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                </>}
-              />
-            </ListItem>
-            <Divider variant="inset" component="li" />
-          </>)
-        })
-        const commentsJsx__ = commentsJsx_.slice();
-        setCommentsJsx(commentsJsx__)
-      }
-
-      // ライブチャット情報を取得
-      if ( liveBroadcastContent_ === "live" && liveChatId_ !== undefined ) {
-        try {
-          [videoChatInfos_, chatNumber_, chatNextPageToken_] = await getVideoChatInfos(YouTubeDataAPIConfig.apiKey, liveChatId_, VideoWatchPageConfig.maxResultsChat, VideoWatchPageConfig.iterChat, chatNextPageToken_)
-          console.log( "videoChatInfos_ : ", videoChatInfos_ )    
-        }
-        catch (err) {
-          console.error(err);
-        }
-
-        videoChatInfos_.forEach((videoChatInfo_: any)=> {
-          chatsJsx_.unshift(<>
-            <ListItem>
-              <Box style={{display:"flex"}}>
-                { /* アイコン画像 */ }
-                <ListItemAvatar>
-                  <Link href={videoChatInfo_["channelUrl"]}><Avatar aria-label="avatar" src={videoChatInfo_["profileImageUrl"]} style={{ width: 60, height: 60 }} /></Link>
-                </ListItemAvatar>
-                <ListItemText 
-                  primary={<>
-                    <Box mx={1} style={{display:"flex"}}>
-                      { /* ユーザー名 */ }
-                      <Typography component="span" variant="body2" color="textPrimary" style={{display: "inline"}}>{videoChatInfo_["displayName"]}</Typography>
-                      { /* チャット投稿日 */ }
-                      <Box mx={2} style={{display:"flex"}}>
-                        <Typography component="span" variant="body2" color="textSecondary" style={{display: "inline"}}>{videoChatInfo_["publishedAt"]}</Typography>
-                      </Box>
-                    </Box>
-                  </>}
-                  secondary={<>
-                    <Box mx={2}>
-                      { /* コメント */ }
-                      <Typography variant="subtitle2">{videoChatInfo_["displayMessage"]}</Typography>
-                    </Box>
-                  </>}
-                />
-              </Box>
-            </ListItem>
-            <Divider variant="inset" component="li" />
-          </>)
-        })
-        const chatsJsx__ = chatsJsx_.slice();
-        setChatsJsx(chatsJsx__)
-      }
     }
 
     // 非同期処理実行
     initPageAsync()
-  }, [])
-
-  // setInterval() を呼び出す副作用フック。レンダーの度にsetIntervalが何度も実行されて、オーバーフローやメモリリークが発生するので副作用フック内で行う
-  useEffect( () => {
-    //console.log( "call useEffect2" )
-
-    // 一定時間経過度に呼び出されるイベントハンドラ
-    // setInterval(()=>{処理}, インターバル時間msec) : 一定時間度に {} で定義した処理を行う
-    let timerChat = setInterval( ()=>{
-      console.log( "call timerChat" )
-      console.log( "liveBroadcastContent_ : ", liveBroadcastContent_ )
-      console.log( "liveChatId_ : ", liveChatId_ )
-
-      // ライブチャット情報を取得
-      if ( liveBroadcastContent_ === "live" && liveChatId_ !== undefined ) {
-        //console.log( "chatNextPageToken_ : ", chatNextPageToken_ )
-        getVideoChatInfos(YouTubeDataAPIConfig.apiKey, liveChatId_, VideoWatchPageConfig.maxResultsIntervalChat, 1, chatNextPageToken_ )
-          .then( ([videoChatInfos_, chatNumber_, nextPageToken_ ]) => {
-            console.log( "[timerChat] videoChatInfos_ : ", videoChatInfos_ )
-            chatNextPageToken_ = nextPageToken_
-            videoChatInfos_.forEach((videoChatInfo_: any)=> {
-              chatsJsx_.unshift(<>
-                <ListItem>
-                  <Box style={{display:"flex"}}>
-                    { /* アイコン画像 */ }
-                    <ListItemAvatar>
-                      <Link href={videoChatInfo_["channelUrl"]}><Avatar aria-label="avatar" src={videoChatInfo_["profileImageUrl"]} style={{ width: 60, height: 60 }} /></Link>
-                    </ListItemAvatar>
-                    <ListItemText 
-                      primary={<>
-                        <Box mx={1} style={{display:"flex"}}>
-                          { /* ユーザー名 */ }
-                          <Typography component="span" variant="body2" color="textPrimary" style={{display: "inline"}}>{videoChatInfo_["displayName"]}</Typography>
-                          { /* チャット投稿日 */ }
-                          <Box mx={2} style={{display:"flex"}}>
-                            <Typography component="span" variant="body2" color="textSecondary" style={{display: "inline"}}>{videoChatInfo_["publishedAt"]}</Typography>
-                          </Box>
-                        </Box>
-                      </>}
-                      secondary={<>
-                        <Box mx={2}>
-                          { /* コメント */ }
-                          <Typography variant="subtitle2">{videoChatInfo_["displayMessage"]}</Typography>
-                        </Box>
-                      </>}
-                    />
-                  </Box>
-                </ListItem>
-                <Divider variant="inset" component="li" />
-              </>)
-            })
-            //console.log( "chatsJsx_ : ", chatsJsx_ )
-            const chatsJsx__ = chatsJsx_.slice();
-            setChatsJsx(chatsJsx__)
-          })
-          .catch(err => {
-            console.log(err);
-          })    
-          .finally( () => {
-          })
-      }
-    }, VideoWatchPageConfig.intervalTimeChat );
-
-    // アンマウント処理
-    return () => {
-      clearInterval(timerChat)
-      console.log('コンポーネントがアンマウントしました')
-    }
   }, [])
 
   //------------------------
@@ -416,7 +208,6 @@ const VideoWatchPage: React.VFC = () => {
   //------------------------
   const channelURL = "https://www.youtube.com/channel/" + channelId
   const youtubeVideoURL = "https://www.youtube.com/watch?v=" + videoId
-  console.log( "chatsJsx : ", chatsJsx )
 
   return (
     <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
@@ -429,21 +220,9 @@ const VideoWatchPage: React.VFC = () => {
         <Typography variant="subtitle2">{messageVideo}</Typography>
         <Box style={{display: "flex"}}>
           { /* 動画表示 */ }
-          <iframe id="ytplayer" data-type="text/html" width={VideoWatchPageConfig.videoWidth} height={VideoWatchPageConfig.videoHeight} src={videoURL} frameBorder="0"></iframe>  { /* IFrame Player API では、<iframe> タグで動画プレイヤーを埋め込むことで動画再生できるようになる。<iframe> は、HTML の標準機能でインラインフレーム要素を表す */ }
+          <iframe id="ytplayer" data-type="text/html" width={VideoWatchPageConfig.videoWidth} height={VideoWatchPageConfig.videoHeight} src={videoURL_} frameBorder="0"></iframe>  { /* IFrame Player API では、<iframe> タグで動画プレイヤーを埋め込むことで動画再生できるようになる。<iframe> は、HTML の標準機能でインラインフレーム要素を表す */ }
           { /* チャット表示 */ }
-          <Typography variant="subtitle2">{messageChat}</Typography>
-          <Box style={{width: "400px"}} ml={2}>
-            <Paper variant="outlined" square>
-              <Box m={1}>
-                <Typography variant="h6">{liveBroadcastContent !== "none" ? "チャット" : ""}</Typography>
-              </Box>
-            </Paper>
-            <Box className={style.chatTimeLineStyle}>
-              <Paper elevation={1} variant="outlined" square>
-                {liveBroadcastContent !== "none" ? chatsJsx : ""}
-              </Paper>
-            </Box>
-          </Box>
+          <LiveChatList liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} />
         </Box>
         { /* 動画情報表示 */ }
         <Box m={2}>
@@ -510,15 +289,11 @@ const VideoWatchPage: React.VFC = () => {
               <ListItemText primary={"タグ : " + convertTagsToJsx(tags)} />
             </ListItem>
           </List>
-          { /* コメント */ }          
-          <Divider />
-          <Box mt={2} mx={2}>
-            <Typography variant="subtitle1" display="inline" style={{whiteSpace: 'pre-line'}}>{liveBroadcastContent === "none" ? commentsNumber + " 件のコメント" : ""}</Typography>
-          </Box>
-          <List component="div">
-            {liveBroadcastContent === "none" ? commentsJsx : ""}
-          </List>
         </Box>
+        { /* 動画コメント */ }
+        <Box m={2}>
+          <CommentList videoId={videoId} liveBroadcastContent={liveBroadcastContent} />
+        </Box>          
       </Box>
     </ThemeProvider>
   );

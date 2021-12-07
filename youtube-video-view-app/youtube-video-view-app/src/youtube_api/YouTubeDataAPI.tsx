@@ -1,9 +1,22 @@
 /* eslint-disable */
-import React from 'react';
-import { useState, useEffect } from 'react'
-import { YouTubeDataAPIConfig } from '../Config'
 
 const YOUTUBE_DATA_API_URL = 'https://www.googleapis.com/youtube/v3/'
+const YOUTUBE_DATA_API_KEYS: any[] = [
+  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_1"],
+  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_2"],
+  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_3"],
+]
+
+//--------------------------------------------------------
+// YouTubeAPI キーを取得する
+//--------------------------------------------------------
+export function getAPIKey() {
+  YOUTUBE_DATA_API_KEYS.length
+  // YouTube Data API の１日の利用上限 10,000 Queries / day を回避するために、複数の API キーからランダムに取得した API キーを返す
+  let index = Math.floor(Math.random() * YOUTUBE_DATA_API_KEYS.length)
+  //console.log( "[getAPIKey] index : ", index )
+  return YOUTUBE_DATA_API_KEYS[index]
+}
 
 //--------------------------------------------------------
 // YouTubeAPI を使用して動画IDからチャンネルIDを取得する非同期関数
@@ -146,7 +159,7 @@ export async function getVideoCommentInfos(apiKey: any, videoId: any, maxResults
       //console.log("dataCommentThreads : ", dataCommentThreads)
       commentsNumber = dataCommentThreads["pageInfo"]["totalResults"]
       dataCommentThreads["items"].forEach((itemCommentThread: any)=> {
-        videoCommentInfos.unshift({
+        videoCommentInfos.push({
           "commentId": itemCommentThread["id"],
           "textDisplay": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["textDisplay"],
           "publishedAt": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["publishedAt"],
@@ -180,7 +193,7 @@ export async function getVideoChatInfos(apiKey: any, liveChatId: any, maxResults
       //console.log("dataLiveChatMessages : ", dataLiveChatMessages)
       chatNumber = dataLiveChatMessages["pageInfo"]["totalResults"]
       dataLiveChatMessages["items"].forEach((itemLiveChatMessage: any)=> {
-        videoChatInfos.unshift({
+        videoChatInfos.push({
           "liveChatId": liveChatId,
           "displayName": itemLiveChatMessage["authorDetails"]["displayName"],
           "channelId": itemLiveChatMessage["authorDetails"]["channelId"],
@@ -218,7 +231,7 @@ export async function searchVideos(apiKey: any, searchWord: any, maxResults:Numb
         totalNumber = dataSearch["pageInfo"]["totalResults"]
   
         dataSearch["items"].forEach((itemSearch: any)=> {
-          searchVideoInfos.unshift({
+          searchVideoInfos.push({
             "channelId": itemSearch["snippet"]["channelId"],
             "channelTitle": itemSearch["snippet"]["channelTitle"],
             "videoId": itemSearch["id"]["videoId"],

@@ -49,7 +49,6 @@ npm install --save @material-ui/icons                     # Material-UI
 npm install --save @material-ui/lab                       # Material-UI
 npm install --save @types/react-beautiful-dnd             # ドラック＆ドロップ用ライブラリ
 npm install --save react-beautiful-dnd
-
 npm ls --depth=0
 
 #----------------------------- 

@@ -20,12 +20,12 @@ import Autocomplete from '@material-ui/lab/Autocomplete';
 import Divider from '@material-ui/core/Divider';
 import { LensTwoTone } from '@material-ui/icons';
 
-import AppConfig, { VideoSearchPageConfig, YouTubeDataAPIConfig } from '../Config'
+import AppConfig, { VideoSearchPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
 import YouTubeVideoInfoCard from '../components/YouTubeVideoInfoCard'
-import { getChannelIdFromVideoId, getChannelInfo, getVideoInfo, getVideoCategoryInfo, getVideoCommentInfos, getVideoChatInfos, searchVideos } from '../youtube_api/YouTubeDataAPI';
+import { getAPIKey, getChannelIdFromVideoId, getChannelInfo, getVideoInfo, getVideoCategoryInfo, getVideoCommentInfos, getVideoChatInfos, searchVideos } from '../youtube_api/YouTubeDataAPI';
 
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
@@ -110,7 +110,7 @@ const VideoSearchPage: React.VFC = () => {
       let seachResultsUpcomingJsx_: any = []
 
       // 検索ワードから動画を検索
-      searchVideos(YouTubeDataAPIConfig.apiKey, searchWord, VideoSearchPageConfig.maxResults, VideoSearchPageConfig.iterSearchVideo)
+      searchVideos(getAPIKey(), searchWord, VideoSearchPageConfig.maxResults, VideoSearchPageConfig.iterSearchVideo)
         .then( ([searchVideoInfos_, totalNumber_, searchNumber_]) => {
           setSearchMessage("件数 : " + totalNumber_)
           searchVideoInfos = searchVideoInfos_
@@ -123,19 +123,19 @@ const VideoSearchPage: React.VFC = () => {
             let videoCategoryInfo: any = undefined
 
             // チャンネル情報を取得
-            getChannelInfo(YouTubeDataAPIConfig.apiKey, searchVideoInfo_["channelId"])
+            getChannelInfo(getAPIKey(), searchVideoInfo_["channelId"])
               .then( (channelInfo_) => {
                 channelInfo = channelInfo_
                 console.log( "channelInfo_ : ", channelInfo_ )
 
                 // 動画情報を取得
-                getVideoInfo(YouTubeDataAPIConfig.apiKey, searchVideoInfo_["videoId"])
+                getVideoInfo(getAPIKey(), searchVideoInfo_["videoId"])
                   .then( (videoInfo_) => {
                     videoInfo = videoInfo_
                     console.log( "videoInfo_ : ", videoInfo_ )
 
                     // 動画カテゴリ情報の取得
-                    getVideoCategoryInfo(YouTubeDataAPIConfig.apiKey, videoInfo_["categoryId"])
+                    getVideoCategoryInfo(getAPIKey(), videoInfo_["categoryId"])
                       .then( (videoCategoryInfo_) => {
                         videoCategoryInfo = videoCategoryInfo_
                         console.log( "videoCategoryInfo_ : ", videoCategoryInfo_ )   

@@ -27,7 +27,7 @@ import ThumbDownAltOutlinedIcon from '@material-ui/icons/ThumbDownAltOutlined';
 import ThumbDownAltRoundedIcon from '@material-ui/icons/ThumbDownAltRounded';
 import FavoriteBorderOutlinedIcon from '@material-ui/icons/FavoriteBorderOutlined';
 
-import AppConfig, {YouTubeDataAPIConfig} from '../Config'
+import AppConfig from '../Config'
 import useLocalPersist from './LocalPersist';
 
 // Auth オブジェクトの作成
@@ -168,7 +168,8 @@ const YouTubeVideoInfoCard: React.FC<Props> = ({
   //------------------------
   const channelURL = "https://www.youtube.com/channel/" + channelId
   const youtubeVideoURL = "https://www.youtube.com/watch?v=" + videoId
-  const watchVideoURL = "/video_watch/" + videoId
+  //const watchVideoURL = "/video_watch/" + videoId
+  const watchVideoURL = AppConfig.videoWatchPage.path.split(":")[0] + videoId
   return (
     <Card variant="outlined">
       <CardHeader 
