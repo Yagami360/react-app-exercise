@@ -33,7 +33,9 @@ const auth: any = firebase.auth()
 // Firestore にアクセスするためのオブジェクト作成
 const firestore = firebase.firestore()
 
+//=======================================
 // 動画検索を表示するコンポーネント
+//=======================================
 const VideoSearchPage: React.VFC = () => {  
   //------------------------
   // フック
@@ -52,9 +54,9 @@ const VideoSearchPage: React.VFC = () => {
   const [searchMessage, setSearchMessage] = useState("")
   
   // 検索ヒット画像のリスト 
-  const [seachResultsJsx, setSeachResultsJsx] = useState([]);
-  const [seachResultsLiveJsx, setSeachResultsLiveJsx] = useState([]);
-  const [seachResultsUpcomingJsx, setSeachResultsUpcomingJsx] = useState([]);
+  const [seachResultsJsx, setSeachResultsJsx] = useState([] as any);
+  const [seachResultsLiveJsx, setSeachResultsLiveJsx] = useState([] as any);
+  const [seachResultsUpcomingJsx, setSeachResultsUpcomingJsx] = useState([] as any);
 
   // 副作用フック
   useEffect(() => {
@@ -87,6 +89,7 @@ const VideoSearchPage: React.VFC = () => {
   }
 
   const onSubmitSearchWord = (event: React.FormEvent<HTMLFormElement>)=> {
+    console.log( "call onSubmitSearchWord")
     // submit イベント e の発生元であるフォームが持つデフォルトのイベント処理をキャンセル
     event.preventDefault(); 
 
@@ -104,21 +107,19 @@ const VideoSearchPage: React.VFC = () => {
         })
       }
      
-      let searchVideoInfos: any = []
-      let seachResultsJsx_: any = []
-      let seachResultsLiveJsx_: any = []
-      let seachResultsUpcomingJsx_: any = []
-
       // 検索ワードから動画を検索
       searchVideos(getAPIKey(), searchWord, VideoSearchPageConfig.maxResults, VideoSearchPageConfig.iterSearchVideo)
-        .then( ([searchVideoInfos_, totalNumber_, searchNumber_]) => {
+        .then( ([searchVideoInfos_, totalNumber_, searchNumber_, nextPageToken_]) => {
           setSearchMessage("件数 : " + totalNumber_)
-          searchVideoInfos = searchVideoInfos_
           //console.log( "searchVideoInfos_ : ", searchVideoInfos_ )
 
           // 各動画に対しての処理
+          let seachResultsJsx_: any[] = []
+          let seachResultsLiveJsx_: any[] = []
+          let seachResultsUpcomingJsx_: any[] = []
+
           searchVideoInfos_.forEach((searchVideoInfo_: any)=> {
-            let channelInfo: any = undefined
+            let channelInfo: any  = undefined
             let videoInfo: any = undefined
             let videoCategoryInfo: any = undefined
 
@@ -126,23 +127,23 @@ const VideoSearchPage: React.VFC = () => {
             getChannelInfo(getAPIKey(), searchVideoInfo_["channelId"])
               .then( (channelInfo_) => {
                 channelInfo = channelInfo_
-                console.log( "channelInfo_ : ", channelInfo_ )
+                //console.log( "channelInfo_ : ", channelInfo_ )
 
                 // 動画情報を取得
                 getVideoInfo(getAPIKey(), searchVideoInfo_["videoId"])
                   .then( (videoInfo_) => {
                     videoInfo = videoInfo_
-                    console.log( "videoInfo_ : ", videoInfo_ )
+                    //console.log( "videoInfo_ : ", videoInfo_ )
 
                     // 動画カテゴリ情報の取得
                     getVideoCategoryInfo(getAPIKey(), videoInfo_["categoryId"])
                       .then( (videoCategoryInfo_) => {
                         videoCategoryInfo = videoCategoryInfo_
-                        console.log( "videoCategoryInfo_ : ", videoCategoryInfo_ )   
+                        //console.log( "videoCategoryInfo_ : ", videoCategoryInfo_ )   
 
                         // Youtube Card コンポーネントを追加
                         if ( searchVideoInfo_["liveBroadcastContent"] == "live" ) {
-                          seachResultsLiveJsx_.push(
+                          const seachResultLiveJsx_ = (
                             <Grid item xs={3}>
                               <YouTubeVideoInfoCard 
                                 channelId={channelInfo["channelId"]} channelTitle={channelInfo["title"]} profileImageUrl={channelInfo["profileImageUrl"]} subscriberCount={channelInfo["subscriberCount"]}
@@ -152,10 +153,12 @@ const VideoSearchPage: React.VFC = () => {
                                 tags={videoInfo["tags"]}
                               />
                             </Grid>
-                          )
+                          );
+                          setSeachResultsLiveJsx([...seachResultsLiveJsx_, seachResultLiveJsx_])
+                          seachResultsLiveJsx_.push(seachResultLiveJsx_)
                         }
                         else if ( searchVideoInfo_["liveBroadcastContent"] == "upcoming" ) {
-                          seachResultsUpcomingJsx_.push(
+                          const seachResultUpcomingJsx_ = (
                             <Grid item xs={3}>
                               <YouTubeVideoInfoCard 
                                 channelId={channelInfo["channelId"]} channelTitle={channelInfo["title"]} profileImageUrl={channelInfo["profileImageUrl"]} subscriberCount={channelInfo["subscriberCount"]}
@@ -166,9 +169,11 @@ const VideoSearchPage: React.VFC = () => {
                               />
                             </Grid>
                           )
+                          setSeachResultsUpcomingJsx([...seachResultsUpcomingJsx_, seachResultUpcomingJsx_])
+                          seachResultsUpcomingJsx_.push(seachResultUpcomingJsx_)
                         }
                         else {
-                          seachResultsJsx_.push(
+                          const seachResultJsx_ = (
                             <Grid item xs={3}>
                               <YouTubeVideoInfoCard 
                                 channelId={channelInfo["channelId"]} channelTitle={channelInfo["title"]} profileImageUrl={channelInfo["profileImageUrl"]} subscriberCount={channelInfo["subscriberCount"]}
@@ -179,6 +184,8 @@ const VideoSearchPage: React.VFC = () => {
                               />
                             </Grid>
                           )
+                          setSeachResultsJsx([...seachResultsJsx_, seachResultJsx_])
+                          seachResultsJsx_.push(seachResultJsx_)
                         }
                       })
                       .catch(err => {
@@ -202,20 +209,6 @@ const VideoSearchPage: React.VFC = () => {
               .finally( () => {
               })
           })
-
-          /*
-          const seachResultsJsx__ = seachResultsJsx_.slice();
-          setSeachResultsJsx(seachResultsJsx__)
-
-          const seachResultsLiveJsx__ = seachResultsLiveJsx_.slice();
-          setSeachResultsLiveJsx(seachResultsLiveJsx__)
-
-          const seachResultsUpcomingJsx__ = seachResultsUpcomingJsx_.slice();
-          setSeachResultsUpcomingJsx(seachResultsUpcomingJsx__)
-          */
-          setSeachResultsJsx(seachResultsJsx_)
-          setSeachResultsLiveJsx(seachResultsLiveJsx_)
-          setSeachResultsUpcomingJsx(seachResultsUpcomingJsx_)
         })
         .catch(err => {
           console.log(err);

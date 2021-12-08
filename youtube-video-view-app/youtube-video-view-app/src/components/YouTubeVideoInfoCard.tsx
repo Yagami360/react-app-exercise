@@ -36,11 +36,9 @@ const auth: any = firebase.auth()
 // Firestore にアクセスするためのオブジェクト作成
 const firestore = firebase.firestore()
 
-//-----------------------------------------------
+//===========================================
 // 動画情報をカード形式で表示するコンポーネント
-// [引数]
-//   text : ヘッダーの文字列
-//-----------------------------------------------
+//===========================================
 // コンポーネントの引数
 type Props = {
   channelId: string;
@@ -133,7 +131,7 @@ const YouTubeVideoInfoCard: React.FC<Props> = ({
     if( savedFav === false ) {
       setSavedFav(true)
 
-      // 新規に追加するドキュメントデータ
+      // 新規に追加するドキュメントデータ（統計情報以外を追加）
       const document = {
         channelId: channelId,
         channelTitle: channelTitle,     
@@ -143,7 +141,8 @@ const YouTubeVideoInfoCard: React.FC<Props> = ({
         title: title,
         description: description,
         categoryTitle: categoryTitle,
-        thumbnailsUrl: thumbnailsUrl,     
+        thumbnailsUrl: thumbnailsUrl,
+        tags: tags,     
       }
 
       // firestore.collection(コレクション名).doc(ドキュメントID).set(ドキュメントデータ) で、コレクションに新たなドキュメントを追加する

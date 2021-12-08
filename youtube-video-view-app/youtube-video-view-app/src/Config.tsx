@@ -3,8 +3,11 @@ export const AppConfig = {
   appName: "youtube-video-view-app",
   topPage: { index : 0, path : "/" },
   videoSearchPage: { index : 1, path : "/search" },
-  videoWatchPage: { index : 2, path : "/watch/:video_id" },
-  testPage: { index : 3, path : "/test" },
+  videoWatchPage: { index : 2, path : "/watch/:video_id"},
+  //videoWatchPage: { index : 2, path : "/watch/*"},
+  favPage: { index : 3, path : "/fav" },
+  followPage: { index : 4, path : "/follow" },
+  testPage: { index : 5, path : "/test" },
 };
 export default AppConfig
 
@@ -32,7 +35,18 @@ export const VideoWatchPageConfig = {
   maxResultsComment: 100,
   iterComment: 2,
   maxResultsChat: 100,
-  iterChat: 2,
-  intervalTimeChat: 1000,
+  iterChat: 1,
+  intervalTimeChat: 10000,
   maxResultsIntervalChat: 1,
+};
+
+export const FavPageConfig = {
+  collectionNameFav: 'fav-video-database',
+  imageHeight: "300px",
+  imageWidth: "2000px",
+  gridXs: 3,                  //  画面幅 12 分割に対して１つのカードで使用するグリッド数
+};
+
+export const FollowPageConfig = {
+  collectionNameFollow: 'follow-database',
 };

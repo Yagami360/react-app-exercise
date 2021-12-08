@@ -40,29 +40,28 @@ const convertCommentToJsx = (text: any) => {
   return textJsx
 }
 
-//-----------------------------------------------
+//=======================================
 // 動画コメントを表示するコンポーネント
-//-----------------------------------------------
+//=======================================
 // コンポーネントの引数
 type Props = {
   videoId: any;
   liveBroadcastContent: string;
+  darkMode: boolean;
 }
 
 const CommentList: React.FC<Props> = ({ 
   children,
   videoId,
   liveBroadcastContent,
+  darkMode,
 }) => {
   //------------------------
   // フック
   //------------------------
-  // ダークモード
-  const [darkMode, setDarkMode] = useLocalPersist(AppConfig.appName, "darkMode", false)
-
   // 動画コメント情報
   const [commentsNumber, setCommentsNumber] = useState()
-  const [commentsJsx, setCommentsJsx] = useState([])
+  const [commentsJsx, setCommentsJsx] = useState([] as any)
   const [message, setMessage] = useState("loading comments")
 
   // ページ読み込み時の副作用フック
@@ -74,14 +73,14 @@ const CommentList: React.FC<Props> = ({
     const initPageAsync = async () => {
       // 動画コメント情報を取得
       if ( liveBroadcastContent === undefined || liveBroadcastContent === "none" ) {
-        let videoCommentInfos_: any = []
+        let videoCommentInfos_: any[] = []
         let commentsNumber_: any = undefined
-        let commentsJsx_: any = []
+        let commentsJsx_: any[] = []
 
         try {
           [videoCommentInfos_, commentsNumber_] = await getVideoCommentInfos(getAPIKey(), videoId, VideoWatchPageConfig.maxResultsComment, VideoWatchPageConfig.iterComment)
           setCommentsNumber(commentsNumber_)
-          console.log( "videoCommentInfos_ : ", videoCommentInfos_ )    
+          //console.log( "videoCommentInfos_ : ", videoCommentInfos_ )    
         }
         catch (err) {
           console.error(err);
@@ -89,7 +88,7 @@ const CommentList: React.FC<Props> = ({
         }
   
         videoCommentInfos_.forEach((videoCommentInfo_: any)=> {
-          commentsJsx_.push(<>
+          const commentJsx_ = (<>
             <ListItem alignItems="flex-start">
               { /* アイコン画像 */ }
               <ListItemAvatar>
@@ -127,18 +126,20 @@ const CommentList: React.FC<Props> = ({
                 </>}
               />
             </ListItem>
-            <Divider variant="inset" component="li" />
+            <Divider variant="inset" component="li" />            
           </>)
+
+          setCommentsJsx([...commentsJsx_, commentJsx_])
+          commentsJsx_.push(commentJsx_)
         })
-        const commentsJsx__ = commentsJsx_.slice();
-        setCommentsJsx(commentsJsx__)
+
         setMessage("")
       }
     }
 
     // 非同期処理実行
     initPageAsync()
-  }, [])
+  }, [videoId, liveBroadcastContent])
 
   //------------------------
   // イベントハンドラ
@@ -147,19 +148,28 @@ const CommentList: React.FC<Props> = ({
   //------------------------
   // JSX での表示処理
   //------------------------
-  return (
-    <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
-      { /* 動画コメント */ }   
-      <Typography>{message}</Typography>       
-      <Divider />
-      <Box mt={2} mx={2}>
-        <Typography variant="subtitle1" display="inline" style={{whiteSpace: 'pre-line'}}>{liveBroadcastContent === "none" ? commentsNumber + " 件のコメント" : ""}</Typography>
-      </Box>
-      <List component="div">
-        {liveBroadcastContent === "none" ? commentsJsx : ""}
-      </List>
-    </ThemeProvider>
-  )
+  //console.log( "[CommentList] darkMode : ", darkMode )
+  if( liveBroadcastContent === "none" ) {
+    return (
+      <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
+        { /* 動画コメント */ }   
+        <Typography>{message}</Typography>       
+        <Divider />
+        <Box mt={2} mx={2}>
+          <Typography variant="subtitle1" display="inline" style={{whiteSpace: 'pre-line'}}>{commentsNumber + " 件のコメント"}</Typography>
+        </Box>
+        <List component="div">
+          {commentsJsx}
+        </List>
+      </ThemeProvider>
+    )
+  }
+  else {
+    return (
+      <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
+      </ThemeProvider>
+    )
+  }
 }
 
 export default CommentList;

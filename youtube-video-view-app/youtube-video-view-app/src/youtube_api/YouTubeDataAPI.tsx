@@ -149,30 +149,34 @@ export async function getVideoCategoryInfo(apiKey: any, categoryId: any) {
 //--------------------------------------------------------
 // YouTubeAPI を使用して動画のコメント情報を返す非同期関数
 //--------------------------------------------------------
-export async function getVideoCommentInfos(apiKey: any, videoId: any, maxResults:Number = 100, iter: Number = 1 ) {
+export async function getVideoCommentInfos(apiKey: any, videoId: any, maxResults:Number = 100, iter: Number = 1, nextPageToken: any = "" ) {
   let videoCommentInfos: any = []
   let commentsNumber = undefined
   if( videoId !== undefined && videoId !== "") {
-    try {
-      const response = await fetch(YOUTUBE_DATA_API_URL+"commentThreads" + '?key='+apiKey + '&part=snippet,replies' + '&videoId='+videoId + '&maxResults='+maxResults )
-      const dataCommentThreads = await response.json()
-      //console.log("dataCommentThreads : ", dataCommentThreads)
-      commentsNumber = dataCommentThreads["pageInfo"]["totalResults"]
-      dataCommentThreads["items"].forEach((itemCommentThread: any)=> {
-        videoCommentInfos.push({
-          "commentId": itemCommentThread["id"],
-          "textDisplay": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["textDisplay"],
-          "publishedAt": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["publishedAt"],
-          "likeCount": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["likeCount"],
-          "authorDisplayName": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["authorDisplayName"],
-          "authorProfileImageUrl": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["authorProfileImageUrl"],
-          "authorChannelId": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["authorChannelId"],
-          "authorChannelUrl": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["authorChannelUrl"],
-        })
-      })      
-    }
-    catch (err) {
-      console.error(err);
+    for (let i = 0; i < iter; i++) {
+      try {
+        const response = await fetch(YOUTUBE_DATA_API_URL+"commentThreads" + '?key='+apiKey + '&part=snippet,replies' + '&videoId='+videoId + '&maxResults='+maxResults + '&pageToken='+nextPageToken)
+        const dataCommentThreads = await response.json()
+        //console.log("dataCommentThreads : ", dataCommentThreads)
+        nextPageToken = dataCommentThreads["nextPageToken"]
+        commentsNumber = dataCommentThreads["pageInfo"]["totalResults"]
+
+        dataCommentThreads["items"].forEach((itemCommentThread: any)=> {
+          videoCommentInfos.push({
+            "commentId": itemCommentThread["id"],
+            "textDisplay": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["textDisplay"],
+            "publishedAt": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["publishedAt"],
+            "likeCount": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["likeCount"],
+            "authorDisplayName": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["authorDisplayName"],
+            "authorProfileImageUrl": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["authorProfileImageUrl"],
+            "authorChannelId": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["authorChannelId"],
+            "authorChannelUrl": itemCommentThread["snippet"]["topLevelComment"]["snippet"]["authorChannelUrl"],
+          })
+        })      
+      }
+      catch (err) {
+        console.error(err);
+      }
     }    
   }
 
@@ -187,27 +191,31 @@ export async function getVideoChatInfos(apiKey: any, liveChatId: any, maxResults
   let chatNumber = undefined
 
   if( liveChatId !== undefined && liveChatId !== "") {
-    try {
-      const response = await fetch(YOUTUBE_DATA_API_URL+"liveChat/messages" + '?key='+apiKey + '&part=snippet,authorDetails' + '&liveChatId='+liveChatId + '&maxResults='+maxResults + '&pageToken='+nextPageToken)
-      const dataLiveChatMessages = await response.json()
-      //console.log("dataLiveChatMessages : ", dataLiveChatMessages)
-      chatNumber = dataLiveChatMessages["pageInfo"]["totalResults"]
-      dataLiveChatMessages["items"].forEach((itemLiveChatMessage: any)=> {
-        videoChatInfos.push({
-          "liveChatId": liveChatId,
-          "displayName": itemLiveChatMessage["authorDetails"]["displayName"],
-          "channelId": itemLiveChatMessage["authorDetails"]["channelId"],
-          "channelUrl": itemLiveChatMessage["authorDetails"]["channelUrl"],
-          "profileImageUrl": itemLiveChatMessage["authorDetails"]["profileImageUrl"],
-          "publishedAt": itemLiveChatMessage["snippet"]["publishedAt"],
-          "displayMessage": itemLiveChatMessage["snippet"]["displayMessage"],
-          "nextPageToken": dataLiveChatMessages["nextPageToken"],
-        })
-      })      
+    for (let i = 0; i < iter; i++) {
+      try {
+        const response = await fetch(YOUTUBE_DATA_API_URL+"liveChat/messages" + '?key='+apiKey + '&part=snippet,authorDetails' + '&liveChatId='+liveChatId + '&maxResults='+maxResults + '&pageToken='+nextPageToken)
+        const dataLiveChatMessages = await response.json()
+        //console.log("dataLiveChatMessages : ", dataLiveChatMessages)
+
+        nextPageToken = dataLiveChatMessages["nextPageToken"]
+        chatNumber = dataLiveChatMessages["pageInfo"]["totalResults"]
+
+        dataLiveChatMessages["items"].forEach((itemLiveChatMessage: any)=> {
+          videoChatInfos.push({
+            "liveChatId": liveChatId,
+            "displayName": itemLiveChatMessage["authorDetails"]["displayName"],
+            "channelId": itemLiveChatMessage["authorDetails"]["channelId"],
+            "channelUrl": itemLiveChatMessage["authorDetails"]["channelUrl"],
+            "profileImageUrl": itemLiveChatMessage["authorDetails"]["profileImageUrl"],
+            "publishedAt": itemLiveChatMessage["snippet"]["publishedAt"],
+            "displayMessage": itemLiveChatMessage["snippet"]["displayMessage"],
+          })
+        })      
+      }
+      catch (err) {
+        console.error(err);
+      }    
     }
-    catch (err) {
-      console.error(err);
-    }    
   }
 
   return [videoChatInfos, chatNumber, nextPageToken]
@@ -249,7 +257,7 @@ export async function searchVideos(apiKey: any, searchWord: any, maxResults:Numb
     }   
   }
   
-  return [searchVideoInfos, totalNumber, searchNumber]
+  return [searchVideoInfos, totalNumber, searchNumber, nextPageToken]
 }
 
 

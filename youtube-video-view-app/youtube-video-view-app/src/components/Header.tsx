@@ -156,9 +156,14 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL, da
                 <ListItemText primary="動画検索" />
               </ListItem>
             </Link>
-            <Link to={AppConfig.testPage.path} style={{ textDecoration: 'none', color: 'black' }}>
+            <Link to={AppConfig.favPage.path} style={{ textDecoration: 'none', color: 'black' }}>
               <ListItem button>
-                <ListItemText primary="テスト" />
+                <ListItemText primary="お気に入り" />
+              </ListItem>
+            </Link>
+            <Link to={AppConfig.followPage.path} style={{ textDecoration: 'none', color: 'black' }}>
+              <ListItem button>
+                <ListItemText primary="フォローチャンネル" />
               </ListItem>
             </Link>
           </List>
@@ -174,7 +179,8 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL, da
           <Tabs value={selectedTab} onChange={onChangeSelectedTab} TabIndicatorProps={{style: {background:'#FFFFFF'}}}>
             <Tab label="ホーム" component={Link} to={AppConfig.topPage.path} />
             <Tab label="動画検索" component={Link} to={AppConfig.videoSearchPage.path} />
-            <Tab label="テスト" component={Link} to={AppConfig.testPage.path} />
+            <Tab label="お気に入り" component={Link} to={AppConfig.favPage.path} />
+            <Tab label="フォローチャンネル" component={Link} to={AppConfig.followPage.path} />
           </Tabs>
         </Box>
         { /* ダークモード切り替えボタン */ }

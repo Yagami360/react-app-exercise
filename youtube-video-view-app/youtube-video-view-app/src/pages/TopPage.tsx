@@ -29,7 +29,9 @@ const auth: any = firebase.auth()
 // Firestore にアクセスするためのオブジェクト作成
 const firestore = firebase.firestore()
 
+//=======================================
 // トップページを表示するコンポーネント
+//=======================================
 const TopPage: React.VFC = () => {
   //------------------------
   // フック

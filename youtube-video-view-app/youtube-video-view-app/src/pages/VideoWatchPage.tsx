@@ -31,6 +31,7 @@ import Paper from '@material-ui/core/Paper';
 import AppConfig, { VideoWatchPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import Header from '../components/Header'
+import VideoPlayer from '../components/VideoPlayer'
 import CommentList from '../components/CommentList'
 import LiveChatList from '../components/LiveChatList'
 import useLocalPersist from '../components/LocalPersist';
@@ -71,7 +72,9 @@ const convertTagsToJsx = (tags: any) => {
   return tagsJsx
 }
 
+//=======================================
 // 動画視聴ページを表示するコンポーネント
+//=======================================
 const VideoWatchPage: React.VFC = () => {
   //------------------------
   // パスパラメーター
@@ -208,7 +211,8 @@ const VideoWatchPage: React.VFC = () => {
   //------------------------
   const channelURL = "https://www.youtube.com/channel/" + channelId
   const youtubeVideoURL = "https://www.youtube.com/watch?v=" + videoId
-
+  console.log( "[VideoWatchPage] liveChatId : ", liveChatId )
+  console.log( "[VideoWatchPage] liveBroadcastContent : ", liveBroadcastContent )
   return (
     <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
@@ -220,9 +224,9 @@ const VideoWatchPage: React.VFC = () => {
         <Typography variant="subtitle2">{messageVideo}</Typography>
         <Box style={{display: "flex"}}>
           { /* 動画表示 */ }
-          <iframe id="ytplayer" data-type="text/html" width={VideoWatchPageConfig.videoWidth} height={VideoWatchPageConfig.videoHeight} src={videoURL_} frameBorder="0"></iframe>  { /* IFrame Player API では、<iframe> タグで動画プレイヤーを埋め込むことで動画再生できるようになる。<iframe> は、HTML の標準機能でインラインフレーム要素を表す */ }
+          <VideoPlayer videoId={videoId} autoPlay={true} videoWidth={VideoWatchPageConfig.videoWidth} videoHeight={VideoWatchPageConfig.videoHeight} darkMode={darkMode} />
           { /* チャット表示 */ }
-          <LiveChatList liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} />
+          <LiveChatList liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} darkMode={darkMode} />
         </Box>
         { /* 動画情報表示 */ }
         <Box m={2}>
@@ -292,7 +296,7 @@ const VideoWatchPage: React.VFC = () => {
         </Box>
         { /* 動画コメント */ }
         <Box m={2}>
-          <CommentList videoId={videoId} liveBroadcastContent={liveBroadcastContent} />
+          <CommentList videoId={videoId} liveBroadcastContent={liveBroadcastContent} darkMode={darkMode} />
         </Box>          
       </Box>
     </ThemeProvider>

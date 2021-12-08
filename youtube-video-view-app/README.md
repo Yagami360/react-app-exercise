@@ -1,6 +1,6 @@
 # YouTube 動画視聴アプリ（TypeScript + React + React Hooks での構成）
 
-- 公開サイト : https://video-view-app-684c0.web.app/
+- 公開サイト : https://video-view-app-684c0.web.app/search
 
 ## ■ 使用法
 
@@ -31,7 +31,7 @@
     $ sh create_app.sh
     ```
 
-    > Firebase の初期化時には、"Firestore", "Hosting", "Function" を有効化して初期化してください
+    > Firebase の初期化時には、"Firestore", "Hosting" を有効化して初期化してください
 
     > FireBase Hosting のディレクトリは、build を指定してください。
 

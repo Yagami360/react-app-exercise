@@ -25,6 +25,9 @@ import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
 import { getAPIKey, getVideoChatInfos } from '../youtube_api/YouTubeDataAPI';
 
+let chatNextPageToken: any = ""
+let chatsJsx_: any[] = []
+
 // 独自のスタイル定義
 const useStyles = makeStyles({
   chatTimeLineStyle: {
@@ -33,51 +36,53 @@ const useStyles = makeStyles({
   },
 })
 
-//-----------------------------------------------
+//===========================================
 // ライブ動画のチャットを表示するコンポーネント
-//-----------------------------------------------
+//===========================================
 // コンポーネントの引数
 type Props = {
   liveChatId: string;
   liveBroadcastContent: string;
+  darkMode: boolean;
 }
 
 const LiveChatList: React.FC<Props> = ({ 
   children,
   liveChatId,
   liveBroadcastContent,
+  darkMode,
 }) => {
-  let chatsJsx_: any = []
-  let chatNextPageToken_: any = ""
+  console.log( "call LiveChatList" )
+  //console.log( "[LiveChatList] liveChatId : ", liveChatId )
+  //console.log( "[LiveChatList] liveBroadcastContent : ", liveBroadcastContent )
 
   //------------------------
   // フック
   //------------------------
-  // ダークモード
-  const [darkMode, setDarkMode] = useLocalPersist(AppConfig.appName, "darkMode", false)
-
   // 独自スタイル
   const style = useStyles()
 
   // チャット情報
-  const [chatsJsx, setChatsJsx] = useState([])
-  const scrollBottomRef = useRef<HTMLDivElement>(null);  // useRef() : HTML の ref属性への参照
+  const [chatsJsx, setChatsJsx] = useState([] as any)
   const [message, setMessage] = useState("loading chats")
+  //const scrollBottomRef = useRef<HTMLDivElement>(null);  // useRef() : HTML の ref属性への参照
 
   // ページ読み込み時の副作用フック
   useEffect( () => {
-    //console.log( "liveChatId : ", liveChatId )
-    //console.log( "liveBroadcastContent : ", liveBroadcastContent )
+    //console.log( "call useEffect1 (init)" )
+    //console.log( "[LiveChatList in useEffect1] liveChatId : ", liveChatId )
+    //console.log( "[LiveChatList in useEffect1] liveBroadcastContent : ", liveBroadcastContent )
 
     // useEffect 内で非同期処理の関数を定義
     const initPageAsync = async () => {
       // ライブチャット情報を取得
-      if ( liveBroadcastContent === "live" && liveChatId !== undefined ) {
+      if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
         let videoChatInfos_ = undefined
         let chatNumber_ = undefined
         try {
-          [videoChatInfos_, chatNumber_, chatNextPageToken_] = await getVideoChatInfos(getAPIKey(), liveChatId, VideoWatchPageConfig.maxResultsChat, VideoWatchPageConfig.iterChat, chatNextPageToken_)
+          [videoChatInfos_, chatNumber_, chatNextPageToken] = await getVideoChatInfos(getAPIKey(), liveChatId, VideoWatchPageConfig.maxResultsChat, VideoWatchPageConfig.iterChat, chatNextPageToken)
           console.log( "videoChatInfos_ : ", videoChatInfos_ )    
+          console.log( "chatNextPageToken : ", chatNextPageToken )
         }
         catch (err) {
           console.error(err);
@@ -85,7 +90,7 @@ const LiveChatList: React.FC<Props> = ({
         }
 
         videoChatInfos_.forEach((videoChatInfo_: any)=> {
-          chatsJsx_.push(<>
+          const chatJsx_ = (<>
             <ListItem>
               <Box style={{display:"flex"}}>
                 { /* アイコン画像 */ }
@@ -114,83 +119,96 @@ const LiveChatList: React.FC<Props> = ({
             </ListItem>
             <Divider variant="inset" component="li" />
           </>)
+
+          //setChatsJsx([...chatsJsx_, chatJsx_])
+          chatsJsx_.unshift(chatJsx_)
         })
-        const chatsJsx__ = chatsJsx_.slice();
-        setChatsJsx(chatsJsx__)
+
+        setChatsJsx(chatsJsx_)
         setMessage("")
       }
     }
 
     // 非同期処理実行
     initPageAsync()
-  }, [])
+  }, [liveChatId, liveBroadcastContent])
 
   // setInterval() を呼び出す副作用フック。レンダーの度にsetIntervalが何度も実行されて、オーバーフローやメモリリークが発生するので副作用フック内で行う
   useEffect( () => {
+    console.log( "call useEffect2 (setInterval)" )
+
     // 一定時間経過度に呼び出されるイベントハンドラ
     // setInterval(()=>{処理}, インターバル時間msec) : 一定時間度に {} で定義した処理を行う
-    let timerChat = setInterval( ()=>{
-      //console.log( "call timerChat" )
+    if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
+      let timerChat = setInterval( ()=>{
+        console.log( "call timerChat" )
+        //console.log( "[LiveChatList in useEffect2] liveChatId : ", liveChatId )
+        //console.log( "[LiveChatList in useEffect2] liveBroadcastContent : ", liveBroadcastContent )
+  
+        // ライブチャット情報を取得
+        if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
+          //console.log( "[LiveChatList in useEffect2] chatNextPageToken : ", chatNextPageToken )
+          getVideoChatInfos(getAPIKey(), liveChatId, VideoWatchPageConfig.maxResultsIntervalChat, 1, chatNextPageToken )
+            .then( ([videoChatInfos_, chatNumber_, nextPageToken_ ]) => {
+              //console.log( "[timerChat] videoChatInfos_ : ", videoChatInfos_ )     
+              chatNextPageToken = nextPageToken_         
 
-      // ライブチャット情報を取得
-      if ( liveBroadcastContent === "live" && liveChatId !== undefined ) {
-        //console.log( "chatNextPageToken_ : ", chatNextPageToken_ )
-        getVideoChatInfos(getAPIKey(), liveChatId, VideoWatchPageConfig.maxResultsIntervalChat, 1, chatNextPageToken_ )
-          .then( ([videoChatInfos_, chatNumber_, nextPageToken_ ]) => {
-            console.log( "[timerChat] videoChatInfos_ : ", videoChatInfos_ )
-            chatNextPageToken_ = nextPageToken_
-            videoChatInfos_.forEach((videoChatInfo_: any)=> {
-              chatsJsx_.push(<>
-                <ListItem>
-                  <Box style={{display:"flex"}}>
-                    { /* アイコン画像 */ }
-                    <ListItemAvatar>
-                      <Link href={videoChatInfo_["channelUrl"]}><Avatar aria-label="avatar" src={videoChatInfo_["profileImageUrl"]} style={{ width: 60, height: 60 }} /></Link>
-                    </ListItemAvatar>
-                    <ListItemText 
-                      primary={<>
-                        <Box mx={1} style={{display:"flex"}}>
-                          { /* ユーザー名 */ }
-                          <Typography component="span" variant="body2" color="textPrimary" style={{display: "inline"}}>{videoChatInfo_["displayName"]}</Typography>
-                          { /* チャット投稿日 */ }
-                          <Box mx={2} style={{display:"flex"}}>
-                            <Typography component="span" variant="body2" color="textSecondary" style={{display: "inline"}}>{videoChatInfo_["publishedAt"]}</Typography>
+              videoChatInfos_.forEach((videoChatInfo_: any)=> {
+                const chatJsx_ = (<>
+                  <ListItem>
+                    <Box style={{display:"flex"}}>
+                      { /* アイコン画像 */ }
+                      <ListItemAvatar>
+                        <Link href={videoChatInfo_["channelUrl"]}><Avatar aria-label="avatar" src={videoChatInfo_["profileImageUrl"]} style={{ width: 60, height: 60 }} /></Link>
+                      </ListItemAvatar>
+                      <ListItemText 
+                        primary={<>
+                          <Box mx={1} style={{display:"flex"}}>
+                            { /* ユーザー名 */ }
+                            <Typography component="span" variant="body2" color="textPrimary" style={{display: "inline"}}>{videoChatInfo_["displayName"]}</Typography>
+                            { /* チャット投稿日 */ }
+                            <Box mx={2} style={{display:"flex"}}>
+                              <Typography component="span" variant="body2" color="textSecondary" style={{display: "inline"}}>{videoChatInfo_["publishedAt"]}</Typography>
+                            </Box>
                           </Box>
-                        </Box>
-                      </>}
-                      secondary={<>
-                        <Box mx={2}>
-                          { /* コメント */ }
-                          <Typography variant="subtitle2">{videoChatInfo_["displayMessage"]}</Typography>
-                        </Box>
-                      </>}
-                    />
-                  </Box>
-                </ListItem>
-                <Divider variant="inset" component="li" />
-              </>)
+                        </>}
+                        secondary={<>
+                          <Box mx={2}>
+                            { /* コメント */ }
+                            <Typography variant="subtitle2">{videoChatInfo_["displayMessage"]}</Typography>
+                          </Box>
+                        </>}
+                      />
+                    </Box>
+                  </ListItem>
+                  <Divider variant="inset" component="li" />
+                </>)
+
+                setChatsJsx([...chatsJsx_, chatJsx_])
+                chatsJsx_.unshift(chatJsx_)
+              })
+  
+              //setChatsJsx(chatsJsx_)
+              
+              // チャット表示を下にスクロール
+              //scrollBottomRef?.current?.scrollIntoView({behavior: "smooth", block: "end",});
+              //console.log( "scrollBottomRef : ", scrollBottomRef )
             })
-            //console.log( "chatsJsx_ : ", chatsJsx_ )
-            const chatsJsx__ = chatsJsx_.slice();
-            setChatsJsx(chatsJsx__)
-
-            // チャット表示を下にスクロール
-            scrollBottomRef?.current?.scrollIntoView({behavior: "smooth", block: "end",});
-          })
-          .catch(err => {
-            console.log(err);
-          })    
-          .finally( () => {
-          })
+            .catch(err => {
+              console.log(err);
+            })    
+            .finally( () => {
+            })
+        }
+      }, VideoWatchPageConfig.intervalTimeChat );
+  
+      // アンマウント処理
+      return () => {
+        clearInterval(timerChat)
+        console.log('コンポーネントがアンマウントしました')
       }
-    }, VideoWatchPageConfig.intervalTimeChat );
-
-    // アンマウント処理
-    return () => {
-      clearInterval(timerChat)
-      console.log('コンポーネントがアンマウントしました')
     }
-  }, [])
+  }, [liveChatId, liveBroadcastContent])
 
   //------------------------
   // イベントハンドラ
@@ -199,27 +217,36 @@ const LiveChatList: React.FC<Props> = ({
   //------------------------
   // JSX での表示処理
   //------------------------
-  return (
-    <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
-      { /* チャット表示 */ }
-      <Box style={{width: "400px"}} ml={2}>
-        <Paper variant="outlined" square>
-          <Box m={1}>
-            <Typography variant="h6">{liveBroadcastContent !== "none" ? "チャット" : ""}</Typography>
-          </Box>
-        </Paper>
-        <div className={style.chatTimeLineStyle} ref={scrollBottomRef}>
-          <Paper elevation={1} variant="outlined" square>
-            <Typography variant="h6">{message}</Typography>
-            {liveBroadcastContent !== "none" ? chatsJsx : ""}
+  console.log( "chatsJsx: ", chatsJsx )
+  if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
+    return (
+      <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
+        { /* チャット表示 */ }
+        <Box style={{width: "400px"}} ml={2}>
+          <Paper variant="outlined" square>
+            <Box m={1}>
+              <Typography variant="h6">{"チャット"}</Typography>
+            </Box>
           </Paper>
-        </div>
-      </Box>
-    </ThemeProvider>
-  )
+          <Box className={style.chatTimeLineStyle}>
+            <Paper elevation={1} variant="outlined" square>
+              <Typography variant="h6">{message}</Typography>
+              {chatsJsx}
+            </Paper>
+          </Box>
+        </Box>
+      </ThemeProvider>
+    )
+  }
+  else {
+    return (
+      <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
+      </ThemeProvider>
+    )
+  }
 }
 
 export default LiveChatList;
 
 //{ /* ref={scrollBottomRef} で useRef() で作成した ref を <div> 設定する */ }
-//<div ref={scrollBottomRef}></div>
+//<div ref={scrollBottomRef} />
