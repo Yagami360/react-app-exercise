@@ -49,6 +49,8 @@ npm install --save @material-ui/icons                     # Material-UI
 npm install --save @material-ui/lab                       # Material-UI
 npm install --save @types/react-beautiful-dnd             # ドラック＆ドロップ用ライブラリ
 npm install --save react-beautiful-dnd
+npm install --save youtube                                # for IFrame Player API
+npm install --save @types/youtube                         # for IFrame Player API（TypeScript用）
 npm ls --depth=0
 
 #----------------------------- 

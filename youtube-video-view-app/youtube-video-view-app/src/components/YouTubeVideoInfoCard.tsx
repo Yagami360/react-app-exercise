@@ -146,7 +146,6 @@ const YouTubeVideoInfoCard: React.FC<Props> = ({
       }
 
       // firestore.collection(コレクション名).doc(ドキュメントID).set(ドキュメントデータ) で、コレクションに新たなドキュメントを追加する
-      // ドキュメントID は、"twitter-image-search-app:fav"+tweetId
       // 新規にコレクションを追加する場合も、このメソッドで作成できる
       firestore.collection(collectionNameFav).doc(auth.currentUser.email).collection(collectionNameFav).doc(AppConfig.appName+":fav"+videoId).set(document).then((ref: any) => {
         console.log("added video info in ", collectionNameFav)

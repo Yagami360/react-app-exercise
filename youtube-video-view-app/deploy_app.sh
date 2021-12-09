@@ -7,7 +7,7 @@ FIREBASE_PROJECT_ID="video-view-app-684c0"
 cd ${ROOT_DIR}/${PROJECT_NAME}
 
 # 作成した React のプロジェクトをビルドする
-#npm run build
+npm run build
 
 # Firebase Hosting で外部公開する 
 firebase deploy --project ${FIREBASE_PROJECT_ID}

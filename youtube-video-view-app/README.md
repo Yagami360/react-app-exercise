@@ -45,6 +45,30 @@
 
 ### 3. デプロイ処理（アプリの外部公開）
 
+1. `firebase.json` を以下のように修正する
+    ```json
+    {
+        "firestore": {
+            "rules": "firestore.rules",
+            "indexes": "firestore.indexes.json"
+        },
+        "hosting": {
+            "rewrites": [ {
+                "source": "**",
+                "destination": "/index.html"
+            } ],
+            "public": "build",
+            "ignore": [
+                "firebase.json",
+                "**/.*",
+                "**/node_modules/**"
+            ]
+        }
+    }
+    ```
+
+    > 本 React アプリは SPA なので、上記の `hosting.rewrites` の部分を設定しないと、ルーティングを行っていないアドレス（例えば、`https://video-view-app-684c0.web.app/watch/nsGxi_41AGA` など）にアクセスした際に 404 エラーが発生してしまう。そのため、`hosting.rewrites` を設定し、ルーティングが行われていないアドレスにアクセスした際は、ルートページの `index.html` に移動するようにすることで、ルーティングを行っていないアドレス（例えば、`https://video-view-app-684c0.web.app/watch/nsGxi_41AGA` など）にアクセス出来るようにする必要がある。
+
 1. React アプリをビルドする<br>
     ```sh
     $ cd "youtube-video-view-app"
@@ -73,6 +97,7 @@
 - IFrame Player API / YouTube Player API
     - https://developers.google.com/youtube/player_parameters?hl=ja
     - https://qiita.com/rei67/items/25fa4a069157fd6c34b4#%E6%BA%96%E5%82%9
+    - https://so-zou.jp/web-app/tech/web-api/google/youtube/player-api/iframe.htm#loading-api
 
 - YouTube Live Streaming API
     - https://developers.google.com/youtube/v3/live/docs

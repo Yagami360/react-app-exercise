@@ -5,6 +5,8 @@ const YOUTUBE_DATA_API_KEYS: any[] = [
   process.env["REACT_APP_YOUTUBE_DATA_API_KEY_1"],
   process.env["REACT_APP_YOUTUBE_DATA_API_KEY_2"],
   process.env["REACT_APP_YOUTUBE_DATA_API_KEY_3"],
+  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_4"],
+  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_5"],
 ]
 
 //--------------------------------------------------------
@@ -144,6 +146,33 @@ export async function getVideoCategoryInfo(apiKey: any, categoryId: any) {
   }
 
   return videoCategoryInfo
+}
+
+//--------------------------------------------------------
+// YouTubeAPI を使用してガイドカテゴリを返す非同期関数
+//--------------------------------------------------------
+export async function getGuideCategoryInfo(apiKey: any, id: any = "") {
+  let guideCategoryInfo = {
+    "id": id,
+    "title": undefined,
+  }
+
+  if( id !== undefined ) {
+    try {
+      const response = await fetch(YOUTUBE_DATA_API_URL+"guideCategories" + '?key='+apiKey + '&part=snippet' + '&regionCode=jp' + '&id='+id )
+      //const response = await fetch(YOUTUBE_DATA_API_URL+"guideCategories" + '?key='+apiKey + '&part=snippet' + '&regionCode=jp' )
+      const dataGuideCategories = await response.json()
+      console.log("dataGuideCategories : ", dataGuideCategories)
+
+      // 動画情報を取得
+      guideCategoryInfo["title"] = dataGuideCategories["items"][0]["snippet"]["title"]
+    }
+    catch (err) {
+      console.error(err);
+    }    
+  }
+
+  return guideCategoryInfo
 }
 
 //--------------------------------------------------------

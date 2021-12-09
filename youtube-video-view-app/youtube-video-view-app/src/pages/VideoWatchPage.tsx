@@ -31,11 +31,12 @@ import Paper from '@material-ui/core/Paper';
 import AppConfig, { VideoWatchPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import Header from '../components/Header'
+import SimpleVideoPlayer from '../components/SimpleVideoPlayer'
 import VideoPlayer from '../components/VideoPlayer'
 import CommentList from '../components/CommentList'
 import LiveChatList from '../components/LiveChatList'
 import useLocalPersist from '../components/LocalPersist';
-import { getAPIKey, getChannelIdFromVideoId, getChannelInfo, getVideoInfo, getVideoCategoryInfo, getVideoCommentInfos, getVideoChatInfos } from '../youtube_api/YouTubeDataAPI';
+import { getAPIKey, getChannelIdFromVideoId, getChannelInfo, getVideoInfo, getVideoCategoryInfo, getGuideCategoryInfo } from '../youtube_api/YouTubeDataAPI';
 
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
@@ -106,18 +107,21 @@ const VideoWatchPage: React.VFC = () => {
   const [videoId, setVideoId] = useState(videoId_)
   const [title, setTitle] = useState()
   const [description, setDescription] = useState()
+  const [descriptionJsx, setDescriptionJsx] = useState([])
   const [publishedAt, setPublishedAt] = useState()
   const [tags, setTags] = useState([])
   const [viewCount, setViewCount] = useState()
   const [likeCount, setLikeCount] = useState()
   const [dislikeCount, setDislikeCount] = useState()
   const [favoriteCount, setFavoriteCount] = useState()
+  const [showMore, setShowMore] = useState(false)
+  const scrollShowMoreRef = useRef<HTMLDivElement>(null);  // useRef() : HTML の ref属性への参照
 
   // 動画カテゴリ情報
   const [categoryId, setCategoryId] = useState()  
   const [categoryTitle, setCategoryTitle] = useState()
   const [guideCategoryTitle, setGuideCategoryTitle] = useState()
-  
+
   // チャット情報
   const [liveChatId, setLiveChatId] = useState("")
   const [liveBroadcastContent, setLiveBroadcastContent] = useState("")
@@ -150,9 +154,11 @@ const VideoWatchPage: React.VFC = () => {
         setChannelTitle(channelInfo_["title"])
         setSubscriberCount(channelInfo_["subscriberCount"])
         setProfileImageUrl(channelInfo_["profileImageUrl"])
+        setMessageChannel("")
       }
       catch (err) {
         console.error(err);
+        setMessageChannel("チャンネル情報の取得に失敗しました")
       }
 
       // 動画情報を取得
@@ -162,9 +168,10 @@ const VideoWatchPage: React.VFC = () => {
       let liveBroadcastContent_: any = undefined
       try {
         videoInfo_ = await getVideoInfo(getAPIKey(), videoId)
-        console.log( "videoInfo_ : ", videoInfo_ )    
+        //console.log( "videoInfo_ : ", videoInfo_ )    
         setTitle(videoInfo_["title"])
         setDescription(videoInfo_["description"])
+        setDescriptionJsx(convertDescriptionToJsx(videoInfo_["description"]))
         setPublishedAt(videoInfo_["publishedAt"])
         setTags(videoInfo_["tags"])
         setViewCount(videoInfo_["viewCount"])
@@ -182,9 +189,11 @@ const VideoWatchPage: React.VFC = () => {
         setLiveBroadcastContent(videoInfo_["liveBroadcastContent"])
 
         setConcurrentViewers(videoInfo_["concurrentViewers"])
+        setMessageVideo("")
       }
       catch (err) {
         console.error(err);
+        setMessageVideo("動画情報の取得に失敗しました")
       }
 
       // 動画カテゴリ情報を取得
@@ -192,9 +201,23 @@ const VideoWatchPage: React.VFC = () => {
         const videoCategoryInfo_ = await getVideoCategoryInfo(getAPIKey(), categoryId_)
         console.log( "videoCategoryInfo_ : ", videoCategoryInfo_ )    
         setCategoryTitle(videoCategoryInfo_["title"])
+        setMessageVideoCategory("")
       }
       catch (err) {
         console.error(err);
+        setMessageVideoCategory("動画カテゴリ情報の取得に失敗しました")
+      }
+
+      // ガイドカテゴリ情報を修正
+      try {
+        const guideCategoryInfo_ = await getGuideCategoryInfo(getAPIKey())
+        console.log( "guideCategoryInfo_ : ", guideCategoryInfo_ )    
+        setGuideCategoryTitle(guideCategoryInfo_["title"])
+        setMessageVideoCategory("")
+      }
+      catch (err) {
+        console.error(err);
+        setMessageVideoCategory("ガイドカテゴリ情報の取得に失敗しました")
       }
     }
 
@@ -205,14 +228,28 @@ const VideoWatchPage: React.VFC = () => {
   //------------------------
   // イベントハンドラ
   //------------------------  
+  // もっと見るボタンクリック時のイベントハンドラ
+  const onClickShowMore = ((event: any) => {
+    setShowMore(true)
+  })
+
+  // 一部を表示ボタンクリック時のイベントハンドラ
+  const onClickShowLess = ((event: any) => {
+    setShowMore(false)
+
+    // scrollShowMoreRef.current は null である可能性があるので、optional chaining (.?) でアクセス
+    //scrollShowMoreRef?.current?.scrollIntoView({behavior: "smooth", block: "start",});
+    scrollShowMoreRef?.current?.scrollIntoView({block: "center",});
+  })
 
   //------------------------
   // JSX での表示処理
   //------------------------
   const channelURL = "https://www.youtube.com/channel/" + channelId
   const youtubeVideoURL = "https://www.youtube.com/watch?v=" + videoId
-  console.log( "[VideoWatchPage] liveChatId : ", liveChatId )
-  console.log( "[VideoWatchPage] liveBroadcastContent : ", liveBroadcastContent )
+  //console.log( "[VideoWatchPage] liveChatId : ", liveChatId )
+  //console.log( "[VideoWatchPage] liveBroadcastContent : ", liveBroadcastContent )
+
   return (
     <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
@@ -274,7 +311,10 @@ const VideoWatchPage: React.VFC = () => {
           </Box>
           { /* 動画説明 */ }
           <Box m={2}>
-            <Typography variant="body1">{convertDescriptionToJsx(description)}</Typography>
+            <div ref={scrollShowMoreRef} />   { /* useRef() で作成した scrollShowMoreRef を <div> の ref 属性に設定する */ }
+            <Typography variant="body1">{showMore ? descriptionJsx : [...descriptionJsx.slice(0,10), "..."] }</Typography>
+            { showMore ? "" : <Button variant="text" onClick={onClickShowMore}><Typography variant="subtitle2">もっと見る</Typography></Button> }
+            { showMore ? <Button variant="text" onClick={onClickShowLess}><Typography variant="subtitle2">一部を表示</Typography></Button> : "" }
           </Box>
           { /* 追加情報 */ }
           <Divider />
@@ -302,5 +342,7 @@ const VideoWatchPage: React.VFC = () => {
     </ThemeProvider>
   );
 }
+
+//          <SimpleVideoPlayer videoId={videoId} autoPlay={true} videoWidth={VideoWatchPageConfig.videoWidth} videoHeight={VideoWatchPageConfig.videoHeight} darkMode={darkMode} />
 
 export default VideoWatchPage;

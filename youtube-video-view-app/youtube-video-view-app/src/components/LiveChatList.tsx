@@ -130,7 +130,9 @@ const LiveChatList: React.FC<Props> = ({
     }
 
     // 非同期処理実行
-    initPageAsync()
+    if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
+      initPageAsync()
+    }
   }, [liveChatId, liveBroadcastContent])
 
   // setInterval() を呼び出す副作用フック。レンダーの度にsetIntervalが何度も実行されて、オーバーフローやメモリリークが発生するので副作用フック内で行う
@@ -189,7 +191,7 @@ const LiveChatList: React.FC<Props> = ({
               })
   
               //setChatsJsx(chatsJsx_)
-              
+
               // チャット表示を下にスクロール
               //scrollBottomRef?.current?.scrollIntoView({behavior: "smooth", block: "end",});
               //console.log( "scrollBottomRef : ", scrollBottomRef )
