@@ -1,11 +1,10 @@
 /* eslint-disable */
+// React
 import React from 'react';
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useParams, useLocation } from 'react-router-dom';
 
-import firebase from "firebase";
-import '../firebase/initFirebase'
-
+// Material-UI
 import { makeStyles } from '@material-ui/core/styles'
 import { ThemeProvider} from '@material-ui/core/styles';
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -28,6 +27,11 @@ import ListItemText from '@material-ui/core/ListItemText';
 import ListItemAvatar from '@material-ui/core/ListItemAvatar';
 import Paper from '@material-ui/core/Paper';
 
+// firebase
+import firebase from "firebase";
+import '../firebase/initFirebase'
+
+// 自作モジュール
 import AppConfig, { VideoWatchPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import Header from '../components/Header'

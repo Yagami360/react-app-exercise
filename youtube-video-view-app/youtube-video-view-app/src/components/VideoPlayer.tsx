@@ -1,8 +1,10 @@
 /* eslint-disable */
+// React
 import React from 'react';
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useParams, useLocation } from 'react-router-dom';
 
+// Material-UI
 import { makeStyles } from '@material-ui/core/styles'
 import { ThemeProvider} from '@material-ui/core/styles';
 import Box from '@material-ui/core/Box';
@@ -10,14 +12,18 @@ import { Grid } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 
+// スクリーンショット用
+import html2canvas from "html2canvas";
+
+// 自作モジュール
 import AppTheme from './Theme';
 import YouTubeIframeAPI from '../youtube_api/YouTubeIframeAPI'
-
-let player:any 
 
 //===========================================
 // YouTube 動画プレイヤーを表示するコンポーネント
 //===========================================
+let player:any
+
 // コンポーネントの引数
 type Props = {
   videoId: any;
@@ -37,8 +43,7 @@ const VideoPlayer: React.FC<Props> = ({
   //------------------------
   // フック
   //------------------------
-  const [videoURL, setVideoURL] = useState("")
-  const [message, setMessage] = useState("loading chats")
+  const [message, setMessage] = useState("loading video")
 
   // ページ読み込み時の副作用フック
   useEffect( () => {
@@ -64,6 +69,8 @@ const VideoPlayer: React.FC<Props> = ({
             }
           }
         );
+
+        setMessage("")
       });
     }
   }, [videoId, autoPlay])
@@ -77,20 +84,111 @@ const VideoPlayer: React.FC<Props> = ({
 
   // Youtube Player のステート変更時のイベントハンドラ
   const onPlayerStateChange = (event: YT.OnStateChangeEvent) => {
+    switch (event.data) {
+      case -1:
+        // 未開始
+        break;
+      case 0:
+        // 終了
+        break;
+      case 1:
+        // 再生中
+        break;
+      case 2:
+        // 一時停止
+        break;
+      case 3:
+        // バッファリング中
+        break;
+      case 5:
+        // 頭出し済み
+        break;
+    }
   };
 
-  // もっと見るボタンクリック時のイベントハンドラ
+  // スクショボタンクリック時のイベントハンドラ 
   const onClickScreenShort = ((event: any) => {
     console.log( "call onClickScreenShort" )
 
-    // 動画 URL から動画をダウンロード
+    /*
+    // DOM の id からスクリーンショットを取る対象の DOM 要素を取得
+    const targetDomElem: any = document.getElementById("player");
+    console.log( "targetDomElem : ", targetDomElem )
 
-    // 動画の現在の再生時間を取得する
-    const currentTime = player.getCurrentTime();
-    console.log( "currentTime : ", currentTime )
+    // html2canvas ライブラリのメソッドを呼び出し、スクショの画像データ canvas を取得
+    html2canvas(
+      targetDomElem, 
+      {
+        allowTaint: true, 
+        useCORS: true,
+      }
+    )
+      .then( canvas => {
+        // [ToDo] canvas 内の画像データがブランク画像になるバグの修正
 
-    // 動画から現在の再生時間の画像を取得する
+        // スクショの画像データ canvas から 画像 URL を取得
+        var screenImgURL = canvas.toDataURL('image/png');
 
+        // ダウンロード URL を設定するための <a> タグを作成
+        const downloadLinkDomElem = document.createElement("a");
+        if (typeof downloadLinkDomElem.download === "string") {
+          // <a> タグの href 属性に 画像 URL を設定
+          downloadLinkDomElem.href = screenImgURL;
+      
+          // ダウンロードファイル名
+          downloadLinkDomElem.download = "player.png";
+      
+          // Firefox では body の中にダウンロードリンクがないといけないので一時的に追加
+          document.body.appendChild(downloadLinkDomElem);
+      
+          // ダウンロードリンクが設定された a タグをクリック。これにより、自動ダウンロード出来る
+          downloadLinkDomElem.click();
+      
+          // Firefox 対策で追加したリンクを削除しておく
+          document.body.removeChild(downloadLinkDomElem);
+        }
+        else {
+          window.open(screenImgURL);
+        }
+      });
+      */
+
+      if (player) {
+        // 動画 URL を取得
+        const videoURL = player.getVideoUrl();
+
+        // スクショ画像をとる DOM 要素取得
+        const targetDomElem: any = document.getElementById('player'); 
+        console.log( "targetDomElem : ", targetDomElem )
+  
+        if (targetDomElem) { 
+          // video 要素を作成
+          var videoDomElem = document.createElement('video');
+          videoDomElem.src = videoURL + "?sanitize=true"; // sanitize=true を追加して CORB 対策
+          console.log("videoDomElem : ", videoDomElem)
+  
+          // canvas 要素を作成
+          const canvas = document.createElement('canvas'); 
+          canvas.width = targetDomElem.clientWidth; 
+          canvas.height = targetDomElem.clientHeight; 
+          const context: any = canvas.getContext('2d'); 
+          context.drawImage(videoDomElem, 0, 0, canvas.width, canvas.height); 
+          console.log("canvas : ", canvas)
+  
+          // スクショの画像データ canvas から 画像 URL を取得
+          const screenImgURL = canvas.toDataURL('image/png'); 
+  
+          // ダウンロード URL を設定するための <a> タグを作成
+          const downloadLinkDomElem = document.createElement('a'); 
+          downloadLinkDomElem.download = `screen-shot-${new Date().toISOString()}.png`; 
+          downloadLinkDomElem.target = '_blank'; 
+          downloadLinkDomElem.href = screenImgURL; 
+          downloadLinkDomElem.click(); 
+      }
+      else {
+          alert('There is no video tag.'); 
+      } 
+      }
   })
 
   //------------------------

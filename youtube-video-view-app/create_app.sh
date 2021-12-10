@@ -51,6 +51,7 @@ npm install --save @types/react-beautiful-dnd             # ドラック＆ド�
 npm install --save react-beautiful-dnd
 npm install --save youtube                                # for IFrame Player API
 npm install --save @types/youtube                         # for IFrame Player API（TypeScript用）
+npm install --save html2canvas                            # スクリーンショット用
 npm ls --depth=0
 
 #----------------------------- 
