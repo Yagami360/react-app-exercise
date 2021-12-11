@@ -52,6 +52,7 @@ npm install --save react-beautiful-dnd
 npm install --save youtube                                # for IFrame Player API
 npm install --save @types/youtube                         # for IFrame Player API（TypeScript用）
 npm install --save html2canvas                            # スクリーンショット用
+npm install --save @types/html2canvas                     # スクリーンショット用（TypeScript用）
 npm ls --depth=0
 
 #----------------------------- 
@@ -67,6 +68,13 @@ firebase login --project ${FIREBASE_PROJECT_ID}
 
 # Firebase プロジェクトを初期化
 firebase init --project ${FIREBASE_PROJECT_ID}
+
+# Cloud Funtion に各種 npm パッケージをインストール
+cd ${ROOT_DIR}/${PROJECT_NAME}/functions
+npm install --save request request-promise
+npm install --save ytdl-core                              # 動画ダウンロード用
+npm install --save @types/ytdl-core                       # 動画ダウンロード用（TypeScript用）
+npm install --save @types/node
 
 #-----------------------------
 # React アプリを起動する

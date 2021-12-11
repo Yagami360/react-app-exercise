@@ -23,6 +23,7 @@ import YouTubeIframeAPI from '../youtube_api/YouTubeIframeAPI'
 // YouTube 動画プレイヤーを表示するコンポーネント
 //===========================================
 let player:any
+const cloudFuntionDownloadVideoURL = "https://us-central1-video-view-app-684c0.cloudfunctions.net/downloadVideo"
 
 // コンポーネントの引数
 type Props = {
@@ -106,11 +107,45 @@ const VideoPlayer: React.FC<Props> = ({
     }
   };
 
+  // ダウンロードボタンクリック時のイベントハンドラ 
+  const onClickDownload = ((event: any) => {
+    console.log( "call onClickDownload" )
+    
+    // 動画 URL を取得
+    //const videoURL = player.getVideoUrl();
+    //const videoURL = 'https://www.youtube.com/embed/' + videoId
+    const videoURL = 'https://www.youtube.com/watch?v=' + videoId
+    console.log("videoURL : ", videoURL )
+
+
+    // Cloud Funtion をリバースプロキシとして動画ダウンロード
+    fetch(
+      cloudFuntionDownloadVideoURL,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          "videoURL" : videoURL,
+        })
+      }
+    )
+      .then((response) => {
+        console.log("response : ", response)
+        if ( !response.ok) {
+          throw new Error();
+        }
+        return response.json()
+      })
+      .then((data) => {
+      })
+  })
+
   // スクショボタンクリック時のイベントハンドラ 
   const onClickScreenShort = ((event: any) => {
     console.log( "call onClickScreenShort" )
 
-    /*
     // DOM の id からスクリーンショットを取る対象の DOM 要素を取得
     const targetDomElem: any = document.getElementById("player");
     console.log( "targetDomElem : ", targetDomElem )
@@ -151,15 +186,15 @@ const VideoPlayer: React.FC<Props> = ({
           window.open(screenImgURL);
         }
       });
-      */
 
+      /*
       if (player) {
         // 動画 URL を取得
         const videoURL = player.getVideoUrl();
 
         // スクショ画像をとる DOM 要素取得
-        const targetDomElem: any = document.getElementById('player'); 
-        console.log( "targetDomElem : ", targetDomElem )
+        const targetDomElem: any = document.getElementById('screen-shot'); 
+        console.log( "[before] targetDomElem : ", targetDomElem )
   
         if (targetDomElem) { 
           // video 要素を作成
@@ -177,18 +212,19 @@ const VideoPlayer: React.FC<Props> = ({
   
           // スクショの画像データ canvas から 画像 URL を取得
           const screenImgURL = canvas.toDataURL('image/png'); 
-  
+
           // ダウンロード URL を設定するための <a> タグを作成
           const downloadLinkDomElem = document.createElement('a'); 
           downloadLinkDomElem.download = `screen-shot-${new Date().toISOString()}.png`; 
           downloadLinkDomElem.target = '_blank'; 
           downloadLinkDomElem.href = screenImgURL; 
+          console.log( "[after] targetDomElem : ", targetDomElem )
           downloadLinkDomElem.click(); 
       }
       else {
           alert('There is no video tag.'); 
-      } 
       }
+      */
   })
 
   //------------------------
@@ -200,9 +236,10 @@ const VideoPlayer: React.FC<Props> = ({
       <Typography>{message}</Typography> 
       <Box style={{display: "block"}}>
         { /* 動画表示。id="player" の部分が iframe に置き換わる */ }
-        <div id="player"></div> 
+        <div id="player"></div>
         { /* コントロールパネル */ }
         <Box mx={1} style={{textAlign: "right"}}>
+          <Button variant="text" onClick={onClickDownload}><Typography variant="subtitle2">ダウンロード</Typography></Button>
           <Button variant="text" onClick={onClickScreenShort}><Typography variant="subtitle2">スクショ</Typography></Button>
         </Box>
       </Box>

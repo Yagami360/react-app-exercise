@@ -47,87 +47,6 @@ const App: React.VFC = () => {
   //------------------------
   // イベントハンドラ
   //------------------------
-  // スクショボタンクリック時のイベントハンドラ 
-  const onClickScreenShort = ((event: any) => {
-    console.log( "call onClickScreenShort" )
-
-    // DOM の id からスクリーンショットを取る対象の DOM 要素を取得
-    //const targetDomElem: any = document.getElementById("screen-shot");
-    const targetDomElem: any = document.querySelector("#screen-shot");
-    console.log( "targetDomElem : ", targetDomElem )
-
-    // html2canvas ライブラリのメソッドを呼び出し、スクショの画像データ canvas を取得
-    html2canvas(targetDomElem, 
-      {
-        allowTaint: true, 
-        useCORS: true,
-        //width: window.screen.availWidth,      // キャプチャーするエリアのサイズ
-        //height: window.screen.availHeight,
-        x: targetDomElem.offsetLeft,
-        y: targetDomElem.offsetTop,
-        //scrollX: 0,
-        //scrollY: -window.scrollY,
-        //windowWidth: 2500,
-        //width: 2500,
-      }
-    )
-      .then( canvas => {
-        console.log( "canvas : ", canvas )
-
-        canvas.toBlob( (blob:any) => {
-          const downloadLinkDomElem = document.createElement("a");
-
-          if (typeof downloadLinkDomElem.download === "string") {
-            // <a> タグの href 属性に 画像 URL を設定
-            downloadLinkDomElem.href = window.URL.createObjectURL(blob);
-        
-            // ダウンロードファイル名
-            downloadLinkDomElem.download = "player.png";
-        
-            // Firefox では body の中にダウンロードリンクがないといけないので一時的に追加
-            document.body.appendChild(downloadLinkDomElem);
-  
-            // ダウンロードリンクが設定された a タグをクリック。これにより、自動ダウンロード出来る
-            downloadLinkDomElem.click();
-        
-            // Firefox 対策で追加したリンクを削除しておく
-            document.body.removeChild(downloadLinkDomElem);
-          }
-          else {
-            window.open(window.URL.createObjectURL(blob));
-          }
-        })
-
-        /*
-        // スクショの画像データ canvas から 画像 URL を取得
-        var screenImgURL = canvas.toDataURL('image/png');
-        //console.log( "screenImgURL : ", screenImgURL )
-
-        // ダウンロード URL を設定するための <a> タグを作成
-        const downloadLinkDomElem = document.createElement("a");
-
-        if (typeof downloadLinkDomElem.download === "string") {
-          // <a> タグの href 属性に 画像 URL を設定
-          downloadLinkDomElem.href = screenImgURL;
-      
-          // ダウンロードファイル名
-          downloadLinkDomElem.download = "player.png";
-      
-          // Firefox では body の中にダウンロードリンクがないといけないので一時的に追加
-          document.body.appendChild(downloadLinkDomElem);
-
-          // ダウンロードリンクが設定された a タグをクリック。これにより、自動ダウンロード出来る
-          downloadLinkDomElem.click();
-      
-          // Firefox 対策で追加したリンクを削除しておく
-          document.body.removeChild(downloadLinkDomElem);
-        }
-        else {
-          window.open(screenImgURL);
-        }
-        */
-      });
-  })
 
   //------------------------
   // JSX での表示処理
@@ -149,8 +68,6 @@ const App: React.VFC = () => {
           <Route path={AppConfig.testPage.path} element={<TestPage />} />
         </Routes>
       </BrowserRouter>
-      <div id="screen-shot"><h1>スクショ画像</h1></div>
-      <Button variant="text" onClick={onClickScreenShort}><Typography variant="subtitle2">スクショ</Typography></Button>
     </ThemeProvider>
   );
 }
