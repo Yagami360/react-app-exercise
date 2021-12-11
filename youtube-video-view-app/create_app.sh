@@ -53,6 +53,8 @@ npm install --save youtube                                # for IFrame Player AP
 npm install --save @types/youtube                         # for IFrame Player API（TypeScript用）
 npm install --save html2canvas                            # スクリーンショット用
 npm install --save @types/html2canvas                     # スクリーンショット用（TypeScript用）
+#npm install --save react-native-ytdl                      # 動画ダウンロード用
+#npm install --save-dev @types/react-native-ytdl
 npm ls --depth=0
 
 #----------------------------- 

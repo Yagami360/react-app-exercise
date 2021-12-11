@@ -6,8 +6,8 @@ const ytdl = require('ytdl-core');
 // 動画 URL から動画データをダウンロード
 // Cloud Funtion でリバースプロキシすることで CORS エラーを回避
 //==========================================================
-exports.downloadVideo = functions.https.onRequest((request, response) => {  
-  console.log( "call downloadVideo" )
+exports.downloadVideoFromYouTube = functions.https.onRequest((request, response) => {  
+  console.log( "call downloadVideoFromYouTube" )
 
   // CORS 設定（この処理を入れないと Cloud Funtion 呼び出し元で No 'Access-Control-Allow-Origin' のエラーが出る）
   response.set('Access-Control-Allow-Origin', '*');
@@ -20,32 +20,31 @@ exports.downloadVideo = functions.https.onRequest((request, response) => {
   }
 
   //
-  const videoURL = request.body["videoURL"]
+  //const videoId = request.body["videoId"]
+  //const { videoId } = request.params;
+  const videoId = "tqfNjYE2UQk"
+
+  const videoURL = `https://www.youtube.com/watch?v=${videoId}`;
+  console.log( `videoId : ${videoId}` )
   console.log( `videoURL : ${videoURL}` )
 
-  // 動画 URL から動画データをダウンロード
-  fetch(
-    videoURL, 
-    {
-      method: 'GET',
-      mode: 'cors',  // CORS 対策
-      //mode: 'no-cors',  // CORS 対策
-    }
-  )
-    .then(response => {
-      console.log("response : ", response)
-      response.blob()
-    })
-    .then(data => {
-      console.log("data : ", data)
+  // ytdl オブジェクト作成
+  const stream = ytdl(videoURL, { quality: 'highest' });
+  console.log( `stream : ${stream}` )
 
-      // レスポンス処理
-      //response.send()
-    })
+  // ダウンロード処理実行開始
+  stream.pipe(fs.createWriteStream(`${videoId}.mp4`));  
 
-  // ytdl-core ライブラリを使用して動画ダウンロード
-  const stream = fs.createWriteStream(`${new Date().toISOString()}.mp4`)
-  console.log("stream : ", stream )
-  ytdl(videoURL).pipe(stream);
+  // ダウンロードエラー時のイベントハンドラ
+  stream.on('error', (err) => {
+    console.log( "stream.on('error') : ", err )
+    response.status(400).send('download error!');
+  });
 
+  // ダウンロード終了時のイベントハンドラ
+  stream.on('end', () => {
+    console.log( "stream.on('end')" )
+    response.download(`tmp/${videoId}.mp4`);
+    response.status(200).send('download successed!');
+  });
 })

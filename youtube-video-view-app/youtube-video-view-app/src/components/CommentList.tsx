@@ -129,10 +129,11 @@ const CommentList: React.FC<Props> = ({
             <Divider variant="inset" component="li" />            
           </>)
 
-          setCommentsJsx([...commentsJsx_, commentJsx_])
+          //setCommentsJsx([...commentsJsx_, commentJsx_])
           commentsJsx_.push(commentJsx_)
         })
 
+        setCommentsJsx(commentsJsx_)
         setMessage("")
       }
     }

@@ -22,8 +22,9 @@ import YouTubeIframeAPI from '../youtube_api/YouTubeIframeAPI'
 //===========================================
 // YouTube 動画プレイヤーを表示するコンポーネント
 //===========================================
-let player:any
-const cloudFuntionDownloadVideoURL = "https://us-central1-video-view-app-684c0.cloudfunctions.net/downloadVideo"
+// グローバル変数
+let player: any = undefined
+const cloudFuntionDownloadVideoURL = "https://us-central1-video-view-app-684c0.cloudfunctions.net/downloadVideoFromYouTube"
 
 // コンポーネントの引数
 type Props = {
@@ -110,13 +111,6 @@ const VideoPlayer: React.FC<Props> = ({
   // ダウンロードボタンクリック時のイベントハンドラ 
   const onClickDownload = ((event: any) => {
     console.log( "call onClickDownload" )
-    
-    // 動画 URL を取得
-    //const videoURL = player.getVideoUrl();
-    //const videoURL = 'https://www.youtube.com/embed/' + videoId
-    const videoURL = 'https://www.youtube.com/watch?v=' + videoId
-    console.log("videoURL : ", videoURL )
-
 
     // Cloud Funtion をリバースプロキシとして動画ダウンロード
     fetch(
@@ -127,18 +121,41 @@ const VideoPlayer: React.FC<Props> = ({
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          "videoURL" : videoURL,
+          "videoId" : videoId,
         })
       }
     )
       .then((response) => {
-        console.log("response : ", response)
-        if ( !response.ok) {
-          throw new Error();
+        if (!response.ok) {
+          throw new Error('Network error');
         }
-        return response.json()
+        return response.blob();
       })
-      .then((data) => {
+      .then((blob) => {
+        // 動画データの URL 取得
+        const videoDataURL = URL.createObjectURL(blob);
+
+        // ダウンロード URL を設定するための <a> タグを作成
+        const downloadLinkDomElem = document.createElement("a");
+        if (typeof downloadLinkDomElem.download === "string") {
+          // <a> タグの href 属性に 画像 URL を設定
+          downloadLinkDomElem.href = videoDataURL;
+      
+          // ダウンロードファイル名
+          downloadLinkDomElem.download = "${videoId}.png";
+      
+          // Firefox では body の中にダウンロードリンクがないといけないので一時的に追加
+          document.body.appendChild(downloadLinkDomElem);
+      
+          // ダウンロードリンクが設定された a タグをクリック。これにより、自動ダウンロード出来る
+          downloadLinkDomElem.click();
+      
+          // Firefox 対策で追加したリンクを削除しておく
+          document.body.removeChild(downloadLinkDomElem);
+        }
+        else {
+          window.open(videoDataURL);
+        }        
       })
   })
 

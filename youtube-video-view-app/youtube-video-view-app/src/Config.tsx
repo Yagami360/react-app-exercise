@@ -35,8 +35,8 @@ export const VideoWatchPageConfig = {
   iterComment: 2,
   maxResultsChat: 100,
   iterChat: 1,
-  intervalTimeChat: 1000,
-  maxResultsIntervalChat: 1,
+  intervalTimeChat: 100,
+  maxResultsIntervalChat: 5,
 };
 
 export const FavPageConfig = {
