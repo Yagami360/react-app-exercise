@@ -52,7 +52,7 @@ const LiveChatList: React.FC<Props> = ({
   liveBroadcastContent,
   darkMode,
 }) => {
-  console.log( "call LiveChatList" )
+  //console.log( "call LiveChatList" )
   //console.log( "[LiveChatList] liveChatId : ", liveChatId )
   //console.log( "[LiveChatList] liveBroadcastContent : ", liveBroadcastContent )
 
@@ -81,8 +81,8 @@ const LiveChatList: React.FC<Props> = ({
         let chatNumber_ = undefined
         try {
           [videoChatInfos_, chatNumber_, chatNextPageToken] = await getVideoChatInfos(getAPIKey(), liveChatId, VideoWatchPageConfig.maxResultsChat, VideoWatchPageConfig.iterChat, chatNextPageToken)
-          console.log( "videoChatInfos_ : ", videoChatInfos_ )    
-          console.log( "chatNextPageToken : ", chatNextPageToken )
+          //console.log( "videoChatInfos_ : ", videoChatInfos_ )    
+          //console.log( "chatNextPageToken : ", chatNextPageToken )
         }
         catch (err) {
           console.error(err);
@@ -137,13 +137,13 @@ const LiveChatList: React.FC<Props> = ({
 
   // setInterval() を呼び出す副作用フック。レンダーの度にsetIntervalが何度も実行されて、オーバーフローやメモリリークが発生するので副作用フック内で行う
   useEffect( () => {
-    console.log( "call useEffect2 (setInterval)" )
+    //console.log( "call useEffect2 (setInterval)" )
 
     // 一定時間経過度に呼び出されるイベントハンドラ
     // setInterval(()=>{処理}, インターバル時間msec) : 一定時間度に {} で定義した処理を行う
     if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
       let timerChat = setInterval( ()=>{
-        console.log( "call timerChat" )
+        //console.log( "call timerChat" )
         //console.log( "[LiveChatList in useEffect2] liveChatId : ", liveChatId )
         //console.log( "[LiveChatList in useEffect2] liveBroadcastContent : ", liveBroadcastContent )
   
@@ -219,7 +219,7 @@ const LiveChatList: React.FC<Props> = ({
   //------------------------
   // JSX での表示処理
   //------------------------
-  console.log( "chatsJsx: ", chatsJsx )
+  //console.log( "chatsJsx: ", chatsJsx )
   if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
     return (
       <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>

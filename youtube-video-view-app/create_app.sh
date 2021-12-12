@@ -53,6 +53,7 @@ npm install --save youtube                                # for IFrame Player AP
 npm install --save @types/youtube                         # for IFrame Player API（TypeScript用）
 npm install --save html2canvas                            # スクリーンショット用
 npm install --save @types/html2canvas                     # スクリーンショット用（TypeScript用）
+npm install --save gsap                                   # アニメーション用
 npm ls --depth=0
 
 #----------------------------- 

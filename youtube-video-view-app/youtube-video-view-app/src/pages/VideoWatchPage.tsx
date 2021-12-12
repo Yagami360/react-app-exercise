@@ -269,6 +269,7 @@ const VideoWatchPage: React.VFC = () => {
           <VideoPlayer videoId={videoId} autoPlay={true} videoWidth={VideoWatchPageConfig.videoWidth} videoHeight={VideoWatchPageConfig.videoHeight} darkMode={darkMode} />
           { /* チャット表示 */ }
           <LiveChatList liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} darkMode={darkMode} />
+          <LiveChatCanvas liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} chatCanvasMaxRow={20} />
         </Box>
         { /* 動画情報表示 */ }
         <Box m={2}>
