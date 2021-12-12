@@ -108,6 +108,28 @@ const VideoPlayer: React.FC<Props> = ({
     }
   };
 
+  // 再生ボタンクリック時のイベントハンドラ
+  const onClickPlayVideo = ((event: any) => {
+    if(player != undefined) {
+      // 動画再生
+      player.playVideo()
+
+      // コメント字幕の再開
+
+    }
+  })
+
+  // 停止ボタンクリック時のイベントハンドラ
+  const onClickPauseVideo = ((event: any) => {
+    if(player != undefined) {
+      // 動画一時停止
+      player.pauseVideo()
+
+      // コメント字幕の停止
+      
+    }
+  })
+
   // ダウンロードボタンクリック時のイベントハンドラ 
   const onClickDownload = ((event: any) => {
     console.log( "call onClickDownload" )

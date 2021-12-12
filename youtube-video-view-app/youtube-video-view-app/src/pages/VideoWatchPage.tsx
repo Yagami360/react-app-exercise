@@ -39,6 +39,7 @@ import SimpleVideoPlayer from '../components/SimpleVideoPlayer'
 import VideoPlayer from '../components/VideoPlayer'
 import CommentList from '../components/CommentList'
 import LiveChatList from '../components/LiveChatList'
+import LiveChatCanvas from '../components/LiveChatCanvas'
 import useLocalPersist from '../components/LocalPersist';
 import { getAPIKey, getChannelIdFromVideoId, getChannelInfo, getVideoInfo, getVideoCategoryInfo, getGuideCategoryInfo } from '../youtube_api/YouTubeDataAPI';
 

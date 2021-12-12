@@ -10,7 +10,7 @@ cd ${ROOT_DIR}/${PROJECT_NAME}
 npm run build
 
 # Firebase Hosting で外部公開する 
-#firebase deploy --project ${FIREBASE_PROJECT_ID}
+firebase deploy --project ${FIREBASE_PROJECT_ID}
 
 # 外部公開サイトにアクセスする
 open https://${FIREBASE_PROJECT_ID}.web.app/
