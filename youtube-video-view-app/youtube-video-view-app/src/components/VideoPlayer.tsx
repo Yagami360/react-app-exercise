@@ -18,6 +18,7 @@ import html2canvas from "html2canvas";
 // 自作モジュール
 import AppTheme from './Theme';
 import YouTubeIframeAPI from '../youtube_api/YouTubeIframeAPI'
+import LiveChatCanvas, {LiveChatCanvasHandler} from '../components/LiveChatCanvas'
 
 //===========================================
 // YouTube 動画プレイヤーを表示するコンポーネント
@@ -32,6 +33,8 @@ type Props = {
   autoPlay: boolean;
   videoWidth: string;
   videoHeight: string;  
+  liveChatId: string;
+  liveBroadcastContent: string;
   darkMode: boolean;
 }
 
@@ -40,12 +43,16 @@ const VideoPlayer: React.FC<Props> = ({
   videoId,
   autoPlay,
   videoWidth, videoHeight,
+  liveChatId, liveBroadcastContent, 
   darkMode,
 }) => {
   //------------------------
   // フック
   //------------------------
   const [message, setMessage] = useState("loading video")
+
+  // 子コンポーネント LiveChatCanvas で定義した各種メソッドを呼び出すためのハンドル
+  const liveChatCanvasHandlerRef = React.useRef<LiveChatCanvasHandler>(null);
 
   // ページ読み込み時の副作用フック
   useEffect( () => {
@@ -89,21 +96,45 @@ const VideoPlayer: React.FC<Props> = ({
     switch (event.data) {
       case -1:
         // 未開始
+        if ( liveChatCanvasHandlerRef.current !== null ) {
+          // ライブチャット字幕のアニメーション用 TimeLine を一時停止
+          liveChatCanvasHandlerRef.current.pauseTimeline()
+        }
         break;
       case 0:
         // 終了
+        if ( liveChatCanvasHandlerRef.current !== null ) {
+          // ライブチャット字幕のアニメーション用 TimeLine を一時停止
+          liveChatCanvasHandlerRef.current.pauseTimeline()
+        }
         break;
       case 1:
         // 再生中
+        if ( liveChatCanvasHandlerRef.current !== null ) {
+          // ライブチャット字幕のアニメーション用 TimeLine を開始
+          liveChatCanvasHandlerRef.current.playTimeline()
+        }
         break;
       case 2:
         // 一時停止
+        if ( liveChatCanvasHandlerRef.current !== null ) {
+          // ライブチャット字幕のアニメーション用 TimeLine を一時停止
+          liveChatCanvasHandlerRef.current.pauseTimeline()
+        }
         break;
       case 3:
         // バッファリング中
+        if ( liveChatCanvasHandlerRef.current !== null ) {
+          // ライブチャット字幕のアニメーション用 TimeLine を一時停止
+          liveChatCanvasHandlerRef.current.pauseTimeline()
+        }
         break;
       case 5:
         // 頭出し済み
+        if ( liveChatCanvasHandlerRef.current !== null ) {
+          // ライブチャット字幕のアニメーション用 TimeLine を一時停止
+          liveChatCanvasHandlerRef.current.pauseTimeline()
+        }
         break;
     }
   };
@@ -267,6 +298,25 @@ const VideoPlayer: React.FC<Props> = ({
   })
 
   //------------------------
+  // メソッド
+  //------------------------
+  const getVideoCurrentTime = () => {
+    if (player != undefined) {
+      if (player.getPlayerState() === 0) {
+        // 動画終了時は動画の再生時間を返す
+        return player.getDuration();
+      }
+      else {
+        // 動画の現在の再生時間を返す
+        return player.getCurrentTime();
+      }
+    }
+    else {
+      return -1
+    }
+  };
+
+  //------------------------
   // JSX での表示処理
   //------------------------
   //console.log( "[VideoPlayer] videoURL : ", videoURL )
@@ -274,8 +324,12 @@ const VideoPlayer: React.FC<Props> = ({
     <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
       <Typography>{message}</Typography> 
       <Box style={{display: "block"}}>
-        { /* 動画表示。id="player" の部分が iframe に置き換わる */ }
-        <div id="player"></div>
+        <Box>
+          { /* チャット字幕 */ }
+          <LiveChatCanvas liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} chatCanvasMaxRow={20} getVideoCurrentTime={getVideoCurrentTime} ref={liveChatCanvasHandlerRef} />
+          { /* 動画表示。id="player" の部分が iframe に置き換わる */ }
+          <div id="player"></div>
+        </Box>
         { /* コントロールパネル */ }
         <Box mx={1} style={{textAlign: "right"}}>
           <Button variant="text" onClick={onClickDownload}><Typography variant="subtitle2">ダウンロード</Typography></Button>

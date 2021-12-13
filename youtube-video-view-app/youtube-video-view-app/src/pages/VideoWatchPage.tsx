@@ -39,7 +39,6 @@ import SimpleVideoPlayer from '../components/SimpleVideoPlayer'
 import VideoPlayer from '../components/VideoPlayer'
 import CommentList from '../components/CommentList'
 import LiveChatList from '../components/LiveChatList'
-import LiveChatCanvas from '../components/LiveChatCanvas'
 import useLocalPersist from '../components/LocalPersist';
 import { getAPIKey, getChannelIdFromVideoId, getChannelInfo, getVideoInfo, getVideoCategoryInfo, getGuideCategoryInfo } from '../youtube_api/YouTubeDataAPI';
 
@@ -266,10 +265,9 @@ const VideoWatchPage: React.VFC = () => {
         <Typography variant="subtitle2">{messageVideo}</Typography>
         <Box style={{display: "flex"}}>
           { /* 動画表示 */ }
-          <VideoPlayer videoId={videoId} autoPlay={true} videoWidth={VideoWatchPageConfig.videoWidth} videoHeight={VideoWatchPageConfig.videoHeight} darkMode={darkMode} />
+          <VideoPlayer videoId={videoId} autoPlay={true} videoWidth={VideoWatchPageConfig.videoWidth} videoHeight={VideoWatchPageConfig.videoHeight} liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} darkMode={darkMode} />
           { /* チャット表示 */ }
           <LiveChatList liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} darkMode={darkMode} />
-          <LiveChatCanvas liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} chatCanvasMaxRow={20} />
         </Box>
         { /* 動画情報表示 */ }
         <Box m={2}>

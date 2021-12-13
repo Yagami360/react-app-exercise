@@ -1,7 +1,7 @@
 /* eslint-disable */
 // React
 import React from 'react';
-import { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useImperativeHandle, forwardRef, RefForwardingComponent, RefObject } from 'react'
 import { useParams, useLocation } from 'react-router-dom';
 
 // Material-UI
@@ -35,10 +35,16 @@ import { getAPIKey, getVideoChatInfos } from '../youtube_api/YouTubeDataAPI';
 //=======================================================
 // ライブ動画のチャットをニコニコ風字幕で表示するコンポーネント
 //=======================================================
+// 外部公開したいメソッドの定義。useImperativeHandle() を使用して親コンポーネントから子コンポーネントで定義したメソッドを呼び出すために定義
+export interface LiveChatCanvasHandler {
+  playTimeline: () => void;
+  pauseTimeline: () => void;
+  seekTimeline: (seconds: number) => void;
+}
+
 // グローバル変数
 let chatNextPageToken: any = ""
 let chats_: any[] = []
-
 
 // 独自スタイル
 const useStyles = makeStyles({
@@ -49,23 +55,28 @@ const useStyles = makeStyles({
 })
 
 // コンポーネントの引数
-type Props = {
+type probs = {
   liveChatId: string;
   liveBroadcastContent: string;
   chatCanvasMaxRow: number;
+  getVideoCurrentTime: any;
+  ref: RefObject<LiveChatCanvasHandler>;
 }
 
-const LiveChatCanvas: React.FC<Props> = ({ 
-  children,
-  liveChatId,
-  liveBroadcastContent,
-  chatCanvasMaxRow = 20,          // チャット字幕の最大表示行の数
-}) => {
+// useImperativeHandle を使用する場合の定義方法
+const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (probs, ref) => {
   console.log( "call LiveChatCanvas" )
 
   //------------------------
   // フック
   //------------------------
+  //
+  useImperativeHandle(ref, () => ({
+    playTimeline,
+    pauseTimeline,
+    seekTimeline
+  }));
+
   // 独自スタイル
   const style = useStyles()
 
@@ -87,11 +98,11 @@ const LiveChatCanvas: React.FC<Props> = ({
   // ページ読み込み時の副作用フック
   useEffect( () => {
     //console.log( "call useEffect1 (init)" )
-    //console.log( "[LiveChatList in useEffect1] liveChatId : ", liveChatId )
-    //console.log( "[LiveChatList in useEffect1] liveBroadcastContent : ", liveBroadcastContent )
+    //console.log( "[LiveChatList in useEffect1] probs.liveChatId : ", probs.liveChatId )
+    //console.log( "[LiveChatList in useEffect1] probs.liveBroadcastContent : ", probs.liveBroadcastContent )
 
     // 非同期処理実行
-    if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
+    if ( probs.liveBroadcastContent === "live" || probs.liveBroadcastContent === "upcoming" ) {
       // ライブチャット情報を取得する
       getLiveChatAsync()
 
@@ -119,7 +130,7 @@ const LiveChatCanvas: React.FC<Props> = ({
       }
     };
 
-  }, [liveChatId, liveBroadcastContent])
+  }, [probs.liveChatId, probs.liveBroadcastContent])
 
   // setInterval() を呼び出す副作用フック。レンダーの度にsetIntervalが何度も実行されて、オーバーフローやメモリリークが発生するので副作用フック内で行う
   useEffect( () => {
@@ -127,16 +138,16 @@ const LiveChatCanvas: React.FC<Props> = ({
 
     // 一定時間経過度に呼び出されるイベントハンドラ
     // setInterval(()=>{処理}, インターバル時間msec) : 一定時間度に {} で定義した処理を行う
-    if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
+    if ( probs.liveBroadcastContent === "live" || probs.liveBroadcastContent === "upcoming" ) {
       let timerChat = setInterval( ()=>{
         console.log( "call timerChat" )
-        //console.log( "[LiveChatList in useEffect2] liveChatId : ", liveChatId )
-        //console.log( "[LiveChatList in useEffect2] liveBroadcastContent : ", liveBroadcastContent )
+        //console.log( "[LiveChatList in useEffect2] probs.liveChatId : ", probs.liveChatId )
+        //console.log( "[LiveChatList in useEffect2] probs.liveBroadcastContent : ", probs.liveBroadcastContent )
   
         // ライブチャット情報を取得
-        if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
+        if ( probs.liveBroadcastContent === "live" || probs.liveBroadcastContent === "upcoming" ) {
           //console.log( "[LiveChatList in useEffect2] chatNextPageToken : ", chatNextPageToken )
-          getVideoChatInfos(getAPIKey(), liveChatId, VideoWatchPageConfig.maxResultsIntervalChat, 1, chatNextPageToken )
+          getVideoChatInfos(getAPIKey(), probs.liveChatId, VideoWatchPageConfig.maxResultsIntervalChat, 1, chatNextPageToken )
             .then( ([videoChatInfos_, chatNumber_, nextPageToken_ ]) => {
               //console.log( "[timerChat] videoChatInfos_ : ", videoChatInfos_ )     
               chatNextPageToken = nextPageToken_
@@ -160,12 +171,15 @@ const LiveChatCanvas: React.FC<Props> = ({
         console.log('コンポーネントがアンマウントしました')
       }
     }
-  }, [liveChatId, liveBroadcastContent])
+  }, [probs.liveChatId, probs.liveBroadcastContent])
 
   // チャットデータ更新時に呼び出す副作用フック
   useEffect( () => {
     // GSAP の TimeLine 作成
     createTimeLine()
+
+    // タイムラインを再生
+    playTimeline()
   }, [videoChatInfos])
 
   //------------------------
@@ -178,11 +192,11 @@ const LiveChatCanvas: React.FC<Props> = ({
   // ライブチャット情報を取得する非同期関数
   const getLiveChatAsync = async () => {
     // ライブチャット情報を取得
-    if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
+    if ( probs.liveBroadcastContent === "live" || probs.liveBroadcastContent === "upcoming" ) {
       let videoChatInfos_ = null
       let chatNumber_ = null
       try {
-        [videoChatInfos_, chatNumber_, chatNextPageToken] = await getVideoChatInfos(getAPIKey(), liveChatId, VideoWatchPageConfig.maxResultsChat, VideoWatchPageConfig.iterChat, chatNextPageToken)
+        [videoChatInfos_, chatNumber_, chatNextPageToken] = await getVideoChatInfos(getAPIKey(), probs.liveChatId, VideoWatchPageConfig.maxResultsChat, VideoWatchPageConfig.iterChat, chatNextPageToken)
         //console.log( "videoChatInfos_ : ", videoChatInfos_ )    
         //console.log( "chatNextPageToken : ", chatNextPageToken )
       }
@@ -208,7 +222,7 @@ const LiveChatCanvas: React.FC<Props> = ({
         canvasRef.current.height = parent.offsetHeight;
     
         // チャット字幕の1行分の高さを計算
-        canvasHeight.current = canvasRef.current.height / chatCanvasMaxRow;
+        canvasHeight.current = canvasRef.current.height / probs.chatCanvasMaxRow;
 
         // canvas タグの line-height 属性の値
         const canvasLineHeight = getCanvasLineHeight();
@@ -268,34 +282,64 @@ const LiveChatCanvas: React.FC<Props> = ({
     return 100 / textHeight;
   };
 
+  const getRandomChatPosition = (): number[] => {
+    const positions = [];
+
+    // コメントの 1 ~chatCanvasMaxRow 行目までの位置
+    for (let index = 1; index <= probs.chatCanvasMaxRow; index++) {
+      positions.push(canvasHeight.current * index);
+    }
+
+    // 配列シャッフル
+    for (let index = positions.length - 1; index >= 0; index--) {
+      const rand = Math.floor(Math.random() * (index + 1));
+      [positions[index], positions[rand]] = [positions[rand], positions[index]];
+    }
+
+    return positions;
+  };
+
   // GSAP で連続アニメーションを行うための TimeLine 作成
   const createTimeLine = () => {
     console.log( "call createTimeLine()" )
     console.log( "[createTimeLine()] videoChatInfos : ", videoChatInfos )
     if ( canvasRef.current !== null && canvasContextRef.current !== null && videoChatInfos !== null ) {
+      // TimeLine 削除
+      if( timelineRef.current !== null ) {
+        timelineRef.current.kill();
+        timelineRef.current.clear();  
+      }
+
       // チャット字幕のチャット位置
       // key : dict の key。publishedAt の文字列を key にする
       // count : 同じ時間に投稿されたチャット数
+      // positions :  0 ~ chatCanvasMaxRow までのチャット位置の配列
       const chatPos: { [key: string]: { positions: number[]; count: number } } = {};
+      console.log( "chatPos : ", chatPos )
 
       videoChatInfos.forEach((chat: any) => {
-        const chatWidth: any = canvasContextRef.current?.measureText(chat).width
-        console.log( "chatWidth : ", chatWidth )
+        // チャット字幕位置の初期化
+        if (chatPos[chat["publishedAt"]] === undefined) {
+          chatPos[chat["publishedAt"]] = { positions: getRandomChatPosition(), count: -1 };
+        }
 
-        // チャットの publishedAt を key にすることで、同じ時間に投稿されたチャット数を計算
-        console.log( chatPos[chat["publishedAt"]] )
+        // チャットの publishedAt を key にすることで、同じ時間に投稿されたチャット数を計算できる
         chatPos[chat["publishedAt"]].count += 1
 
         // チャット字幕の y 座標位置を計算
         let chatY: number = 0
-        if(chatPos[chat["publishedAt"]].count >= chatCanvasMaxRow) {
+        if(chatPos[chat["publishedAt"]].count >= probs.chatCanvasMaxRow) {
           // 同じ時間に投稿されたチャット数が chatMaxRow を超えた場合はランダムな位置に設定
-          chatY = chatPos[chat["publishedAt"]].positions[Math.floor(Math.random() * (chatCanvasMaxRow-1))]
+          chatY = chatPos[chat["publishedAt"]].positions[Math.floor(Math.random() * (probs.chatCanvasMaxRow-1))]
         }
         else {
           // count 数
           chatY = chatPos[chat["publishedAt"]].positions[chatPos[chat["publishedAt"]].count]
         }
+
+        // チャット幅を計算 
+        const chatWidth: any = canvasContextRef.current?.measureText(chat).width
+        //console.log( "chatWidth : ", chatWidth )
 
         // アニメーションさせる CSS 要素
         const chatCss: any = {
@@ -303,16 +347,18 @@ const LiveChatCanvas: React.FC<Props> = ({
           y: chatY,
         };
 
-        // TimeLine.add() : TimeLine に Tween（小さな単位でのアニメーション）を追加
+        // TimeLine.add() : TimeLine に各チャット字幕の Tween（小さな単位でのアニメーション）を追加
         timelineRef.current.add(
           // Tween.to() : ゴールの状態を指定
           gsap.to(
             chatCss,    // アニメーションさせる CSS 要素
             3,          // アニメーションが開始するまでの時間(秒単位)
-            {           // 完了状態を設定
+            // 完了状態を設定
+            {
               x: -chatWidth,
-              ease: Linear.easeNone,
-              onUpdate: () => {   // アニメーションが更新されるたびに呼び出されるコールバック関数
+              ease: "none",   // アニメーションの変化率（none : 線形変化）
+              // アニメーションが更新されるたびに呼び出されるコールバック関数
+              onUpdate: () => {
                 // canvas タグの context 属性にチャットのテキストを設定
                 canvasContextRef.current?.fillText(videoChatInfos["displayMessage"], chatCss.x, chatCss.y);            
               },
@@ -320,16 +366,34 @@ const LiveChatCanvas: React.FC<Props> = ({
           ),
           "+=1",      // 各 Tween の開始時間
         )
-
       })
+      
+      // タイムラインを動画の再生時間に同期
+      timelineRef.current.seek(probs.getVideoCurrentTime());
     }
   }
+
+  // TimeLine を再生
+  const playTimeline = () => {
+    seekTimeline(probs.getVideoCurrentTime());
+    timelineRef.current.play();
+  };
+
+  // TimeLine を一時停止
+  const pauseTimeline = () => {
+    timelineRef.current.pause();
+  };
+
+  // TimeLine の再生位置を指定した時間に設定
+  const seekTimeline = (seconds: number) => {
+    timelineRef.current.seek(seconds);
+  };
 
   //------------------------
   // JSX での表示処理
   //------------------------
   //console.log( "videoChatInfos: ", videoChatInfos )
-  if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
+  if ( probs.liveBroadcastContent === "live" || probs.liveBroadcastContent === "upcoming" ) {
     // チャット字幕を HTML の canvas タグで表示する
     return (
       <canvas className="live-chat-canvas" ref={canvasRef}></canvas>
