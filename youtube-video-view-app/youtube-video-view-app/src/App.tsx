@@ -30,7 +30,6 @@ import VideoSearchPage from './pages/VideoSearchPage'
 import VideoWatchPage from './pages/VideoWatchPage'
 import FavPage from './pages/FavPage'
 import FollowPage from './pages/FollowPage'
-import TestPage from './pages/TestPage'
 
 const App: React.VFC = () => {
   //------------------------
@@ -65,7 +64,6 @@ const App: React.VFC = () => {
           <Route path={AppConfig.videoWatchPage.path} element={<VideoWatchPage />} />
           <Route path={AppConfig.favPage.path} element={<FavPage />} />
           <Route path={AppConfig.followPage.path} element={<FollowPage />} />
-          <Route path={AppConfig.testPage.path} element={<TestPage />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

@@ -166,6 +166,11 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL, da
                 <ListItemText primary="フォローチャンネル" />
               </ListItem>
             </Link>
+            <Link to={AppConfig.videoWatchPage.path} style={{ textDecoration: 'none', color: 'black' }}>
+              <ListItem button>
+                <ListItemText primary="動画視聴" />
+              </ListItem>
+            </Link>
           </List>
         </Drawer>
         { /* タイトル文字列 */}
@@ -181,6 +186,7 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL, da
             <Tab label="動画検索" component={Link} to={AppConfig.videoSearchPage.path} />
             <Tab label="お気に入り" component={Link} to={AppConfig.favPage.path} />
             <Tab label="フォローチャンネル" component={Link} to={AppConfig.followPage.path} />
+            <Tab label="動画視聴" component={Link} to={AppConfig.videoWatchPage.path} />
           </Tabs>
         </Box>
         { /* ダークモード切り替えボタン */ }

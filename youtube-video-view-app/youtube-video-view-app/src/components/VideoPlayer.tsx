@@ -50,6 +50,7 @@ const VideoPlayer: React.FC<Props> = ({
   // フック
   //------------------------
   const [message, setMessage] = useState("loading video")
+  const isReady = React.useRef<boolean>(false);           // 動画再生開始可能状態
 
   // 子コンポーネント LiveChatCanvas で定義した各種メソッドを呼び出すためのハンドル
   const liveChatCanvasHandlerRef = React.useRef<LiveChatCanvasHandler>(null);
@@ -82,13 +83,15 @@ const VideoPlayer: React.FC<Props> = ({
         setMessage("")
       });
     }
-  }, [videoId, autoPlay])
+  }, [])
 
   //------------------------
   // イベントハンドラ
   //------------------------
   // 動画読み込み時のイベントハンドラ
-  const onPlayerReady = () => {
+  const onPlayerReady = (event:any) => {
+    isReady.current = true;
+    event.target.playVideo();
   };
 
   // Youtube Player のステート変更時のイベントハンドラ
@@ -141,23 +144,19 @@ const VideoPlayer: React.FC<Props> = ({
 
   // 再生ボタンクリック時のイベントハンドラ
   const onClickPlayVideo = ((event: any) => {
-    if(player != undefined) {
+    //console.log( "[onClickPlayVideo] player : ", player )
+    //console.log( "[onClickPlayVideo] isReady.current : ", isReady.current )
+    if(player !== undefined && isReady.current !== false ) {
       // 動画再生
       player.playVideo()
-
-      // コメント字幕の再開
-
     }
   })
 
   // 停止ボタンクリック時のイベントハンドラ
   const onClickPauseVideo = ((event: any) => {
-    if(player != undefined) {
+    if(player !== undefined && isReady.current !== false ) {
       // 動画一時停止
-      player.pauseVideo()
-
-      // コメント字幕の停止
-      
+      player.pauseVideo()      
     }
   })
 
@@ -301,7 +300,7 @@ const VideoPlayer: React.FC<Props> = ({
   // メソッド
   //------------------------
   const getVideoCurrentTime = () => {
-    if (player != undefined) {
+    if (player != undefined && !isReady.current) {
       if (player.getPlayerState() === 0) {
         // 動画終了時は動画の再生時間を返す
         return player.getDuration();
@@ -320,6 +319,8 @@ const VideoPlayer: React.FC<Props> = ({
   // JSX での表示処理
   //------------------------
   //console.log( "[VideoPlayer] videoURL : ", videoURL )
+  //console.log( "[VideoPlayer] liveChatId : ", liveChatId )
+  //console.log( "[VideoPlayer] liveBroadcastContent : ", liveBroadcastContent )
   return (
     <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
       <Typography>{message}</Typography> 
@@ -331,7 +332,9 @@ const VideoPlayer: React.FC<Props> = ({
           <div id="player"></div>
         </Box>
         { /* コントロールパネル */ }
-        <Box mx={1} style={{textAlign: "right"}}>
+        <Box mx={1} style={{textAlign: "left"}}>
+          <Button variant="text" onClick={onClickPlayVideo}><Typography variant="subtitle2">再生</Typography></Button>
+          <Button variant="text" onClick={onClickPauseVideo}><Typography variant="subtitle2">停止</Typography></Button>
           <Button variant="text" onClick={onClickDownload}><Typography variant="subtitle2">ダウンロード</Typography></Button>
           <Button variant="text" onClick={onClickScreenShort}><Typography variant="subtitle2">スクショ</Typography></Button>
         </Box>

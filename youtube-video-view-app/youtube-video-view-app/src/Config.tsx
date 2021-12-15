@@ -5,8 +5,7 @@ export const AppConfig = {
   videoSearchPage: { index : 1, path : "/search" },
   favPage: { index : 2, path : "/fav" },
   followPage: { index : 3, path : "/follow" },
-  testPage: { index : 4, path : "/test" },
-  videoWatchPage: { index : -1, path : "/watch/:video_id"},
+  videoWatchPage: { index : 4, path : "/watch/:video_id"},
 };
 export default AppConfig
 

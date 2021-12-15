@@ -137,13 +137,13 @@ const VideoWatchPage: React.VFC = () => {
 
     // useEffect 内で非同期処理の関数を定義
     const initPageAsync = async () => {
-      console.log( "call async" )
+      //console.log( "call async" )
 
       // 動画ID からチャンネルIDを取得
       let channelId_: any = undefined
       try {
         channelId_ = await getChannelIdFromVideoId(getAPIKey(), videoId)
-        console.log( "channelId_ : ", channelId_ )    
+        //console.log( "channelId_ : ", channelId_ )    
         setChannelId(channelId_)
       }
       catch (err) {
@@ -154,7 +154,7 @@ const VideoWatchPage: React.VFC = () => {
       let channelInfo_: any = undefined
       try {
         channelInfo_ = await getChannelInfo(getAPIKey(), channelId_)
-        console.log( "channelInfo_ : ", channelInfo_ )    
+        //console.log( "channelInfo_ : ", channelInfo_ )    
         setChannelTitle(channelInfo_["title"])
         setSubscriberCount(channelInfo_["subscriberCount"])
         setProfileImageUrl(channelInfo_["profileImageUrl"])
@@ -187,10 +187,10 @@ const VideoWatchPage: React.VFC = () => {
         setCategoryId(videoInfo_["categoryId"])
 
         liveChatId_ = videoInfo_["activeLiveChatId"]
-        setLiveChatId(videoInfo_["activeLiveChatId"])
+        setLiveChatId(liveChatId_)
 
-        liveBroadcastContent_ = videoInfo_["liveBroadcastContent"]        
-        setLiveBroadcastContent(videoInfo_["liveBroadcastContent"])
+        liveBroadcastContent_ = videoInfo_["liveBroadcastContent"]   
+        setLiveBroadcastContent(liveBroadcastContent_)
 
         setConcurrentViewers(videoInfo_["concurrentViewers"])
         setMessageVideo("")
@@ -203,7 +203,7 @@ const VideoWatchPage: React.VFC = () => {
       // 動画カテゴリ情報を取得
       try {
         const videoCategoryInfo_ = await getVideoCategoryInfo(getAPIKey(), categoryId_)
-        console.log( "videoCategoryInfo_ : ", videoCategoryInfo_ )    
+        //console.log( "videoCategoryInfo_ : ", videoCategoryInfo_ )    
         setCategoryTitle(videoCategoryInfo_["title"])
         setMessageVideoCategory("")
       }
@@ -213,9 +213,10 @@ const VideoWatchPage: React.VFC = () => {
       }
 
       // ガイドカテゴリ情報を修正
+      /*
       try {
         const guideCategoryInfo_ = await getGuideCategoryInfo(getAPIKey())
-        console.log( "guideCategoryInfo_ : ", guideCategoryInfo_ )    
+        //console.log( "guideCategoryInfo_ : ", guideCategoryInfo_ )    
         setGuideCategoryTitle(guideCategoryInfo_["title"])
         setMessageVideoCategory("")
       }
@@ -223,6 +224,7 @@ const VideoWatchPage: React.VFC = () => {
         console.error(err);
         setMessageVideoCategory("ガイドカテゴリ情報の取得に失敗しました")
       }
+      */
     }
 
     // 非同期処理実行
@@ -267,7 +269,7 @@ const VideoWatchPage: React.VFC = () => {
           { /* 動画表示 */ }
           <VideoPlayer videoId={videoId} autoPlay={true} videoWidth={VideoWatchPageConfig.videoWidth} videoHeight={VideoWatchPageConfig.videoHeight} liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} darkMode={darkMode} />
           { /* チャット表示 */ }
-          <LiveChatList liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} darkMode={darkMode} />
+          { /*<LiveChatList liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} darkMode={darkMode} /> */ }
         </Box>
         { /* 動画情報表示 */ }
         <Box m={2}>
@@ -315,7 +317,7 @@ const VideoWatchPage: React.VFC = () => {
           </Box>
           { /* 動画説明 */ }
           <Box m={2}>
-            <div ref={scrollShowMoreRef} />   { /* useRef() で作成した scrollShowMoreRef を <div> の ref 属性に設定する */ }
+            <div ref={scrollShowMoreRef} />   { /* useRef() で作成した scrollShowMoreRef を <div> の ref 属性に設定することで DOM 属性を取得できる */ }
             <Typography variant="body1">{showMore ? descriptionJsx : [...descriptionJsx.slice(0,10), "..."] }</Typography>
             { showMore ? "" : <Button variant="text" onClick={onClickShowMore}><Typography variant="subtitle2">もっと見る</Typography></Button> }
             { showMore ? <Button variant="text" onClick={onClickShowLess}><Typography variant="subtitle2">一部を表示</Typography></Button> : "" }
