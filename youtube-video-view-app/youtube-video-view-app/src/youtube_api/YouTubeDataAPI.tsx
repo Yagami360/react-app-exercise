@@ -162,7 +162,7 @@ export async function getGuideCategoryInfo(apiKey: any, id: any = "") {
       const response = await fetch(YOUTUBE_DATA_API_URL+"guideCategories" + '?key='+apiKey + '&part=snippet' + '&regionCode=jp' + '&id='+id )
       //const response = await fetch(YOUTUBE_DATA_API_URL+"guideCategories" + '?key='+apiKey + '&part=snippet' + '&regionCode=jp' )
       const dataGuideCategories = await response.json()
-      console.log("dataGuideCategories : ", dataGuideCategories)
+      //console.log("dataGuideCategories : ", dataGuideCategories)
 
       // 動画情報を取得
       guideCategoryInfo["title"] = dataGuideCategories["items"][0]["snippet"]["title"]
@@ -224,7 +224,7 @@ export async function getVideoChatInfos(apiKey: any, liveChatId: any, maxResults
       try {
         const response = await fetch(YOUTUBE_DATA_API_URL+"liveChat/messages" + '?key='+apiKey + '&part=snippet,authorDetails' + '&liveChatId='+liveChatId + '&maxResults='+maxResults + '&pageToken='+nextPageToken)
         const dataLiveChatMessages = await response.json()
-        //console.log("dataLiveChatMessages : ", dataLiveChatMessages)
+        console.log("dataLiveChatMessages : ", dataLiveChatMessages)
 
         nextPageToken = dataLiveChatMessages["nextPageToken"]
         chatNumber = dataLiveChatMessages["pageInfo"]["totalResults"]

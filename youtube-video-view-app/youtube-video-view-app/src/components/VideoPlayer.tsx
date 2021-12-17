@@ -35,6 +35,8 @@ type Props = {
   videoHeight: string;  
   liveChatId: string;
   liveBroadcastContent: string;
+  videoChatInfos: any;
+  showLiveChatCanvas: boolean;
   darkMode: boolean;
 }
 
@@ -44,6 +46,8 @@ const VideoPlayer: React.FC<Props> = ({
   autoPlay,
   videoWidth, videoHeight,
   liveChatId, liveBroadcastContent, 
+  videoChatInfos,
+  showLiveChatCanvas,
   darkMode,
 }) => {
   //------------------------
@@ -327,7 +331,7 @@ const VideoPlayer: React.FC<Props> = ({
       <Box style={{display: "block"}}>
         <Box>
           { /* チャット字幕 */ }
-          <LiveChatCanvas liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} chatCanvasMaxRow={20} getVideoCurrentTime={getVideoCurrentTime} ref={liveChatCanvasHandlerRef} />
+          { showLiveChatCanvas !== false ? <LiveChatCanvas liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} chatCanvasMaxRow={20} getVideoCurrentTime={getVideoCurrentTime} ref={liveChatCanvasHandlerRef} videoChatInfos={videoChatInfos} /> : "" }
           { /* 動画表示。id="player" の部分が iframe に置き換わる */ }
           <div id="player"></div>
         </Box>

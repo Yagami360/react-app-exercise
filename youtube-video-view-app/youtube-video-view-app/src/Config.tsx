@@ -36,6 +36,7 @@ export const VideoWatchPageConfig = {
   iterChat: 1,
   intervalTimeChat: 1000,
   maxResultsIntervalChat: 1,
+  showLiveChatCanvas: true,
 };
 
 export const FavPageConfig = {

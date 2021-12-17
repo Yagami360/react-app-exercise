@@ -40,7 +40,7 @@ import VideoPlayer from '../components/VideoPlayer'
 import CommentList from '../components/CommentList'
 import LiveChatList from '../components/LiveChatList'
 import useLocalPersist from '../components/LocalPersist';
-import { getAPIKey, getChannelIdFromVideoId, getChannelInfo, getVideoInfo, getVideoCategoryInfo, getGuideCategoryInfo } from '../youtube_api/YouTubeDataAPI';
+import { getAPIKey, getChannelIdFromVideoId, getChannelInfo, getVideoInfo, getVideoCategoryInfo, getGuideCategoryInfo, getVideoChatInfos } from '../youtube_api/YouTubeDataAPI';
 
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
@@ -130,6 +130,9 @@ const VideoWatchPage: React.VFC = () => {
   const [liveChatId, setLiveChatId] = useState("")
   const [liveBroadcastContent, setLiveBroadcastContent] = useState("")
   const [concurrentViewers, setConcurrentViewers] = useState()
+  const [videoChatInfos, setVideoChatInfos] = useState([] as any)
+  let chatNextPageTokenRef = React.useRef<string>("");
+  let videoChatInfosRef = React.useRef<any>([]);
 
   // ページ読み込み時の副作用フック
   useEffect( () => {
@@ -225,12 +228,67 @@ const VideoWatchPage: React.VFC = () => {
         setMessageVideoCategory("ガイドカテゴリ情報の取得に失敗しました")
       }
       */
+
+      // ライブチャット情報を取得
+      if ( liveBroadcastContent_ === "live" || liveBroadcastContent_ === "upcoming" ) {
+        let chatNumber_ = undefined
+        try {
+          [videoChatInfosRef.current, chatNumber_, chatNextPageTokenRef.current] = await getVideoChatInfos(getAPIKey(), liveChatId_, VideoWatchPageConfig.maxResultsChat, VideoWatchPageConfig.iterChat, chatNextPageTokenRef.current)
+          setVideoChatInfos(videoChatInfosRef.current)
+        }
+        catch (err) {
+          console.error(err);
+        }
+      }
     }
 
     // 非同期処理実行
     initPageAsync()
-  }, [])
+  }, [liveChatId, liveBroadcastContent])
 
+  // setInterval() を呼び出す副作用フック。レンダーの度にsetIntervalが何度も実行されて、オーバーフローやメモリリークが発生するので副作用フック内で行う
+  /*
+  useEffect( () => {
+    //console.log( "call useEffect2 (setInterval)" )
+
+    if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
+      // 一定時間経過度に呼び出されるイベントハンドラ
+      // setInterval(()=>{処理}, インターバル時間msec) : 一定時間度に {} で定義した処理を行う
+      let timerChat = setInterval( ()=>{
+        //console.log( "call timerChat" )
+        //console.log( "[LiveChatList in useEffect2] liveChatId : ", liveChatId )
+        //console.log( "[LiveChatList in useEffect2] liveBroadcastContent : ", liveBroadcastContent )
+  
+        // ライブチャット情報を取得
+        if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
+          getVideoChatInfos(getAPIKey(), liveChatId, VideoWatchPageConfig.maxResultsIntervalChat, 1, chatNextPageTokenRef.current )
+            .then( ([videoChatInfos_, chatNumber_, nextPageToken_ ]) => {
+              //console.log( "[before] videoChatInfosRef.current : ", videoChatInfosRef.current )
+              videoChatInfos_.forEach((videoChatInfo_: any)=> {
+                videoChatInfosRef.current.push(videoChatInfo_)
+              })
+              chatNextPageTokenRef.current = nextPageToken_
+              setVideoChatInfos(videoChatInfosRef.current)
+              //console.log( "[after] videoChatInfosRef.current : ", videoChatInfosRef.current )
+              //console.log( "[after] videoChatInfos : ", videoChatInfos )
+            })
+            .catch(err => {
+              console.log(err);
+            })    
+            .finally( () => {
+            })
+        }
+      }, VideoWatchPageConfig.intervalTimeChat );
+  
+      // アンマウント処理
+      return () => {
+        clearInterval(timerChat)
+        console.log('コンポーネントがアンマウントしました')
+      }
+    }
+  }, [liveChatId, liveBroadcastContent])
+  */
+ 
   //------------------------
   // イベントハンドラ
   //------------------------  
@@ -255,7 +313,9 @@ const VideoWatchPage: React.VFC = () => {
   const youtubeVideoURL = "https://www.youtube.com/watch?v=" + videoId
   //console.log( "[VideoWatchPage] liveChatId : ", liveChatId )
   //console.log( "[VideoWatchPage] liveBroadcastContent : ", liveBroadcastContent )
-
+  console.log( "[VideoWatchPage] videoChatInfosRef.current : ", videoChatInfosRef.current )  
+  console.log( "[VideoWatchPage] videoChatInfos : ", videoChatInfos )
+  
   return (
     <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
@@ -267,9 +327,9 @@ const VideoWatchPage: React.VFC = () => {
         <Typography variant="subtitle2">{messageVideo}</Typography>
         <Box style={{display: "flex"}}>
           { /* 動画表示 */ }
-          <VideoPlayer videoId={videoId} autoPlay={true} videoWidth={VideoWatchPageConfig.videoWidth} videoHeight={VideoWatchPageConfig.videoHeight} liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} darkMode={darkMode} />
+          <VideoPlayer videoId={videoId} autoPlay={true} videoWidth={VideoWatchPageConfig.videoWidth} videoHeight={VideoWatchPageConfig.videoHeight} liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} videoChatInfos={videoChatInfos} showLiveChatCanvas={VideoWatchPageConfig.showLiveChatCanvas} darkMode={darkMode} />
           { /* チャット表示 */ }
-          { /*<LiveChatList liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} darkMode={darkMode} /> */ }
+          <LiveChatList liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} videoChatInfos={videoChatInfos} darkMode={darkMode} />
         </Box>
         { /* 動画情報表示 */ }
         <Box m={2}>
