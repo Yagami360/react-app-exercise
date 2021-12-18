@@ -84,9 +84,7 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
   const chatPosRef = React.useRef<{[key: string]: { positions: number[]; count: number }}>({});
 
   // アニメーション
-  const timelineRef = React.useRef<any>(gsap.timeline({                                   // GSAP で連続アニメーションするための TimeLine オブジェクト。useRef で定義することで、値が更新されても表示が更新されないようにする。DOM 要素への参照としては使っていないことに注意
-    paused: true,   // 勝手にアニメーションが始まらないように設定
-  }));                      
+  const timelineRef = React.useRef<any>(null)                                             // GSAP で連続アニメーションするための TimeLine オブジェクト。useRef で定義することで、値が更新されても表示が更新されないようにする。DOM 要素への参照としては使っていないことに注意
 
   // ページ読み込み時の副作用フック
   useEffect( () => {
@@ -191,8 +189,6 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
     if ( canvasRef.current !== null && canvasContextRef.current !== null ) {
       // CanvasRenderingContext2D オブジェクトを用いて、画面全体をクリア
       canvasContextRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      //canvasContextRef.current.clearRect(0, 0, width, height);
-      //canvasContextRef.current.clearRect(0, y, 2 * canvasRef.current.width, height*2);
 
       // ライブチャットテキストをレンダリング
       canvasContextRef.current.fillText(displayMessage, x, y, width);     
@@ -206,7 +202,7 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
 
     // requestAnimationFrame() でこのメソッドを再帰的に呼び出すことで、ライブチャットのアニメーションを行う
     // requestAnimationFrame(関数名) : FPS が一定になるように、引数に渡した関数をブラウザの表示を邪魔しないタイミングで処理する関数
-    canvasFrameRef.current = window.requestAnimationFrame(clearLiveChatCanvas)
+    //canvasFrameRef.current = window.requestAnimationFrame(clearLiveChatCanvas)
   }
 
   // GSAP で連続アニメーションを行うための TimeLine 作成
@@ -229,6 +225,23 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
   // GSAP で連続アニメーションを行うための TimeLine に Tween（小さな単位でのアニメーション）を追加
   const addTimeLine = (videoChatInfo: any) => {
     if ( canvasRef.current !== null && canvasContextRef.current !== null && videoChatInfo !== undefined ) {
+      // TimeLine オブジェクト作成
+      if ( timelineRef.current === null ) {
+        timelineRef.current = gsap.timeline({
+          paused: true,   // 勝手にアニメーションが始まらないように設定
+          // Timeline 開始時に呼び出されるコールバック関数
+          onStart: () => {
+            console.log( "callback onStart() in timeline" )
+            canvasContextRef.current?.clearRect(0, 0, probs.videoWidth, probs.videoHeight);
+          },
+          // TimeLine に含まれる Tween 全体のアニメーションが更新されるたびに呼び出されるコールバック関数
+          onUpdate: () => {
+            console.log( "callback onUpdate() in timeline" )
+            //canvasContextRef.current?.clearRect(0, 0, probs.videoWidth, probs.videoHeight);
+          },
+        });
+      }
+
       // チャット字幕位置の初期化
       if (chatPosRef.current[videoChatInfo["publishedAt"]] === undefined) {
         chatPosRef.current[videoChatInfo["publishedAt"]] = { positions: getRandomChatPosition(), count: -1 };
@@ -263,27 +276,32 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
       //console.log('chatCss.x : ', chatCss.x)
       //console.log('chatCss.y : ', chatCss.y)
 
+      // 各チャット字幕の Tween（小さな単位でのアニメーション）オブジェクト作成
+      // gsap.to() : ゴールの状態を指定して Tween オブジェクト作成
+      const tween = gsap.to(
+        chatCss,    // アニメーションさせる CSS 要素
+        // 完了状態を設定
+        {
+          x: -chatWidth,  // chatCss.x の最終状態 : 初期値 canvasRef.current?.width ~ -chatWidth まで動かす。0 までではなく -chatWidth　なのは、チャットテキスト幅が長いケースｍに対応するため
+          y: chatY,       // chatCss.y の最終状態 : 初期値と同じ値にして変化しないようにする
+          ease: "none",   // アニメーションの変化率（none : 線形変化）
+          duration: 3,    // アニメーションの長さ
+          // Tween のアニメーションが更新されるたびに呼び出されるコールバック関数
+          onUpdate: () => {
+            console.log( "callback onUpdate() in tween / publishedAt : ", videoChatInfo["publishedAt"] )
+            // canvas にレンダリング
+            renderLiveChatCanvas(videoChatInfo["displayMessage"], chatCss.x, chatCss.y, probs.videoWidth, probs.videoHeight)
+            //renderLiveChatCanvas(videoChatInfo["displayMessage"], chatCss.x, chatCss.y, chatWidth, canvasHeightRef.current)
+            //canvasContextRef.current?.fillText(videoChatInfo["displayMessage"], chatCss.x, chatCss.y, chatWidth);
+          },
+        },
+      );
+
       // TimeLine.add() : TimeLine に各チャット字幕の Tween（小さな単位でのアニメーション）を追加
       timelineRef.current?.add(
-        // Tween.to() : ゴールの状態を指定
-        gsap.to(
-          chatCss,    // アニメーションさせる CSS 要素
-          // 完了状態を設定
-          {
-            x: -chatWidth,  // chatCss.x の最終状態 : 初期値 canvasRef.current?.width ~ -chatWidth まで動かす。0 までではなく -chatWidth　なのは、チャットテキスト幅が長いケースｍに対応するため
-            y: chatY,       // chatCss.y の最終状態 : 初期値と同じ値にして変化しないようにする
-            ease: "none",   // アニメーションの変化率（none : 線形変化）
-            duration: 3,    // アニメーションの長さ
-            // アニメーションが更新されるたびに呼び出されるコールバック関数
-            onUpdate: () => {
-              // canvas にレンダリング
-              //renderLiveChatCanvas(videoChatInfo["displayMessage"], chatCss.x, chatCss.y, probs.videoWidth, probs.videoHeight)
-              renderLiveChatCanvas(videoChatInfo["displayMessage"], chatCss.x, chatCss.y, chatWidth, canvasHeightRef.current)
-            },
-          },
-        ),
-        //"<+=1.0",      // 各 Tween の開始時間
-        "+=1.0",      // 各 Tween の開始時間        
+        tween,        // 追加する Tween
+        //"<+=1.0",   // 追加する Tween の開始時間
+        "+=1.0",            
       )
     }
   };
@@ -296,6 +314,7 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
     //seekTimeline(0);
     if( timelineRef.current !== null ) {
       //console.log( "[playTimeline] timelineRef.current.progress() : ", timelineRef.current.progress() )
+      canvasContextRef.current?.clearRect(0, 0, probs.videoWidth, probs.videoHeight);
       timelineRef.current.play();
     }
   };
@@ -310,6 +329,7 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
   // TimeLine の再生位置を指定した時間に設定
   const seekTimeline = (seconds: number) => {
     if( timelineRef.current !== null ) {
+      canvasContextRef.current?.clearRect(0, 0, probs.videoWidth, probs.videoHeight);
       timelineRef.current.seek(seconds);
     }
   };
@@ -363,6 +383,7 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
   //console.log( "[LiveChatCanvas] probs.liveBroadcastContent : ", probs.liveBroadcastContent )
   //console.log( "canvasRef: ", canvasRef )
   //console.log( "probs.videoChatInfos: ", probs.videoChatInfos )
+  console.log( "timelineRef.current: ", timelineRef.current )
 
   if ( (probs.liveBroadcastContent === "live" || probs.liveBroadcastContent === "upcoming") ) {
     // チャット字幕を HTML の canvas タグで表示する

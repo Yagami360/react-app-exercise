@@ -410,6 +410,4 @@ const VideoWatchPage: React.VFC = () => {
   );
 }
 
-//          <SimpleVideoPlayer videoId={videoId} autoPlay={true} videoWidth={VideoWatchPageConfig.videoWidth} videoHeight={VideoWatchPageConfig.videoHeight} darkMode={darkMode} />
-
 export default VideoWatchPage;
