@@ -31,12 +31,13 @@ const cloudFuntionDownloadVideoURL = "https://us-central1-video-view-app-684c0.c
 type Props = {
   videoId: any;
   autoPlay: boolean;
-  videoWidth: string;
-  videoHeight: string;  
+  videoWidth: number;
+  videoHeight: number;  
   liveChatId: string;
   liveBroadcastContent: string;
   videoChatInfos: any;
   showLiveChatCanvas: boolean;
+  chatCanvasMaxRow: number
   darkMode: boolean;
 }
 
@@ -47,7 +48,7 @@ const VideoPlayer: React.FC<Props> = ({
   videoWidth, videoHeight,
   liveChatId, liveBroadcastContent, 
   videoChatInfos,
-  showLiveChatCanvas,
+  showLiveChatCanvas = true, chatCanvasMaxRow = 30,
   darkMode,
 }) => {
   //------------------------
@@ -331,7 +332,7 @@ const VideoPlayer: React.FC<Props> = ({
       <Box style={{display: "block"}}>
         <Box>
           { /* チャット字幕 */ }
-          { showLiveChatCanvas !== false ? <LiveChatCanvas liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} chatCanvasMaxRow={20} getVideoCurrentTime={getVideoCurrentTime} ref={liveChatCanvasHandlerRef} videoChatInfos={videoChatInfos} /> : "" }
+          { showLiveChatCanvas !== false ? <LiveChatCanvas liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} videoWidth={videoWidth} videoHeight={videoHeight} chatCanvasMaxRow={chatCanvasMaxRow} getVideoCurrentTime={getVideoCurrentTime} videoChatInfos={videoChatInfos} autoPlay={autoPlay} ref={liveChatCanvasHandlerRef} /> : "" }
           { /* 動画表示。id="player" の部分が iframe に置き換わる */ }
           <div id="player"></div>
         </Box>

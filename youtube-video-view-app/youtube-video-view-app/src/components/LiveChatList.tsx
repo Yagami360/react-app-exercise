@@ -23,7 +23,6 @@ import '../firebase/initFirebase'
 import AppConfig, { VideoWatchPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
-import { getAPIKey, getVideoChatInfos } from '../youtube_api/YouTubeDataAPI';
 
 // 独自のスタイル定義
 const useStyles = makeStyles({
@@ -97,7 +96,7 @@ const LiveChatList: React.FC<Props> = ({
               secondary={<>
                 <Box mx={2}>
                   { /* コメント */ }
-                  <Typography variant="subtitle2">{videoChatInfo["displayMessage"]}</Typography>
+                  <Typography component={'span'} variant="subtitle2">{videoChatInfo["displayMessage"]}</Typography>
                 </Box>
               </>}
             />
@@ -129,12 +128,12 @@ const LiveChatList: React.FC<Props> = ({
         <Box style={{width: "400px"}} ml={2}>
           <Paper variant="outlined" square>
             <Box m={1}>
-              <Typography variant="h6">{"チャット"}</Typography>
+              <Typography component={'h6'} variant="h6">チャット</Typography>
             </Box>
           </Paper>
           <Box className={style.chatTimeLineStyle}>
             <Paper elevation={1} variant="outlined" square>
-              <Typography variant="h6">{message}</Typography>
+              <Typography component={'h6'} variant="h6">{message}</Typography>
               {chatsJsx}
             </Paper>
           </Box>
@@ -144,8 +143,7 @@ const LiveChatList: React.FC<Props> = ({
   }
   else {
     return (
-      <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
-      </ThemeProvider>
+      <div></div>
     )
   }
 }

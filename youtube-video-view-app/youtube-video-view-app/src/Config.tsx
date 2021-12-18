@@ -23,12 +23,12 @@ export const VideoSearchPageConfig = {
 };
 
 export const VideoWatchPageConfig = {
-  //videoHeight: "720",
-  //videoWidth: "1280",
-  videoHeight: "840",
-  videoWidth: "1493",
-  //videoHeight: "1080",
-  //videoWidth: "1920",
+  //videoHeight: 720,
+  //videoWidth: 1280,
+  videoHeight: 840,
+  videoWidth: 1493,
+  //videoHeight: 1080,
+  //videoWidth: 1920,
   autoPlay: 1,
   maxResultsComment: 100,
   iterComment: 2,
@@ -37,6 +37,7 @@ export const VideoWatchPageConfig = {
   intervalTimeChat: 1000,
   maxResultsIntervalChat: 1,
   showLiveChatCanvas: true,
+  chatCanvasMaxRow: 30,
 };
 
 export const FavPageConfig = {

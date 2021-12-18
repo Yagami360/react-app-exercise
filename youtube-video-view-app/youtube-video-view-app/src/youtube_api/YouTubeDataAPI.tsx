@@ -224,7 +224,7 @@ export async function getVideoChatInfos(apiKey: any, liveChatId: any, maxResults
       try {
         const response = await fetch(YOUTUBE_DATA_API_URL+"liveChat/messages" + '?key='+apiKey + '&part=snippet,authorDetails' + '&liveChatId='+liveChatId + '&maxResults='+maxResults + '&pageToken='+nextPageToken)
         const dataLiveChatMessages = await response.json()
-        console.log("dataLiveChatMessages : ", dataLiveChatMessages)
+        //console.log("dataLiveChatMessages : ", dataLiveChatMessages)
 
         nextPageToken = dataLiveChatMessages["nextPageToken"]
         chatNumber = dataLiveChatMessages["pageInfo"]["totalResults"]

@@ -1,12 +1,13 @@
-import { createMuiTheme } from '@material-ui/core/styles';
+/* eslint-disable */
+import { createTheme } from '@material-ui/core/styles';
 
 const AppTheme = {
-  lightTheme: createMuiTheme({
+  lightTheme: createTheme({
     palette: {
       type: "light",
     },
   }),
-  darkTheme: createMuiTheme({
+  darkTheme: createTheme({
     palette: {
       type: "dark",
     },

@@ -2,7 +2,7 @@ import React from 'react';
 import { useState, useEffect, useMemo } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
-import { useTheme, createMuiTheme, ThemeProvider} from '@material-ui/core/styles';
+import { useTheme, createTheme, ThemeProvider} from '@material-ui/core/styles';
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Box from '@material-ui/core/Box';
 import { Grid } from '@material-ui/core';
@@ -58,12 +58,12 @@ const TestPage: React.VFC = () => {
   const [darkMode, setDarkMode] = useLocalPersist("twitter-image-search-app", "darkMode", false)
 
   // テーマ（画面全体のスタイル）の設定
-  const lightTheme = createMuiTheme({
+  const lightTheme = createTheme({
     palette: {
       type: "light",
     },
   });
-  const darkTheme = createMuiTheme({
+  const darkTheme = createTheme({
     palette: {
       type: "dark",
     },
@@ -71,7 +71,7 @@ const TestPage: React.VFC = () => {
   /*
   const theme = React.useMemo(
     () =>
-      createMuiTheme({
+      createTheme({
         palette: {
           type: darkMode ? "dark" : "light",
         },

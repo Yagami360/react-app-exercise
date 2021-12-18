@@ -129,11 +129,12 @@ const CommentList: React.FC<Props> = ({
             <Divider variant="inset" component="li" />            
           </>)
 
-          //setCommentsJsx([...commentsJsx_, commentJsx_])
+          //setCommentsJsx([...commentsJsx_, ...commentJsx_])
           commentsJsx_.push(commentJsx_)
         })
 
-        setCommentsJsx(commentsJsx_)
+        //setCommentsJsx(commentsJsx_)
+        setCommentsJsx([...commentsJsx, ...commentsJsx_])
         setMessage("")
       }
     }
@@ -167,8 +168,7 @@ const CommentList: React.FC<Props> = ({
   }
   else {
     return (
-      <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
-      </ThemeProvider>
+      <div></div>
     )
   }
 }

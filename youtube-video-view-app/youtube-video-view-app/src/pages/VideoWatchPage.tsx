@@ -206,7 +206,7 @@ const VideoWatchPage: React.VFC = () => {
       // 動画カテゴリ情報を取得
       try {
         const videoCategoryInfo_ = await getVideoCategoryInfo(getAPIKey(), categoryId_)
-        //console.log( "videoCategoryInfo_ : ", videoCategoryInfo_ )    
+        //console.log( "[VideoWatchPage (initPageAsync)] videoCategoryInfo_ : ", videoCategoryInfo_ )    
         setCategoryTitle(videoCategoryInfo_["title"])
         setMessageVideoCategory("")
       }
@@ -232,9 +232,13 @@ const VideoWatchPage: React.VFC = () => {
       // ライブチャット情報を取得
       if ( liveBroadcastContent_ === "live" || liveBroadcastContent_ === "upcoming" ) {
         let chatNumber_ = undefined
+        let videoChatInfos_ = undefined
         try {
-          [videoChatInfosRef.current, chatNumber_, chatNextPageTokenRef.current] = await getVideoChatInfos(getAPIKey(), liveChatId_, VideoWatchPageConfig.maxResultsChat, VideoWatchPageConfig.iterChat, chatNextPageTokenRef.current)
-          setVideoChatInfos(videoChatInfosRef.current)
+          [videoChatInfos_, chatNumber_, chatNextPageTokenRef.current] = await getVideoChatInfos(getAPIKey(), liveChatId_, VideoWatchPageConfig.maxResultsChat, VideoWatchPageConfig.iterChat, chatNextPageTokenRef.current)
+          videoChatInfos_.forEach((videoChatInfo_: any)=> {
+            videoChatInfosRef.current.push(videoChatInfo_)
+          })
+          setVideoChatInfos([...videoChatInfos, ...videoChatInfosRef.current])
         }
         catch (err) {
           console.error(err);
@@ -247,7 +251,6 @@ const VideoWatchPage: React.VFC = () => {
   }, [liveChatId, liveBroadcastContent])
 
   // setInterval() を呼び出す副作用フック。レンダーの度にsetIntervalが何度も実行されて、オーバーフローやメモリリークが発生するので副作用フック内で行う
-  /*
   useEffect( () => {
     //console.log( "call useEffect2 (setInterval)" )
 
@@ -263,14 +266,13 @@ const VideoWatchPage: React.VFC = () => {
         if ( liveBroadcastContent === "live" || liveBroadcastContent === "upcoming" ) {
           getVideoChatInfos(getAPIKey(), liveChatId, VideoWatchPageConfig.maxResultsIntervalChat, 1, chatNextPageTokenRef.current )
             .then( ([videoChatInfos_, chatNumber_, nextPageToken_ ]) => {
-              //console.log( "[before] videoChatInfosRef.current : ", videoChatInfosRef.current )
               videoChatInfos_.forEach((videoChatInfo_: any)=> {
                 videoChatInfosRef.current.push(videoChatInfo_)
               })
               chatNextPageTokenRef.current = nextPageToken_
-              setVideoChatInfos(videoChatInfosRef.current)
-              //console.log( "[after] videoChatInfosRef.current : ", videoChatInfosRef.current )
-              //console.log( "[after] videoChatInfos : ", videoChatInfos )
+              setVideoChatInfos([...videoChatInfos, ...videoChatInfosRef.current])
+              //console.log( "[VideoWatchPage (timerChat)] videoChatInfosRef.current : ", videoChatInfosRef.current )
+              //console.log( "[VideoWatchPage (timerChat)] videoChatInfos : ", videoChatInfos )
             })
             .catch(err => {
               console.log(err);
@@ -287,7 +289,6 @@ const VideoWatchPage: React.VFC = () => {
       }
     }
   }, [liveChatId, liveBroadcastContent])
-  */
  
   //------------------------
   // イベントハンドラ
@@ -313,8 +314,8 @@ const VideoWatchPage: React.VFC = () => {
   const youtubeVideoURL = "https://www.youtube.com/watch?v=" + videoId
   //console.log( "[VideoWatchPage] liveChatId : ", liveChatId )
   //console.log( "[VideoWatchPage] liveBroadcastContent : ", liveBroadcastContent )
-  console.log( "[VideoWatchPage] videoChatInfosRef.current : ", videoChatInfosRef.current )  
-  console.log( "[VideoWatchPage] videoChatInfos : ", videoChatInfos )
+  //console.log( "[VideoWatchPage] videoChatInfosRef.current : ", videoChatInfosRef.current )  
+  //console.log( "[VideoWatchPage] videoChatInfos : ", videoChatInfos )
   
   return (
     <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
@@ -327,7 +328,7 @@ const VideoWatchPage: React.VFC = () => {
         <Typography variant="subtitle2">{messageVideo}</Typography>
         <Box style={{display: "flex"}}>
           { /* 動画表示 */ }
-          <VideoPlayer videoId={videoId} autoPlay={true} videoWidth={VideoWatchPageConfig.videoWidth} videoHeight={VideoWatchPageConfig.videoHeight} liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} videoChatInfos={videoChatInfos} showLiveChatCanvas={VideoWatchPageConfig.showLiveChatCanvas} darkMode={darkMode} />
+          <VideoPlayer videoId={videoId} autoPlay={true} videoWidth={VideoWatchPageConfig.videoWidth} videoHeight={VideoWatchPageConfig.videoHeight} liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} videoChatInfos={videoChatInfos} showLiveChatCanvas={VideoWatchPageConfig.showLiveChatCanvas} chatCanvasMaxRow={VideoWatchPageConfig.chatCanvasMaxRow} darkMode={darkMode} />
           { /* チャット表示 */ }
           <LiveChatList liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} videoChatInfos={videoChatInfos} darkMode={darkMode} />
         </Box>
