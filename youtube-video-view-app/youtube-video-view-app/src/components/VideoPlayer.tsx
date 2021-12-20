@@ -11,6 +11,9 @@ import Box from '@material-ui/core/Box';
 import { Grid } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from "@material-ui/core/Switch";
 
 // スクリーンショット用
 import html2canvas from "html2canvas";
@@ -56,6 +59,7 @@ const VideoPlayer: React.FC<Props> = ({
   //------------------------
   const [message, setMessage] = useState("loading video")
   const isReady = React.useRef<boolean>(false);           // 動画再生開始可能状態
+  const [showLiveChatCanvasState, setShowLiveChatCanvasState] = useState(showLiveChatCanvas)
 
   // 子コンポーネント LiveChatCanvas で定義した各種メソッドを呼び出すためのハンドル
   const liveChatCanvasHandlerRef = React.useRef<LiveChatCanvasHandler>(null);
@@ -218,11 +222,11 @@ const VideoPlayer: React.FC<Props> = ({
 
   // スクショボタンクリック時のイベントハンドラ 
   const onClickScreenShort = ((event: any) => {
-    console.log( "call onClickScreenShort" )
+    //console.log( "call onClickScreenShort" )
 
     // DOM の id からスクリーンショットを取る対象の DOM 要素を取得
     const targetDomElem: any = document.getElementById("player");
-    console.log( "targetDomElem : ", targetDomElem )
+    //console.log( "targetDomElem : ", targetDomElem )
 
     // html2canvas ライブラリのメソッドを呼び出し、スクショの画像データ canvas を取得
     html2canvas(
@@ -301,6 +305,17 @@ const VideoPlayer: React.FC<Props> = ({
       */
   })
 
+  // チャット字幕切り替えボタン
+  const onChangeLiveChatCanvas = (event: React.ChangeEvent<HTMLInputElement>) => {
+    //console.log( "call onChangeLiveChatCanvas" )
+    //console.log( "event.target.checked", event.target.checked )
+    if ( liveChatCanvasHandlerRef.current !== null ) {
+      // ライブチャット字幕のアニメーション用 TimeLine を削除
+      liveChatCanvasHandlerRef.current.deleteTimeline()
+    }
+    setShowLiveChatCanvasState(event.target.checked);
+  };
+
   //------------------------
   // メソッド
   //------------------------
@@ -332,20 +347,24 @@ const VideoPlayer: React.FC<Props> = ({
       <Box style={{display: "block"}}>
         <Box>
           { /* チャット字幕 */ }
-          { showLiveChatCanvas !== false ? <LiveChatCanvas liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} videoWidth={videoWidth} videoHeight={videoHeight} chatCanvasMaxRow={chatCanvasMaxRow} getVideoCurrentTime={getVideoCurrentTime} videoChatInfos={videoChatInfos} autoPlay={autoPlay} ref={liveChatCanvasHandlerRef} /> : "" }
+          <LiveChatCanvas liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} videoWidth={videoWidth} videoHeight={videoHeight} chatCanvasMaxRow={chatCanvasMaxRow} getVideoCurrentTime={getVideoCurrentTime} videoChatInfos={videoChatInfos} autoPlay={autoPlay} showLiveChatCanvas={showLiveChatCanvasState} ref={liveChatCanvasHandlerRef} />
           { /* 動画表示。id="player" の部分が iframe に置き換わる */ }
           <div id="player"></div>
         </Box>
         { /* コントロールパネル */ }
-        <Box mx={1} style={{textAlign: "left"}}>
+        <Box mx={1} style={{textAlign: "left", display: "flex"}}>
           <Button variant="text" onClick={onClickPlayVideo}><Typography variant="subtitle2">再生</Typography></Button>
           <Button variant="text" onClick={onClickPauseVideo}><Typography variant="subtitle2">停止</Typography></Button>
           <Button variant="text" onClick={onClickDownload}><Typography variant="subtitle2">ダウンロード</Typography></Button>
           <Button variant="text" onClick={onClickScreenShort}><Typography variant="subtitle2">スクショ</Typography></Button>
+          <Box style={{ flexGrow: 1 }}></Box>
+          { (liveBroadcastContent === "live" || liveBroadcastContent === "upcoming") ? <FormGroup><FormControlLabel control={<Switch checked={showLiveChatCanvasState} onChange={onChangeLiveChatCanvas} style={{ textAlign: "left"}} inputProps={{ 'aria-label': 'controlled' }}/>} label="チャット字幕" /></FormGroup> : "" }          
         </Box>
       </Box>
     </ThemeProvider>
   )
 }
+
+//          { showLiveChatCanvasState !== false ? <LiveChatCanvas liveChatId={liveChatId} liveBroadcastContent={liveBroadcastContent} videoWidth={videoWidth} videoHeight={videoHeight} chatCanvasMaxRow={chatCanvasMaxRow} getVideoCurrentTime={getVideoCurrentTime} videoChatInfos={videoChatInfos} autoPlay={autoPlay} ref={liveChatCanvasHandlerRef} /> : "" }
 
 export default VideoPlayer;

@@ -36,7 +36,8 @@ export const VideoWatchPageConfig = {
   iterChat: 1,
   intervalTimeChat: 1000,
   maxResultsIntervalChat: 1,
-  showLiveChatCanvas: true,
+  showLiveChatCanvas: false,
+  //showLiveChatCanvas: true,
   chatCanvasMaxRow: 30,
 };
 

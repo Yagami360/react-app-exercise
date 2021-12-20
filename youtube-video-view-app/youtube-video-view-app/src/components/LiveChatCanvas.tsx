@@ -39,6 +39,7 @@ export interface LiveChatCanvasHandler {
   playTimeline: () => void;
   pauseTimeline: () => void;
   seekTimeline: (seconds: number) => void;
+  deleteTimeline: () => void;
 }
 
 // コンポーネントの引数
@@ -51,12 +52,13 @@ type probs = {
   getVideoCurrentTime: any;
   videoChatInfos: any;
   autoPlay: boolean;
+  showLiveChatCanvas: boolean;
   ref: RefObject<LiveChatCanvasHandler>;
 }
 
 // useImperativeHandle を使用する場合の定義方法
 const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (probs, ref) => {
-  console.log( "call LiveChatCanvas" )
+  //console.log( "call LiveChatCanvas" )
   //console.log( "[LiveChatCanvas] probs", probs )
 
   //------------------------
@@ -66,7 +68,8 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
   useImperativeHandle(ref, () => ({
     playTimeline,
     pauseTimeline,
-    seekTimeline
+    seekTimeline,
+    deleteTimeline,
   }));
 
   const [message, setMessage] = useState("loading chats")
@@ -92,7 +95,7 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
     //console.log( "[LiveChatList in useEffect1] probs.liveChatId : ", probs.liveChatId )
     //console.log( "[LiveChatList in useEffect1] probs.liveBroadcastContent : ", probs.liveBroadcastContent )
 
-    if ( probs.liveBroadcastContent === "live" || probs.liveBroadcastContent === "upcoming" ) {
+    if ( (probs.liveBroadcastContent === "live" || probs.liveBroadcastContent === "upcoming") && probs.showLiveChatCanvas ) {
       // canvas を設定
       setLiveChatCanvas()
 
@@ -115,9 +118,9 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
     // アンマウント時の処理
     return () => {
       // requestAnimationFrame() で設定した更新処理を停止。requestAnimationFrame の戻り値を設定することで停止できる
-      if( canvasFrameRef.current !== null ) {
-        cancelAnimationFrame(canvasFrameRef.current);
-      }
+      //if( canvasFrameRef.current !== null ) {
+      //  cancelAnimationFrame(canvasFrameRef.current);
+      //}
 
       // TimeLine 削除
       if( timelineRef.current !== null ) {
@@ -125,12 +128,12 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
         timelineRef.current.clear();  
       }
     };
-  }, [probs.liveBroadcastContent])
+  }, [probs.liveBroadcastContent, probs.showLiveChatCanvas])
 
 
   // チャットデータ更新時に呼び出す副作用フック
   useEffect( () => {
-    if ( (probs.liveBroadcastContent === "live" || probs.liveBroadcastContent === "upcoming") && probs.videoChatInfos !== undefined ) {
+    if ( (probs.liveBroadcastContent === "live" || probs.liveBroadcastContent === "upcoming") && probs.showLiveChatCanvas && probs.videoChatInfos !== undefined ) {
       // GSAP の TimeLine を再作成
       //createTimeLine(probs.videoChatInfos)
 
@@ -171,7 +174,8 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
       // context 属性のフォントを設定
       if ( canvasContextRef.current !== null ) {
         canvasContextRef.current.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'ヒラギノ角ゴ ProN W3'`;
-        canvasContextRef.current.fillStyle = '#fff';
+        //canvasContextRef.current.fillStyle = '#fff';
+        canvasContextRef.current.fillStyle = 'lightgreen';
         canvasContextRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         //console.log( "canvasRef.current : ", canvasRef.current )
         //console.log( "canvasContextRef.current : ", canvasContextRef.current )
@@ -184,14 +188,14 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
   };
 
   // ライブチャットテキストを Canvas タグの context 属性にレンダリングするメソッド
-  const renderLiveChatCanvas = (displayMessage: string, x:number, y:number, width:number, height: number) => {
+  const renderLiveChatCanvas = (displayMessage: string, x:number, y:number) => {
     //console.log( "call renderLiveChatCanvas" )
     if ( canvasRef.current !== null && canvasContextRef.current !== null ) {
       // CanvasRenderingContext2D オブジェクトを用いて、画面全体をクリア
       canvasContextRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
       // ライブチャットテキストをレンダリング
-      canvasContextRef.current.fillText(displayMessage, x, y, width);     
+      canvasContextRef.current.fillText(displayMessage, x, y);     
     }
   }
 
@@ -207,7 +211,7 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
 
   // GSAP で連続アニメーションを行うための TimeLine 作成
   const createTimeLine = (videoChatInfos: any) => {
-    console.log( "call createTimeLine()" )
+    //console.log( "call createTimeLine()" )
     if ( canvasRef.current !== null && canvasContextRef.current !== null && videoChatInfos !== undefined ) {
       // TimeLine の全 Tween をクリア
       if( timelineRef.current !== null ) {
@@ -230,15 +234,15 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
         timelineRef.current = gsap.timeline({
           paused: true,   // 勝手にアニメーションが始まらないように設定
           // Timeline 開始時に呼び出されるコールバック関数
-          onStart: () => {
-            console.log( "callback onStart() in timeline" )
-            canvasContextRef.current?.clearRect(0, 0, probs.videoWidth, probs.videoHeight);
-          },
-          // TimeLine に含まれる Tween 全体のアニメーションが更新されるたびに呼び出されるコールバック関数
-          onUpdate: () => {
-            console.log( "callback onUpdate() in timeline" )
+          //onStart: () => {
+            //console.log( "callback onStart() in timeline" )
             //canvasContextRef.current?.clearRect(0, 0, probs.videoWidth, probs.videoHeight);
-          },
+          //},
+          // TimeLine に含まれる Tween 全体のアニメーションが更新されるたびに呼び出されるコールバック関数
+          //onUpdate: () => {
+            //console.log( "callback onUpdate() in timeline" )
+            //canvasContextRef.current?.clearRect(0, 0, probs.videoWidth, probs.videoHeight);
+          //},
         });
       }
 
@@ -272,7 +276,7 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
         y: chatY,                       // y 位置の初期値
       };
 
-      //console.log('chat["displayMessage"] : ', chat["displayMessage"])
+      //console.log('videoChatInfo["displayMessage"] : ', videoChatInfo["displayMessage"])
       //console.log('chatCss.x : ', chatCss.x)
       //console.log('chatCss.y : ', chatCss.y)
 
@@ -288,10 +292,9 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
           duration: 3,    // アニメーションの長さ
           // Tween のアニメーションが更新されるたびに呼び出されるコールバック関数
           onUpdate: () => {
-            console.log( "callback onUpdate() in tween / publishedAt : ", videoChatInfo["publishedAt"] )
+            //console.log( "callback onUpdate() in tween / publishedAt : ", videoChatInfo["publishedAt"] )
             // canvas にレンダリング
-            renderLiveChatCanvas(videoChatInfo["displayMessage"], chatCss.x, chatCss.y, probs.videoWidth, probs.videoHeight)
-            //renderLiveChatCanvas(videoChatInfo["displayMessage"], chatCss.x, chatCss.y, chatWidth, canvasHeightRef.current)
+            renderLiveChatCanvas(videoChatInfo["displayMessage"], chatCss.x, chatCss.y)
             //canvasContextRef.current?.fillText(videoChatInfo["displayMessage"], chatCss.x, chatCss.y, chatWidth);
           },
         },
@@ -308,7 +311,7 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
 
   // TimeLine を再生
   const playTimeline = () => {
-    console.log( "call playTimeline()" )
+    //console.log( "call playTimeline()" )
     //console.log( "[playTimeline] timelineRef.current : ", timelineRef.current )
     //seekTimeline(probs.getVideoCurrentTime());
     //seekTimeline(0);
@@ -333,6 +336,15 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
       timelineRef.current.seek(seconds);
     }
   };
+
+ // TimeLine を削除
+ const deleteTimeline = () => {
+  if( timelineRef.current !== null ) {
+    canvasContextRef.current?.clearRect(0, 0, probs.videoWidth, probs.videoHeight);
+    timelineRef.current.kill();
+    timelineRef.current.clear();  
+  }
+};
 
   // canvas タグの fillText で設定されている line-height 属性の値の返すメソッド
   const getCanvasLineHeight = () => {
@@ -383,9 +395,9 @@ const LiveChatCanvas: RefForwardingComponent<LiveChatCanvasHandler, probs> = (pr
   //console.log( "[LiveChatCanvas] probs.liveBroadcastContent : ", probs.liveBroadcastContent )
   //console.log( "canvasRef: ", canvasRef )
   //console.log( "probs.videoChatInfos: ", probs.videoChatInfos )
-  console.log( "timelineRef.current: ", timelineRef.current )
+  //console.log( "timelineRef.current: ", timelineRef.current )
 
-  if ( (probs.liveBroadcastContent === "live" || probs.liveBroadcastContent === "upcoming") ) {
+  if ( (probs.liveBroadcastContent === "live" || probs.liveBroadcastContent === "upcoming") && probs.showLiveChatCanvas) {
     // チャット字幕を HTML の canvas タグで表示する
     // position : "absolute" でチャット字幕の canvas を <iframe> 要素に重ねる
     // zIndex で重なり順序を指定。position: "absolute" と これを設定することで動画上に canvas を描写出来るようにする

@@ -2,7 +2,7 @@
 // React
 import React from 'react';
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, Navigate } from 'react-router-dom';
 
 // Material-UI
 import { makeStyles } from '@material-ui/core/styles'
@@ -89,7 +89,8 @@ const VideoWatchPage: React.VFC = () => {
   const videoURL_ = 'https://www.youtube.com/embed/' + videoId_ + '?autoplay='+VideoWatchPageConfig.autoPlay;
   //console.log( "location : ", location )
   //console.log( "params : ", params )
-
+  //console.log( "videoId_ : ", videoId_)
+  
   //------------------------
   // フック
   //------------------------
@@ -321,6 +322,8 @@ const VideoWatchPage: React.VFC = () => {
     <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
       <CssBaseline />
+      { /* パスパラメーターの video_id が指定されてない場合は、動画検索ページにリダイレクト */ }
+      { videoId == ":video_id" ? <Navigate to={AppConfig.videoSearchPage.path} /> : "" }
       {/* ヘッダー表示 */}      
       <Header title="YouTube Video View App" selectedTabIdx={AppConfig.videoWatchPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
       {/* ボディ入力 */}
