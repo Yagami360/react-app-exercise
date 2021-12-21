@@ -80,7 +80,7 @@ const FavPage: React.VFC = () => {
                     // フィールドの値と最新の統計情報を YouTubeVideoInfoCard の形式に変換して追加
                     const favJsx_ = (
                       <YouTubeVideoInfoCard 
-                        channelId={field.channelId} channelTitle={field.title} profileImageUrl={channelInfo_["profileImageUrl"]} subscriberCount={channelInfo_["subscriberCount"]}
+                        channelId={field.channelId} channelTitle={field.channelTitle} profileImageUrl={channelInfo_["profileImageUrl"]} subscriberCount={channelInfo_["subscriberCount"]}
                         videoId={field.videoId} title={field.title} publishTime={field.publishedAt} description={field.description} categoryTitle={field.categoryTitle}
                         thumbnailsUrl={field.thumbnailsUrl} imageHeight={FavPageConfig.imageHeight} imageWidth={FavPageConfig.imageWidth}
                         viewCount={videoInfo_["viewCount"]} likeCount={videoInfo_["likeCount"]} dislikeCount={videoInfo_["dislikeCount"]} favoriteCount={videoInfo_["favoriteCount"]}
