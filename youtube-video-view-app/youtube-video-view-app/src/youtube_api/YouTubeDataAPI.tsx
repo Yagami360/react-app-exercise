@@ -254,15 +254,15 @@ export async function getVideoChatInfos(apiKey: any, liveChatId: any, maxResults
 //--------------------------------------------------------
 // YouTubeAPI を使用して動画検索結果を返す非同期関数
 //--------------------------------------------------------
-export async function searchVideos(apiKey: any, searchWord: any, maxResults:Number = 50, iter: Number = 1, nextPageToken: any = "") {
+export async function searchVideos(apiKey: any, searchWord: any, maxResults:Number = 50, iter: Number = 1, nextPageToken: any = "", channelId: string = "", order="relevance" ) {
   let searchVideoInfos: any = []
   let totalNumber = undefined
   let searchNumber = 0
-  if( searchWord !== undefined && searchWord !== "") {
+  if( searchWord !== undefined　) {
     for (let i = 0; i < iter; i++) {
       try {
         //console.log("nextPageToken : ", nextPageToken)
-        const response = await fetch(YOUTUBE_DATA_API_URL+"search" + '?key='+apiKey + '&type=video' + '&part=snippet' + '&q='+searchWord + '&maxResults='+maxResults + '&pageToken='+nextPageToken)
+        const response = await fetch(YOUTUBE_DATA_API_URL+"search" + '?key='+apiKey + '&type=video' + '&part=snippet' + '&q='+searchWord + '&maxResults='+maxResults + '&pageToken='+nextPageToken + '&channelId='+channelId + '&order='+order)
         const dataSearch = await response.json()
         //console.log("dataSearch : ", dataSearch)
         nextPageToken = dataSearch["nextPageToken"]

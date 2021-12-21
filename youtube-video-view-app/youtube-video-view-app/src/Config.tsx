@@ -16,10 +16,10 @@ export const VideoSearchPageConfig = {
   collectionNameSearchWord: "search-word-database",
   imageHeight: "300px",
   imageWidth: "2000px",
-  maxResults: 10,
-  //maxResults: 50,
-  iterSearchVideo: 1,
-  //iterSearchVideo: 10,  
+  //maxResults: 10,
+  maxResults: 50,
+  //iterSearchVideo: 1,
+  iterSearchVideo: 2,  
 };
 
 export const VideoWatchPageConfig = {
@@ -50,4 +50,8 @@ export const FavPageConfig = {
 
 export const FollowPageConfig = {
   collectionNameFollow: 'follow-database',
+  maxResults: 10,
+  //maxResults: 50,
+  iterSearchVideo: 1,
+  //iterSearchVideo: 10,  
 };

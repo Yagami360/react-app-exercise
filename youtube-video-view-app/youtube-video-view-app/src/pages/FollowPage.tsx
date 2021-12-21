@@ -25,7 +25,7 @@ import AppConfig, { FollowPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
-import { getAPIKey, getChannelInfo, getVideoInfo } from '../youtube_api/YouTubeDataAPI';
+import { getAPIKey, getChannelInfo, getVideoInfo, searchVideos } from '../youtube_api/YouTubeDataAPI';
 
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
@@ -68,43 +68,49 @@ const FollowPage: React.VFC = () => {
   const [message, setMessage] = useState('loading pages..')
 
   // チャンネル情報
-  //const channelInfos = React.useRef<any>([]);
+  const channelInfosRef = React.useRef<any>([]);
   const [channelInfos, setChannelInfos] = useState([] as any)
-  const [channelInfosJsx, setChannelInfosJsx] = useState([] as any)
   const [selectedChannelIndex, setSelectedChannelIndex] = React.useState(0);
+
+  // チャンネル一覧
+  const channelListJsxRef = React.useRef<any>([]);
+  const [channelListJsx, setChannelListJsx] = useState([] as any)
+
+  // チャンネル詳細
+  const channelDetailJsxRef = React.useRef<any>();
+  const [channelDetailJsx, setChannelDetailJsx] = useState()
 
   // ページ読み込み時の副作用フック
   useEffect(() => {
     if( auth.currentUser !== null ) {
       // フォロー済みユーザーを取得
-      let channelInfos_: any = []
-      let channelInfosJsx_: any = []
       firestore.collection(FollowPageConfig.collectionNameFollow).doc(auth.currentUser.email).collection(FollowPageConfig.collectionNameFollow).get()
         .then( (snapshot)=> {
-          let listIndex = 0
-          snapshot.forEach((document)=> {
+          let index = 0
+          channelInfosRef.current = []
+          channelListJsxRef.current = []
+          snapshot.forEach((document) => {
             // document.data() : ドキュメント内のフィールド
             const field = document.data()
             //console.log( "field : ", field )
+            console.log( "index : ", index )
 
-            channelInfos_.push({
+            channelInfosRef.current.push({
               "channelId" : field["channelId"],
               "title" : field["channelTitle"],
               "profileImageUrl" : field["profileImageUrl"],
               "subscriberCount" : undefined,            
             })
 
-            channelInfosJsx_.push(
-              <ListItem onClick={(event:any) => onClickChannelList(event, listIndex)}>
+            channelListJsxRef.current.push(
+              <ListItem onClick={(event:any) => onClickChannelList(event, index)}>
                 <Box style={{display:"flex"}}>
-                  { /* アイコン画像 */ }
                   <ListItemAvatar>
                     <Avatar aria-label="avatar" src={field["profileImageUrl"]} style={{ width: 60, height: 60 }} />
                   </ListItemAvatar>
                   <ListItemText 
                     primary={<>
                       <Box mx={1} style={{display:"flex"}}>
-                        { /* チャンネル名 */ }
                         <Typography component="span" variant="body2" color="textPrimary" style={{display: "inline"}}>{field["channelTitle"]}</Typography>
                       </Box>
                     </>}
@@ -112,10 +118,12 @@ const FollowPage: React.VFC = () => {
                 </Box>
               </ListItem>
             )
-            listIndex += 1
+
+            index += 1
           })
-          setChannelInfos([...channelInfos, ...channelInfos_])
-          setChannelInfosJsx([...channelInfosJsx, ...channelInfosJsx_])
+
+          setChannelInfos(channelInfosRef.current)
+          setChannelListJsx(channelListJsxRef.current)
         })
       setMessage("")
     }
@@ -135,10 +143,10 @@ const FollowPage: React.VFC = () => {
     }
     //console.log('result.source.index : ', result.source.index);
     //console.log('result.destination.index : ', result.destination.index);
-    const channelInfosJsx_ = Array.from(channelInfosJsx);   // ステートの配列 channelInfosJsx を deep copy して、コピーした配列で操作
-    const [reorderedChannelInfosJsx] = channelInfosJsx_.splice(result.source.index, 1);   // splice(index1,index2) : index1 ~ index2 までの要素を取り除く
-    channelInfosJsx_.splice(result.destination.index, 0, reorderedChannelInfosJsx);       // splice(index1,index2,array1) : 第1引数で指定した要素から、第2引数で指定した数を取り除き、第3引数の値を追加します。
-    setChannelInfosJsx(channelInfosJsx_)
+    const channelListJsx_ = Array.from(channelListJsx);   // ステートの配列 channelListJsx を deep copy して、コピーした配列で操作
+    const [reorderedChannelInfosJsx] = channelListJsx_.splice(result.source.index, 1);   // splice(index1,index2) : index1 ~ index2 までの要素を取り除く
+    channelListJsx_.splice(result.destination.index, 0, reorderedChannelInfosJsx);       // splice(index1,index2,array1) : 第1引数で指定した要素から、第2引数で指定した数を取り除き、第3引数の値を追加します。
+    setChannelListJsx(channelListJsx_)
   })
 
   const onClickChannelListAll = ((event: any) => {
@@ -148,77 +156,138 @@ const FollowPage: React.VFC = () => {
   const onClickChannelList = ((event: React.MouseEvent<HTMLDivElement, MouseEvent>, index: number,) => {
     console.log( "[onClickChannelList] event : ", event )
     console.log( "[onClickChannelList] index : ", index )
+    index = 1
     setSelectedChannelIndex(index)
 
-    // チャンネル ID を取得
-    if( channelInfos.length >= index ) {
-      const channelId = channelInfos[index]["channelId"]
+    if( channelInfosRef.current.length > 0 ) {
+      // チャンネル ID を取得
+      const channelId = channelInfosRef.current[index]["channelId"]
+      //const channelId = "UCeLzT-7b2PBcunJplmWtoDg"
       console.log( "[onClickChannelList] channelId : ", channelId )
+
+      // チャンネル詳細
+      console.log( "[onClickChannelList] channelInfosRef.current : ", channelInfosRef.current )      
+      channelDetailJsxRef.current = (<>
+        <ListItem >
+          <Box style={{display:"flex"}}>
+            <ListItemAvatar>
+              <Avatar aria-label="avatar" src={channelInfosRef.current[index]["profileImageUrl"]} style={{ width: 80, height: 80 }} />
+            </ListItemAvatar>
+            <ListItemText 
+              primary={<>
+                <Box mx={1} style={{display:"flex"}}>
+                  <Typography component="span" variant="subtitle1" color="textPrimary" style={{display: "inline"}}>{channelInfosRef.current[index]["title"]}</Typography>
+                </Box>
+              </>}
+              secondary={<>
+                <Box mx={1} style={{display:"flex"}}>
+                  <Typography component="span" variant="subtitle2" color="textPrimary" style={{display: "inline"}}>{"チャンネル登録者数 : "+channelInfosRef.current[index]["subscriberCount"]}</Typography>
+                </Box>
+              </>}
+            />
+          </Box>
+        </ListItem>        
+      </>);
+      setChannelDetailJsx(channelDetailJsxRef.current)
+
+      // チャンネル ID からチャンネルの動画取得
+      searchVideos(getAPIKey(), "", FollowPageConfig.maxResults, FollowPageConfig.iterSearchVideo, "", channelId, "date")
+        .then( ([searchVideoInfos_, totalNumber_, searchNumber_, nextPageToken_]) => {
+          console.log( "[onClickChannelList] searchVideoInfos_ : ", searchVideoInfos_ )          
+
+          // チャンネル動画一覧
+          /*
+          searchVideoInfos_.foreach((searchVideoInfo_: any) => {
+          })
+          */
+
+        })
+        .catch(err => {
+          console.log(err);
+          setMessage("チャンネルの動画検索に失敗しました" )
+        })    
+        .finally( () => {
+        })
     }
   })
 
   //------------------------
   // JSX での表示処理
   //------------------------
-  console.log("channelInfos : ", channelInfos )
-  return (
-    <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
-      {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
-      <CssBaseline />
-      {/* ヘッダー表示 */}
-      <Header title="YouTube Video View App" selectedTabIdx={AppConfig.followPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
-      {/* ボディ表示 */}
-      <Typography variant="h6">{message}</Typography>
-      <Box>
-        { /* チャンネルリスト */ }
-        <Box style={{width: "300px"}}>
-          <Paper variant="outlined" square>
-          { /* 全チャンネル */ }
-            <ListItem onClick={onClickChannelListAll}>
-              <Box style={{display:"flex"}}>
-                { /* アイコン画像 */ }
-                <ListItemAvatar>
-                  <Avatar aria-label="avatar" src={""} style={{ width: 60, height: 60 }} />
-                </ListItemAvatar>
-                <ListItemText 
-                  primary={<>
-                    <Box mx={1} style={{display:"flex"}}>
-                      { /* チャンネル名 */ }
-                      <Typography component="span" variant="body2" color="textPrimary" style={{display: "inline"}}>全チャンネル</Typography>
-                    </Box>
-                  </>}
-                />
-              </Box>
-            </ListItem>
-            <Divider />
-            { /* 各チャンネル */ }
-            <DragDropContext onDragEnd={onDragEndChannelList}>
-              <Droppable droppableId="droppable">
-                {(provided, snapshot) => (
-                  <div ref={provided.innerRef} {...provided.droppableProps}>   { /* <div></div> の範囲にドロップできるようにする。このタグ内に provided 引数を設定することで、この引数に含まれる値を元にどのアイテムがどの位置に移動されたかをトラッキングできるようになる */ }
-                    {channelInfosJsx.map( (channelInfoJsx: any, index: any) => (
-                      <Draggable key={index.toString()} draggableId={index.toString()} index={index}>
-                        {(provided, snapshot) => (
-                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} style={channelListDraggingStyle(snapshot.isDragging, provided.draggableProps.style)}>    { /* <div></div> の範囲（＝カード）でドラックできるようにする。このタグ内に provided 引数を設定することで、この引数に含まれる値を元にどのアイテムがどの位置に移動されたかをトラッキングできるようになる */ }
-                            {channelInfoJsx}
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}  { /* placeholderを追加することで、ドラッグしたアイテムがドラッグされる前に使っていたスペースを埋めてくれる */ }
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-          </Paper>
-        </Box>
-        { /* チャンネル詳細 */ }
-        <Box m={2}>
+  //console.log("channelInfos : ", channelInfos )
+  console.log("channelListJsx : ", channelListJsx )
 
+  if( auth.currentUser !== null ) {
+    return (
+      <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
+        {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
+        <CssBaseline />
+        {/* ヘッダー表示 */}
+        <Header title="YouTube Video View App" selectedTabIdx={AppConfig.followPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
+        {/* ボディ表示 */}
+        <Typography variant="h6">{message}</Typography>
+        <Box style={{display: "flex"}}>
+          { /* チャンネルリスト */ }
+          <Box style={{width: "15%"}}>
+            <Paper variant="outlined" square>
+            { /* 全チャンネル */ }
+              <ListItem onClick={onClickChannelListAll}>
+                <Box style={{display:"flex"}}>
+                  { /* アイコン画像 */ }
+                  <ListItemAvatar>
+                    <Avatar aria-label="avatar" src={""} style={{ width: 60, height: 60 }} />
+                  </ListItemAvatar>
+                  <ListItemText 
+                    primary={<>
+                      <Box mx={1} style={{display:"flex"}}>
+                        { /* チャンネル名 */ }
+                        <Typography component="span" variant="body2" color="textPrimary" style={{display: "inline"}}>全チャンネル</Typography>
+                      </Box>
+                    </>}
+                  />
+                </Box>
+              </ListItem>
+              <Divider />
+              { /* 各チャンネル */ }
+              <DragDropContext onDragEnd={onDragEndChannelList}>
+                <Droppable droppableId="droppable">
+                  {(provided, snapshot) => (
+                    <div ref={provided.innerRef} {...provided.droppableProps}>   { /* <div></div> の範囲にドロップできるようにする。このタグ内に provided 引数を設定することで、この引数に含まれる値を元にどのアイテムがどの位置に移動されたかをトラッキングできるようになる */ }
+                      {channelListJsx.map( (channelInfoJsx: any, index: any) => (
+                        <Draggable key={index.toString()} draggableId={index.toString()} index={index}>
+                          {(provided, snapshot) => (
+                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} style={channelListDraggingStyle(snapshot.isDragging, provided.draggableProps.style)}>    { /* <div></div> の範囲（＝カード）でドラックできるようにする。このタグ内に provided 引数を設定することで、この引数に含まれる値を元にどのアイテムがどの位置に移動されたかをトラッキングできるようになる */ }
+                              {channelInfoJsx}
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}  { /* placeholderを追加することで、ドラッグしたアイテムがドラッグされる前に使っていたスペースを埋めてくれる */ }
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+            </Paper>
+          </Box>
+          { /* チャンネル詳細 */ }
+          <Box style={{width: "85%"}}>
+            {channelDetailJsx}
+          </Box>
         </Box>
-      </Box>
-    </ThemeProvider>
-  )
+      </ThemeProvider>
+    )
+  }
+  else {
+    return (
+      <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
+        {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
+        <CssBaseline />
+        {/* ヘッダー表示 */}
+        <Header title="YouTube Video View App" selectedTabIdx={AppConfig.followPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
+        <Typography variant="h6">ログインしてください</Typography>
+      </ThemeProvider>
+    );    
+  }
 }
 
 export default FollowPage;
