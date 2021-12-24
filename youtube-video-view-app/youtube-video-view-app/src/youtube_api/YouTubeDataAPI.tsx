@@ -48,18 +48,22 @@ export async function getChannelInfo(apiKey: any, channelId: any) {
   let channelInfo = {
     "channelId": channelId,
     "title": undefined,
+    "description": undefined,
     "profileImageUrl": undefined,
-    "subscriberCount": undefined
+    "subscriberCount": undefined,
+    "bannerExternalUrl": undefined,
   }
 
   if( channelId !== undefined && channelId !== "") {
     try {
-      const response = await fetch(YOUTUBE_DATA_API_URL+"channels" + '?key='+apiKey + '&part=snippet,statistics' + '&id='+channelId )
+      const response = await fetch(YOUTUBE_DATA_API_URL+"channels" + '?key='+apiKey + '&part=snippet,statistics,brandingSettings' + '&id='+channelId )
       const dataChannels = await response.json()
-      //console.log("dataChannels : ", dataChannels)
+      console.log("dataChannels : ", dataChannels)
       channelInfo["title"] = dataChannels["items"][0]["snippet"]["title"]
+      channelInfo["description"] = dataChannels["items"][0]["snippet"]["description"]
       channelInfo["profileImageUrl"] = dataChannels["items"][0]["snippet"]["thumbnails"]["medium"]["url"]
       channelInfo["subscriberCount"] = dataChannels["items"][0]["statistics"]["subscriberCount"]
+      channelInfo["bannerExternalUrl"] = dataChannels["items"][0]["brandingSettings"]["image"]["bannerExternalUrl"]
     }
     catch (err) {
       console.error(err);

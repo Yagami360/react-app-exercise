@@ -38,10 +38,25 @@ const TopPage: React.VFC = () => {
   //------------------------
   // ダークモード
   const [darkMode, setDarkMode] = useLocalPersist(AppConfig.appName, "darkMode", false)
-  
+
+  // ログインユーザー
+  const [authCurrentUser, setAuthCurrentUser] = useState(auth.currentUser)
+
   //------------------------
   // イベントハンドラ
   //------------------------  
+  // ログイン確認の副作用フック
+  useEffect(() => {
+    // Firebase Auth のログイン情報の初期化処理は、onAuthStateChanged 呼び出し時に行われる（このメソッドを呼び出さないと、ページ読み込み直後に firebase.auth().currentUser の値が null になることに注意）
+    const unregisterAuthObserver = auth.onAuthStateChanged( (user: any) => {
+      setAuthCurrentUser(user)
+    })
+
+    // アンマウント時の処理
+    return () => {
+      unregisterAuthObserver()
+    }
+  }, [])
 
   //------------------------
   // JSX での表示処理
@@ -51,7 +66,7 @@ const TopPage: React.VFC = () => {
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
       <CssBaseline />
       {/* ヘッダー表示 */}      
-      <Header title="YouTube Video View App" selectedTabIdx={AppConfig.topPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
+      <Header title="YouTube Video View App" selectedTabIdx={AppConfig.topPage.index} photoURL={authCurrentUser !== null ? authCurrentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
       {/* ボディ入力 */}
       <Box m={2}>
         <Typography variant="subtitle1">TopPage</Typography>

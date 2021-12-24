@@ -33,6 +33,25 @@ const auth: any = firebase.auth()
 // Firestore にアクセスするためのオブジェクト作成
 const firestore = firebase.firestore()
 
+// 文字列を改行コードで分割して改行タグに置換する関数
+const convertDescriptionToJsx = (text: any) => {
+  let textJsx: any = []
+  if( text != undefined ) {
+    //text = text.replace(/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig, "<a href='$1'>'$1'</a>")   // http://xxx を <a> でのリンクに変換
+    textJsx = text.split(/(\n)/g).map((t:any) => (t === '\n') ? <br/> : t)  // 改行文字 \n を区切り文字として配列に分割し、分割した配列の \n を <br/> タグに変換する
+    //textJsx = text.match(/<[^>]*>|[^<>]+/g)
+    /*
+    textJsx_.forEach((t: any) => {
+      //textJsx.push( t.split(/(<a href=)/g).map((t:any) => (t === '<a href=') ? <a href="xxx"></a> : t) )
+      console.log("match : ", t.match(/<[^>]*>|[^<>]+/g))
+      textJsx.push(t.match(/<[^>]*>|[^<>]+/g))
+    })
+    */
+  }
+  //console.log( "textJsx : ", textJsx )
+  return textJsx
+}
+
 //=======================================
 // お気に入りページを表示するコンポーネント
 //=======================================
@@ -42,6 +61,11 @@ const useStyles = makeStyles({
     width: "5000px",
     overflowY: "scroll",      // 縦スクロールバー
   },
+  bannerImg: {
+    width: "100%",    
+    height: "auto", 
+    objectFit: "cover",   
+  }
 })
 
 const FollowPage: React.VFC = () => {
@@ -65,6 +89,11 @@ const FollowPage: React.VFC = () => {
   //------------------------
   // ダークモード
   const [darkMode, setDarkMode] = useLocalPersist(AppConfig.appName, "darkMode", false)
+
+  // ログインユーザー
+  const [authCurrentUser, setAuthCurrentUser] = useState(auth.currentUser)
+
+  // メッセージ
   const [message, setMessage] = useState('loading pages..')
 
   // チャンネル情報
@@ -80,11 +109,24 @@ const FollowPage: React.VFC = () => {
   const channelDetailJsxRef = React.useRef<any>();
   const [channelDetailJsx, setChannelDetailJsx] = useState()
 
+  // ログイン確認の副作用フック
+  useEffect(() => {
+    // Firebase Auth のログイン情報の初期化処理は、onAuthStateChanged 呼び出し時に行われる（このメソッドを呼び出さないと、ページ読み込み直後に firebase.auth().currentUser の値が null になることに注意）
+    const unregisterAuthObserver = auth.onAuthStateChanged( (user: any) => {
+      setAuthCurrentUser(user)
+    })
+
+    // アンマウント時の処理
+    return () => {
+      unregisterAuthObserver()
+    }
+  }, [])
+
   // ページ読み込み時の副作用フック
   useEffect(() => {
-    if( auth.currentUser !== null ) {
+    if( authCurrentUser !== null ) {
       // フォロー済みユーザーを取得
-      firestore.collection(FollowPageConfig.collectionNameFollow).doc(auth.currentUser.email).collection(FollowPageConfig.collectionNameFollow).get()
+      firestore.collection(FollowPageConfig.collectionNameFollow).doc(authCurrentUser?.email).collection(FollowPageConfig.collectionNameFollow).get()
         .then( (snapshot)=> {
           let index = 0
           channelInfosRef.current = []
@@ -130,7 +172,7 @@ const FollowPage: React.VFC = () => {
     else {
       setMessage("Please login")
     }
-  }, [])
+  }, [authCurrentUser])
 
   //------------------------
   // イベントハンドラ
@@ -165,36 +207,42 @@ const FollowPage: React.VFC = () => {
       //const channelId = "UCeLzT-7b2PBcunJplmWtoDg"
       console.log( "[onClickChannelList] channelId : ", channelId )
 
-      // チャンネル詳細
-      console.log( "[onClickChannelList] channelInfosRef.current : ", channelInfosRef.current )      
-      channelDetailJsxRef.current = (<>
-        <ListItem >
-          <Box style={{display:"flex"}}>
-            <ListItemAvatar>
-              <Avatar aria-label="avatar" src={channelInfosRef.current[index]["profileImageUrl"]} style={{ width: 80, height: 80 }} />
-            </ListItemAvatar>
-            <ListItemText 
-              primary={<>
-                <Box mx={1} style={{display:"flex"}}>
-                  <Typography component="span" variant="subtitle1" color="textPrimary" style={{display: "inline"}}>{channelInfosRef.current[index]["title"]}</Typography>
-                </Box>
-              </>}
-              secondary={<>
-                <Box mx={1} style={{display:"flex"}}>
-                  <Typography component="span" variant="subtitle2" color="textPrimary" style={{display: "inline"}}>{"チャンネル登録者数 : "+channelInfosRef.current[index]["subscriberCount"]}</Typography>
-                </Box>
-              </>}
-            />
-          </Box>
-        </ListItem>        
-      </>);
-      setChannelDetailJsx(channelDetailJsxRef.current)
+      // チャンネル ID からチャンネル情報取得
+      getChannelInfo(getAPIKey(), channelId)
+        .then( (channelInfo_:any) => {
+          console.log( "[onClickChannelList] channelInfo_ : ", channelInfo_ )          
 
-      // チャンネル ID からチャンネルの動画取得
-      searchVideos(getAPIKey(), "", FollowPageConfig.maxResults, FollowPageConfig.iterSearchVideo, "", channelId, "date")
-        .then( ([searchVideoInfos_, totalNumber_, searchNumber_, nextPageToken_]) => {
-          console.log( "[onClickChannelList] searchVideoInfos_ : ", searchVideoInfos_ )          
-
+          // チャンネル詳細 body の JSX
+          channelDetailJsxRef.current = (<>
+            <Box className={style.bannerImg}>
+              <img src={channelInfo_["bannerExternalUrl"]} width="100%" height="auto" />
+            </Box>
+            <ListItem >
+              <Box style={{display:"flex"}}>
+                <ListItemAvatar>
+                  <Avatar aria-label="avatar" src={channelInfo_["profileImageUrl"]} style={{ width: 80, height: 80 }} />
+                </ListItemAvatar>
+                <ListItemText 
+                  primary={<>
+                    <Box mx={1} style={{display:"flex"}}>
+                      <Typography component="span" variant="subtitle1" color="textPrimary" style={{display: "inline"}}>{channelInfo_["title"]}</Typography>
+                    </Box>
+                  </>}
+                  secondary={<>
+                    <Box mx={1} style={{display:"flex"}}>
+                      <Typography component="span" variant="subtitle2" color="textPrimary" style={{display: "inline"}}>{"チャンネル登録者数 : "+channelInfo_["subscriberCount"]}</Typography>
+                    </Box>
+                  </>}
+                />
+              </Box>
+            </ListItem>                  
+            <Divider />
+            <Box m={2}>
+              <Typography component="span" variant="body1" color="textPrimary" style={{display: "inline"}}>{convertDescriptionToJsx(channelInfo_["description"])}</Typography>
+            </Box>
+          </>);
+          setChannelDetailJsx(channelDetailJsxRef.current)
+    
           // チャンネル動画一覧
           /*
           searchVideoInfos_.foreach((searchVideoInfo_: any) => {
@@ -217,13 +265,13 @@ const FollowPage: React.VFC = () => {
   //console.log("channelInfos : ", channelInfos )
   console.log("channelListJsx : ", channelListJsx )
 
-  if( auth.currentUser !== null ) {
+  if( authCurrentUser !== null ) {
     return (
       <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
         {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
         <CssBaseline />
         {/* ヘッダー表示 */}
-        <Header title="YouTube Video View App" selectedTabIdx={AppConfig.followPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
+        <Header title="YouTube Video View App" selectedTabIdx={AppConfig.followPage.index} photoURL={authCurrentUser !== null ? authCurrentUser?.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
         {/* ボディ表示 */}
         <Typography variant="h6">{message}</Typography>
         <Box style={{display: "flex"}}>
@@ -283,8 +331,8 @@ const FollowPage: React.VFC = () => {
         {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
         <CssBaseline />
         {/* ヘッダー表示 */}
-        <Header title="YouTube Video View App" selectedTabIdx={AppConfig.followPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
-        <Typography variant="h6">ログインしてください</Typography>
+        <Header title="YouTube Video View App" selectedTabIdx={AppConfig.followPage.index} photoURL={authCurrentUser !== null ? authCurrentUser?.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
+        <Typography variant="h6">{message}</Typography>
       </ThemeProvider>
     );    
   }

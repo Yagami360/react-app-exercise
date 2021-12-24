@@ -43,6 +43,9 @@ const VideoSearchPage: React.VFC = () => {
   // ダークモード
   const [darkMode, setDarkMode] = useLocalPersist(AppConfig.appName, "darkMode", false)
 
+  // ログインユーザー
+  const [authCurrentUser, setAuthCurrentUser] = useState(auth.currentUser)
+
   // 検索フォームの入力テキスト
   const [searchWord, setSearchWord] = useLocalPersist(AppConfig.appName, "searchWord", "")
   const [seachHistorys, setSeachHistorys] = useState([]);
@@ -58,11 +61,24 @@ const VideoSearchPage: React.VFC = () => {
   const [seachResultsLiveJsx, setSeachResultsLiveJsx] = useState([] as any);
   const [seachResultsUpcomingJsx, setSeachResultsUpcomingJsx] = useState([] as any);
 
-  // 副作用フック
+  // ログイン確認の副作用フック
+  useEffect(() => {
+    // Firebase Auth のログイン情報の初期化処理は、onAuthStateChanged 呼び出し時に行われる（このメソッドを呼び出さないと、ページ読み込み直後に firebase.auth().currentUser の値が null になることに注意）
+    const unregisterAuthObserver = auth.onAuthStateChanged( (user: any) => {
+      setAuthCurrentUser(user)
+    })
+
+    // アンマウント時の処理
+    return () => {
+      unregisterAuthObserver()
+    }
+  }, [])
+  
+  // 検索履歴表示の副作用フック
   useEffect(() => {
     // 検索履歴
-    if( auth.currentUser !== null && searchWord != "" ) {
-      firestore.collection(VideoSearchPageConfig.collectionNameSearchWord).doc(auth.currentUser.email).collection(VideoSearchPageConfig.collectionNameSearchWord).get().then( (snapshot)=> {
+    if( authCurrentUser !== null && searchWord != "" ) {
+      firestore.collection(VideoSearchPageConfig.collectionNameSearchWord).doc(authCurrentUser?.email).collection(VideoSearchPageConfig.collectionNameSearchWord).get().then( (snapshot)=> {
         let id = 1
         let seachHistorys_: any = []
         snapshot.forEach((document)=> {
@@ -96,13 +112,13 @@ const VideoSearchPage: React.VFC = () => {
     // 検索ワード入力に対しての処理
     if( searchWord != "" ) {
       // 検索履歴のデータベースに追加
-      if( auth.currentUser !== null ) {
+      if( authCurrentUser !== null ) {
         // 新規に追加するドキュメントデータ
         const document = {
           searchWord: searchWord, 
           time: new Date(),   
         }
-        firestore.collection(VideoSearchPageConfig.collectionNameSearchWord).doc(auth.currentUser.email).collection(VideoSearchPageConfig.collectionNameSearchWord).doc(searchWord).set(document).then((ref: any) => {
+        firestore.collection(VideoSearchPageConfig.collectionNameSearchWord).doc(authCurrentUser?.email).collection(VideoSearchPageConfig.collectionNameSearchWord).doc(searchWord).set(document).then((ref: any) => {
           console.log("added search word in ", VideoSearchPageConfig.collectionNameSearchWord)
         })
       }
@@ -227,14 +243,15 @@ const VideoSearchPage: React.VFC = () => {
   //------------------------
   // JSX での表示処理
   //------------------------
-  //console.log( "auth.currentUser : ", auth.currentUser )
+  console.log( "auth.currentUser : ", auth.currentUser )
+  console.log( "authCurrentUser : ", authCurrentUser )
   console.log( "seachResultsJsx : ", seachResultsJsx )
   return (
     <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
       <CssBaseline />
       {/* ヘッダー表示 */}      
-      <Header title="YouTube Video View App" selectedTabIdx={AppConfig.videoSearchPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
+      <Header title="YouTube Video View App" selectedTabIdx={AppConfig.videoSearchPage.index} photoURL={authCurrentUser !== null ? authCurrentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
       {/* 検索ワード入力 */}
       <Box m={2}>
         <form onSubmit={onSubmitSearchWord}>
