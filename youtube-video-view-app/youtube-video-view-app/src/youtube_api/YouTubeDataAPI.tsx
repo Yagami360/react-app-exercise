@@ -58,7 +58,7 @@ export async function getChannelInfo(apiKey: any, channelId: any) {
     try {
       const response = await fetch(YOUTUBE_DATA_API_URL+"channels" + '?key='+apiKey + '&part=snippet,statistics,brandingSettings' + '&id='+channelId )
       const dataChannels = await response.json()
-      console.log("dataChannels : ", dataChannels)
+      //console.log("dataChannels : ", dataChannels)
       channelInfo["title"] = dataChannels["items"][0]["snippet"]["title"]
       channelInfo["description"] = dataChannels["items"][0]["snippet"]["description"]
       channelInfo["profileImageUrl"] = dataChannels["items"][0]["snippet"]["thumbnails"]["medium"]["url"]
@@ -278,6 +278,7 @@ export async function searchVideos(apiKey: any, searchWord: any, maxResults:Numb
             "channelTitle": itemSearch["snippet"]["channelTitle"],
             "videoId": itemSearch["id"]["videoId"],
             "title": itemSearch["snippet"]["title"],
+            "description": itemSearch["snippet"]["description"],
             "publishTime": itemSearch["snippet"]["publishTime"],
             "thumbnailsHightUrl": itemSearch["snippet"]["thumbnails"]["high"]["url"],
             "liveBroadcastContent": itemSearch["snippet"]["liveBroadcastContent"],

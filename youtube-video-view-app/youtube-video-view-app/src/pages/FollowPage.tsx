@@ -1,6 +1,6 @@
 /* eslint-disable */
 import React from 'react';
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 import { makeStyles } from '@material-ui/core/styles'
@@ -9,6 +9,7 @@ import CssBaseline from "@material-ui/core/CssBaseline";
 import Box from '@material-ui/core/Box';
 import { Grid } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -25,6 +26,7 @@ import AppConfig, { FollowPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
+import YouTubeVideoInfoCard from '../components/YouTubeVideoInfoCard'
 import { getAPIKey, getChannelInfo, getVideoInfo, searchVideos } from '../youtube_api/YouTubeDataAPI';
 
 // Auth オブジェクトの作成
@@ -63,8 +65,8 @@ const useStyles = makeStyles({
   },
   bannerImg: {
     width: "100%",    
-    height: "auto", 
-    objectFit: "cover",   
+    height: "250px", 
+    objectFit: "cover",       // 画像をトリミング
   }
 })
 
@@ -106,8 +108,13 @@ const FollowPage: React.VFC = () => {
   const [channelListJsx, setChannelListJsx] = useState([] as any)
 
   // チャンネル詳細
+  const [channelInfo, setChannelInfo] = useState()
+  const [searchVideoInfos, setSearchVideoInfos] = useState([] as any)
+  const [searchVideoInfosJsx, setSearchVideoInfosJsx] = useState([] as any)
   const channelDetailJsxRef = React.useRef<any>();
   const [channelDetailJsx, setChannelDetailJsx] = useState()
+  const [showMore, setShowMore] = useState(false)
+  const scrollShowMoreRef = useRef<HTMLDivElement>(null);  // useRef() : HTML の ref属性への参照
 
   // ログイン確認の副作用フック
   useEffect(() => {
@@ -122,7 +129,7 @@ const FollowPage: React.VFC = () => {
     }
   }, [])
 
-  // ページ読み込み時の副作用フック
+  // フォロー済みチャンネル一覧を取得する副作用フック
   useEffect(() => {
     if( authCurrentUser !== null ) {
       // フォロー済みユーザーを取得
@@ -145,19 +152,17 @@ const FollowPage: React.VFC = () => {
             })
 
             channelListJsxRef.current.push(
-              <ListItem onClick={(event:any) => onClickChannelList(event, index)}>
-                <Box style={{display:"flex"}}>
-                  <ListItemAvatar>
-                    <Avatar aria-label="avatar" src={field["profileImageUrl"]} style={{ width: 60, height: 60 }} />
-                  </ListItemAvatar>
-                  <ListItemText 
-                    primary={<>
-                      <Box mx={1} style={{display:"flex"}}>
-                        <Typography component="span" variant="body2" color="textPrimary" style={{display: "inline"}}>{field["channelTitle"]}</Typography>
-                      </Box>
-                    </>}
-                  />
-                </Box>
+              <ListItem onClick={onClickChannelList}>
+                <ListItemAvatar>
+                  <Avatar aria-label="avatar" src={field["profileImageUrl"]} style={{ width: 60, height: 60 }} />
+                </ListItemAvatar>
+                <ListItemText 
+                  primary={<>
+                    <Box mx={1} style={{display:"flex"}}>
+                      <Typography component="span" variant="body2" color="textPrimary" style={{display: "inline"}}>{field["channelTitle"]}</Typography>
+                    </Box>
+                  </>}
+                />
               </ListItem>
             )
 
@@ -173,6 +178,131 @@ const FollowPage: React.VFC = () => {
       setMessage("Please login")
     }
   }, [authCurrentUser])
+
+  // 動画一覧を設定する副作用フック
+  useEffect(() => {
+    if( channelInfo !== undefined ) {
+      // 動画一覧設定
+      let searchVideoInfosJsx_: any[] = []
+      searchVideoInfos.forEach((searchVideoInfo: any)=> {
+        getVideoInfo(getAPIKey(), searchVideoInfo["videoId"])
+          .then( (videoInfo_:any) => {
+            const searchVideoInfoJsx_ = (
+              <Grid item xs={3}>
+                <YouTubeVideoInfoCard 
+                  channelId={channelInfo["channelId"]} channelTitle={channelInfo["title"]} profileImageUrl={channelInfo["profileImageUrl"]} subscriberCount={channelInfo["subscriberCount"]}
+                  videoId={searchVideoInfo["videoId"]} title={searchVideoInfo["title"]} publishTime={searchVideoInfo["publishTime"]} description={searchVideoInfo["description"]} categoryTitle={""}
+                  thumbnailsUrl={searchVideoInfo["thumbnailsHightUrl"]} imageHeight={FollowPageConfig.imageHeight} imageWidth={FollowPageConfig.imageWidth}
+                  viewCount={videoInfo_["viewCount"]} likeCount={videoInfo_["likeCount"]} dislikeCount={videoInfo_["dislikeCount"]} favoriteCount={videoInfo_["favoriteCount"]}
+                  tags={[]}
+                />
+              </Grid>
+            );
+            setSearchVideoInfosJsx([...searchVideoInfosJsx_, searchVideoInfoJsx_])
+            searchVideoInfosJsx_.push(searchVideoInfoJsx_)
+          })
+          .catch(err => {
+            console.log(err);
+            setMessage("チャンネル詳細情報の取得に失敗しました" )
+          })    
+          .finally( () => {
+          })
+  
+        //setSearchVideoInfosJsx(searchVideoInfosJsx_)
+      })
+
+      // チャンネル詳細 body の JSX 設定
+      channelDetailJsxRef.current = (<>
+        { /* バナー画像 */ }
+        <Box>
+          <img src={channelInfo["bannerExternalUrl"]} className={style.bannerImg} />
+        </Box>
+        { /* チャンネルアイコン */ }
+        <ListItem >
+          <Box style={{display:"flex"}}>
+            <ListItemAvatar>
+              <Avatar aria-label="avatar" src={channelInfo["profileImageUrl"]} style={{ width: 80, height: 80 }} />
+            </ListItemAvatar>
+            <ListItemText 
+              primary={<>
+                <Box mx={1} style={{display:"flex"}}>
+                  <Typography component="span" variant="subtitle1" color="textPrimary" style={{display: "inline"}}>{channelInfo["title"]}</Typography>
+                </Box>
+              </>}
+              secondary={<>
+                <Box mx={1} style={{display:"flex"}}>
+                  <Typography component="span" variant="subtitle2" color="textPrimary" style={{display: "inline"}}>{"チャンネル登録者数 : "+channelInfo["subscriberCount"]}</Typography>
+                </Box>
+              </>}
+            />
+          </Box>
+        </ListItem>                  
+        { /* チャンネル概要 */ }
+        <Box m={1}>
+          <div ref={scrollShowMoreRef} />   { /* useRef() で作成した scrollShowMoreRef を <div> の ref 属性に設定することで DOM 属性を取得できる */ }
+          <Typography variant="body2">{showMore ? convertDescriptionToJsx(channelInfo["description"]) : [...convertDescriptionToJsx(channelInfo["description"]).slice(0,1), "..."] }</Typography>
+          { showMore ? "" : <Button variant="text" onClick={onClickShowMore}><Typography variant="subtitle2">もっと見る</Typography></Button> }
+          { showMore ? <Button variant="text" onClick={onClickShowLess}><Typography variant="subtitle2">一部を表示</Typography></Button> : "" }
+        </Box>
+        <Divider />
+        { /* チャンネル動画一覧 */ }
+        <Box m={2}>
+          <Grid container spacing={2}>
+            {searchVideoInfosJsx}
+          </Grid>
+        </Box>
+      </>);
+      setChannelDetailJsx(channelDetailJsxRef.current)
+    }
+  }, [searchVideoInfos])
+
+  // チャンネル詳細 body の副作用フック
+  useEffect(() => {
+    if( channelInfo !== undefined ) {
+      // チャンネル詳細 body の JSX 設定
+      channelDetailJsxRef.current = (<>
+        { /* バナー画像 */ }
+        <Box>
+          <img src={channelInfo["bannerExternalUrl"]} className={style.bannerImg} />
+        </Box>
+        { /* チャンネルアイコン */ }
+        <ListItem >
+          <Box style={{display:"flex"}}>
+            <ListItemAvatar>
+              <Avatar aria-label="avatar" src={channelInfo["profileImageUrl"]} style={{ width: 80, height: 80 }} />
+            </ListItemAvatar>
+            <ListItemText 
+              primary={<>
+                <Box mx={1} style={{display:"flex"}}>
+                  <Typography component="span" variant="subtitle1" color="textPrimary" style={{display: "inline"}}>{channelInfo["title"]}</Typography>
+                </Box>
+              </>}
+              secondary={<>
+                <Box mx={1} style={{display:"flex"}}>
+                  <Typography component="span" variant="subtitle2" color="textPrimary" style={{display: "inline"}}>{"チャンネル登録者数 : "+channelInfo["subscriberCount"]}</Typography>
+                </Box>
+              </>}
+            />
+          </Box>
+        </ListItem>                  
+        { /* チャンネル概要 */ }
+        <Box m={1}>
+          <div ref={scrollShowMoreRef} />   { /* useRef() で作成した scrollShowMoreRef を <div> の ref 属性に設定することで DOM 属性を取得できる */ }
+          <Typography variant="body2">{showMore ? convertDescriptionToJsx(channelInfo["description"]) : [...convertDescriptionToJsx(channelInfo["description"]).slice(0,1), "..."] }</Typography>
+          { showMore ? "" : <Button variant="text" onClick={onClickShowMore}><Typography variant="subtitle2">もっと見る</Typography></Button> }
+          { showMore ? <Button variant="text" onClick={onClickShowLess}><Typography variant="subtitle2">一部を表示</Typography></Button> : "" }
+        </Box>
+        <Divider />
+        { /* チャンネル動画一覧 */ }
+        <Box m={2}>
+          <Grid container spacing={2}>
+            {searchVideoInfosJsx}
+          </Grid>
+        </Box>
+      </>);
+      setChannelDetailJsx(channelDetailJsxRef.current)
+    }
+  }, [channelInfo, showMore, searchVideoInfosJsx])
 
   //------------------------
   // イベントハンドラ
@@ -195,76 +325,77 @@ const FollowPage: React.VFC = () => {
     console.log( "[onClickChannelListAll] event : ", event )
   })
 
-  const onClickChannelList = ((event: React.MouseEvent<HTMLDivElement, MouseEvent>, index: number,) => {
+  const onClickChannelList = ((event: any) => {
     console.log( "[onClickChannelList] event : ", event )
-    console.log( "[onClickChannelList] index : ", index )
-    index = 1
+    console.log( "[onClickChannelList] event.currentTarget : ", event.currentTarget )
+    console.log( "[onClickChannelList] event.currentTarget.innerText : ", event.currentTarget.innerText )
+
+    // クリックされたリストのチャンネルタイトルからリスト番号を取得
+    let index = 0
+    const channelTitle = event.currentTarget.innerText
+    for (let i = 0; i < channelInfosRef.current.length; i++) {
+      if ( channelTitle === channelInfosRef.current[i]["title"]) {
+        break
+      }
+      index += 1
+    }
     setSelectedChannelIndex(index)
 
+    // クリックされたリスト番号のチャンネル情報取得
     if( channelInfosRef.current.length > 0 ) {
       // チャンネル ID を取得
       const channelId = channelInfosRef.current[index]["channelId"]
-      //const channelId = "UCeLzT-7b2PBcunJplmWtoDg"
       console.log( "[onClickChannelList] channelId : ", channelId )
 
       // チャンネル ID からチャンネル情報取得
       getChannelInfo(getAPIKey(), channelId)
         .then( (channelInfo_:any) => {
-          console.log( "[onClickChannelList] channelInfo_ : ", channelInfo_ )          
+          //console.log( "[onClickChannelList] channelInfo_ : ", channelInfo_ )          
+          setChannelInfo(channelInfo_)
+        })
+        .catch(err => {
+          console.log(err);
+          setMessage("チャンネル詳細情報の取得に失敗しました" )
+        })    
+        .finally( () => {
+        })
 
-          // チャンネル詳細 body の JSX
-          channelDetailJsxRef.current = (<>
-            <Box className={style.bannerImg}>
-              <img src={channelInfo_["bannerExternalUrl"]} width="100%" height="auto" />
-            </Box>
-            <ListItem >
-              <Box style={{display:"flex"}}>
-                <ListItemAvatar>
-                  <Avatar aria-label="avatar" src={channelInfo_["profileImageUrl"]} style={{ width: 80, height: 80 }} />
-                </ListItemAvatar>
-                <ListItemText 
-                  primary={<>
-                    <Box mx={1} style={{display:"flex"}}>
-                      <Typography component="span" variant="subtitle1" color="textPrimary" style={{display: "inline"}}>{channelInfo_["title"]}</Typography>
-                    </Box>
-                  </>}
-                  secondary={<>
-                    <Box mx={1} style={{display:"flex"}}>
-                      <Typography component="span" variant="subtitle2" color="textPrimary" style={{display: "inline"}}>{"チャンネル登録者数 : "+channelInfo_["subscriberCount"]}</Typography>
-                    </Box>
-                  </>}
-                />
-              </Box>
-            </ListItem>                  
-            <Divider />
-            <Box m={2}>
-              <Typography component="span" variant="body1" color="textPrimary" style={{display: "inline"}}>{convertDescriptionToJsx(channelInfo_["description"])}</Typography>
-            </Box>
-          </>);
-          setChannelDetailJsx(channelDetailJsxRef.current)
-    
-          // チャンネル動画一覧
-          /*
-          searchVideoInfos_.foreach((searchVideoInfo_: any) => {
-          })
-          */
-
+      // チャンネル ID からチャンネルの動画一覧取得
+      searchVideos(getAPIKey(), "", FollowPageConfig.maxResults, FollowPageConfig.iterSearchVideo, "", channelId, "date")
+        .then( ([searchVideoInfos_, totalNumber_, searchNumber_, nextPageToken_]) => {
+          //console.log( "[onClickChannelList] searchVideoInfos_ : ", searchVideoInfos_ )          
+          setSearchVideoInfos(searchVideoInfos_)
         })
         .catch(err => {
           console.log(err);
           setMessage("チャンネルの動画検索に失敗しました" )
         })    
         .finally( () => {
-        })
+        })      
     }
+  })
+
+  // もっと見るボタンクリック時のイベントハンドラ
+  const onClickShowMore = ((event: any) => {
+    setShowMore(true)
+  })
+
+  // 一部を表示ボタンクリック時のイベントハンドラ
+  const onClickShowLess = ((event: any) => {
+    setShowMore(false)
+
+    // scrollShowMoreRef.current は null である可能性があるので、optional chaining (.?) でアクセス
+    //scrollShowMoreRef?.current?.scrollIntoView({behavior: "smooth", block: "start",});
+    scrollShowMoreRef?.current?.scrollIntoView({block: "center",});
   })
 
   //------------------------
   // JSX での表示処理
   //------------------------
   //console.log("channelInfos : ", channelInfos )
-  console.log("channelListJsx : ", channelListJsx )
-
+  //console.log("channelListJsx : ", channelListJsx )
+  //console.log("searchVideoInfosJsx : ", searchVideoInfosJsx )
+    
   if( authCurrentUser !== null ) {
     return (
       <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>

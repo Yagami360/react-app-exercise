@@ -50,8 +50,10 @@ export const FavPageConfig = {
 
 export const FollowPageConfig = {
   collectionNameFollow: 'follow-database',
-  maxResults: 10,
+  maxResults: 20,
   //maxResults: 50,
   iterSearchVideo: 1,
   //iterSearchVideo: 10,  
+  imageHeight: "300px",
+  imageWidth: "2000px",
 };

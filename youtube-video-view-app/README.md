@@ -1,6 +1,6 @@
 # YouTube 動画視聴アプリ（TypeScript + React + React Hooks での構成）
 
-- 公開サイト : https://video-view-app-684c0.web.app/search
+- 公開サイト : https://video-view-app-684c0.web.app/
 
 ## ■ 使用法
 
