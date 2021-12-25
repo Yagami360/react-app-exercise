@@ -22,6 +22,8 @@ import Divider from '@material-ui/core/Divider';
 import firebase from "firebase";
 import '../firebase/initFirebase'
 
+import InfiniteScroll from "react-infinite-scroller"
+
 import AppConfig, { FollowPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
@@ -108,13 +110,14 @@ const FollowPage: React.VFC = () => {
   const [channelListJsx, setChannelListJsx] = useState([] as any)
 
   // チャンネル詳細
-  const searchVideoInfosAllRef = React.useRef<any>([] as any);                      // 全チャンネル
-  const [searchVideoInfosAll, setSearchVideoInfosAll] = useState([] as any)         // ↑
-  const [searchVideoInfosAllJsx, setSearchVideoInfosAllJsx] = useState([] as any)   // ↑
-  const [channelInfo, setChannelInfo] = useState()                                  // 各チャンネル
-  const [searchVideoInfos, setSearchVideoInfos] = useState([] as any)               // ↑
-  const [searchVideoInfosJsx, setSearchVideoInfosJsx] = useState([] as any)         // ↑
-  const channelDetailJsxRef = React.useRef<any>();
+  const nextPageTokenRef = React.useRef<string>("");
+  const [searchVideoInfosAll, setSearchVideoInfosAll] = useState([] as any)                   // 全チャンネル
+  const [channelInfo, setChannelInfo] = useState()                                            // 各チャンネル
+  const [searchVideoInfos, setSearchVideoInfos] = useState([] as any)                         // ↑
+  const [searchVideoInfosJsx, setSearchVideoInfosJsx] = useState([] as any)                   // ↑
+  const [searchVideoInfosLiveJsx, setSearchVideoInfosLiveJsx] = useState([] as any)           // ↑
+  const [searchVideoInfosUpcomingJsx, setSearchVideoInfosUpcomingJsx] = useState([] as any)   // ↑
+
   const [channelDetailJsx, setChannelDetailJsx] = useState([] as any)
   const [showMore, setShowMore] = useState(false)
   const scrollShowMoreRef = useRef<HTMLDivElement>(null);  // useRef() : HTML の ref属性への参照
@@ -184,45 +187,94 @@ const FollowPage: React.VFC = () => {
 
   // 全チャンネルの動画一覧を設定する副作用フック  
   useEffect(() => {
-    if( channelInfosRef.current !== undefined && searchVideoInfosAll.length > 0 ) {    
-      // 各チャンネルに対してのループ
-      for (let i = 0; i < channelInfosRef.current.length; i++) {   
-        let searchVideoInfosAllJsx_: any[] = []
-        // 各チャンネルの動画一覧に対してのループ
-        searchVideoInfosAll[i].forEach((searchVideoInfo: any)=> {
-          getVideoInfo(getAPIKey(), searchVideoInfo["videoId"])
-            .then( (videoInfo_:any) => {
-              const searchVideoInfoAllJsx_ = (
-                <Grid item xs={3}>
-                  <YouTubeVideoInfoCard 
-                    channelId={channelInfosRef.current[i]["channelId"]} channelTitle={channelInfosRef.current[i]["title"]} profileImageUrl={channelInfosRef.current[i]["profileImageUrl"]} subscriberCount={channelInfosRef.current[i]["subscriberCount"]}
-                    videoId={searchVideoInfo["videoId"]} title={searchVideoInfo["title"]} publishTime={searchVideoInfo["publishTime"]} description={searchVideoInfo["description"]} categoryTitle={""}
-                    thumbnailsUrl={searchVideoInfo["thumbnailsHightUrl"]} imageHeight={FollowPageConfig.imageHeight} imageWidth={FollowPageConfig.imageWidth}
-                    viewCount={videoInfo_["viewCount"]} likeCount={videoInfo_["likeCount"]} dislikeCount={videoInfo_["dislikeCount"]} favoriteCount={videoInfo_["favoriteCount"]}
-                    tags={[]}
-                  />
-                </Grid>
-              );
-              setSearchVideoInfosAllJsx([...searchVideoInfosAllJsx_, searchVideoInfoAllJsx_])
-              searchVideoInfosAllJsx_.push(searchVideoInfoAllJsx_)
-            })
-            .catch(err => {
-              console.log(err);
-              setMessage("チャンネル詳細情報の取得に失敗しました" )
-            })        
-        })
+    // 各チャンネルに対してのループ
+    for (let i = 0; i < searchVideoInfosAll.length; i++) {   
+      let searchVideoInfosAllJsx_: any[] = []
+      let searchVideoInfosAllLiveJsx_: any[] = []
+      let searchVideoInfosAllUpcomingJsx_: any[] = []
 
-        // チャンネル詳細 body の JSX 設定
-        channelDetailJsxRef.current = (<>
-          { /* チャンネル動画一覧 */ }
-          <Box m={2}>
-            <Grid container spacing={2}>
-              {searchVideoInfosAllJsx[i]}
-            </Grid>
+      // 各チャンネルの動画一覧に対してのループ
+      searchVideoInfosAll[i].forEach((searchVideoInfo: any)=> {
+        console.log( "searchVideoInfo : ", searchVideoInfo )
+        getVideoInfo(getAPIKey(), searchVideoInfo["videoId"])
+          .then( (videoInfo_:any) => {
+            const searchVideoInfoAllJsx_ = (
+              <Grid item xs={3}>
+                <YouTubeVideoInfoCard 
+                  channelId={searchVideoInfo["channelId"]} channelTitle={searchVideoInfo["channelTitle"]} profileImageUrl={""} subscriberCount={""}
+                  videoId={searchVideoInfo["videoId"]} title={searchVideoInfo["title"]} publishTime={searchVideoInfo["publishTime"]} description={searchVideoInfo["description"]} categoryTitle={""}
+                  thumbnailsUrl={searchVideoInfo["thumbnailsHightUrl"]} imageHeight={FollowPageConfig.imageHeight} imageWidth={FollowPageConfig.imageWidth}
+                  viewCount={videoInfo_["viewCount"]} likeCount={videoInfo_["likeCount"]} dislikeCount={videoInfo_["dislikeCount"]} favoriteCount={videoInfo_["favoriteCount"]}
+                  tags={[]}
+                />
+              </Grid>
+            );
+
+            if ( videoInfo_["liveBroadcastContent"] == "live" ) {
+              searchVideoInfosAllLiveJsx_.push([...searchVideoInfosAllLiveJsx_, searchVideoInfoAllJsx_])
+            }
+            else if ( videoInfo_["liveBroadcastContent"] == "upcoming" ) {
+              searchVideoInfosAllUpcomingJsx_.push([...searchVideoInfosAllUpcomingJsx_, searchVideoInfoAllJsx_])
+            }
+            else {
+              searchVideoInfosAllJsx_.push([...searchVideoInfosAllJsx_, searchVideoInfoAllJsx_])
+            }
+          })
+          .catch(err => {
+            console.log(err);
+            setMessage("チャンネル詳細情報の取得に失敗しました" )
+          })        
+      })
+
+      // チャンネル詳細 body の JSX 設定
+      const channelDetailJsx_ = (<>
+        { /* チャンネル動画一覧（配信中） */ }
+        <Box m={2}>
+          <Box m={1}>
+            <Typography variant="subtitle2">配信中</Typography>
+            <Box my={1}>
+              <Divider/>
+            </Box>
           </Box>
-        </>);
-        setChannelDetailJsx([...channelDetailJsx, channelDetailJsxRef.current])
-      }
+          <Grid container spacing={2}>
+            {searchVideoInfosAllLiveJsx_}
+          </Grid>
+        </Box>
+        { /* チャンネル動画一覧（配信予定） */ }
+        <Box m={2}>
+          <Box m={1}>
+            <Typography variant="subtitle2">配信予定</Typography>
+            <Box my={1}>
+              <Divider/>
+            </Box>
+          </Box>
+          <Grid container spacing={2}>
+            {searchVideoInfosAllUpcomingJsx_}
+          </Grid>
+        </Box>
+        { /* チャンネル動画一覧（アーカイブ） */ }
+        <Box m={2}>
+          <Box m={1}>
+            <Typography variant="subtitle2">アーカイブ</Typography>
+            <Box my={1}>
+              <Divider/>
+            </Box>
+          </Box>
+          <InfiniteScroll
+            pageStart={0}
+            loadMore={onHandleLoadMoreArchiveAll}                         // 項目を読み込む際に処理するコールバック関数
+            hasMore={true}                                                // 読み込みを行うかどうかの判定
+            loader={<Box className="loader" key={0}>{""}</Box>}           // ロード中の表示
+            initialLoad={false}
+          >
+            <Grid container spacing={2}>
+              {searchVideoInfosAllJsx_}
+            </Grid>
+          </InfiniteScroll>
+        </Box>
+
+      </>);
+      setChannelDetailJsx([...channelDetailJsx, channelDetailJsx_])
     }
   }, [searchVideoInfosAll])
 
@@ -231,6 +283,8 @@ const FollowPage: React.VFC = () => {
     if( channelInfo !== undefined ) {
       // 動画一覧設定
       let searchVideoInfosJsx_: any[] = []
+      let searchVideoInfosLiveJsx_: any[] = []
+      let searchVideoInfosUpcomingJsx_: any[] = []     
       searchVideoInfos.forEach((searchVideoInfo: any)=> {
         getVideoInfo(getAPIKey(), searchVideoInfo["videoId"])
           .then( (videoInfo_:any) => {
@@ -245,59 +299,25 @@ const FollowPage: React.VFC = () => {
                 />
               </Grid>
             );
-            setSearchVideoInfosJsx([...searchVideoInfosJsx_, searchVideoInfoJsx_])
-            searchVideoInfosJsx_.push(searchVideoInfoJsx_)
+
+            if ( videoInfo_["liveBroadcastContent"] == "live" ) {
+              setSearchVideoInfosLiveJsx([...searchVideoInfosLiveJsx_, searchVideoInfoJsx_])
+              searchVideoInfosLiveJsx_.push(searchVideoInfoJsx_)              
+            }
+            else if ( videoInfo_["liveBroadcastContent"] == "upcoming" ) {
+              setSearchVideoInfosUpcomingJsx([...searchVideoInfosUpcomingJsx_, searchVideoInfoJsx_])
+              searchVideoInfosUpcomingJsx_.push(searchVideoInfoJsx_)              
+            }
+            else {
+              setSearchVideoInfosJsx([...searchVideoInfosJsx_, searchVideoInfoJsx_])
+              searchVideoInfosJsx_.push(searchVideoInfoJsx_)              
+            }
           })
           .catch(err => {
             console.log(err);
             setMessage("チャンネル詳細情報の取得に失敗しました" )
           })    
-  
-        //setSearchVideoInfosJsx(searchVideoInfosJsx_)
       })
-
-      // チャンネル詳細 body の JSX 設定
-      channelDetailJsxRef.current = (<>
-        { /* バナー画像 */ }
-        <Box>
-          <img src={channelInfo["bannerExternalUrl"]} className={style.bannerImg} />
-        </Box>
-        { /* チャンネルアイコン */ }
-        <ListItem >
-          <Box style={{display:"flex"}}>
-            <ListItemAvatar>
-              <Avatar aria-label="avatar" src={channelInfo["profileImageUrl"]} style={{ width: 80, height: 80 }} />
-            </ListItemAvatar>
-            <ListItemText 
-              primary={<>
-                <Box mx={1} style={{display:"flex"}}>
-                  <Typography component="span" variant="subtitle1" color="textPrimary" style={{display: "inline"}}>{channelInfo["title"]}</Typography>
-                </Box>
-              </>}
-              secondary={<>
-                <Box mx={1} style={{display:"flex"}}>
-                  <Typography component="span" variant="subtitle2" color="textPrimary" style={{display: "inline"}}>{"チャンネル登録者数 : "+channelInfo["subscriberCount"]}</Typography>
-                </Box>
-              </>}
-            />
-          </Box>
-        </ListItem>                  
-        { /* チャンネル概要 */ }
-        <Box m={1}>
-          <div ref={scrollShowMoreRef} />   { /* useRef() で作成した scrollShowMoreRef を <div> の ref 属性に設定することで DOM 属性を取得できる */ }
-          <Typography variant="body2">{showMore ? convertDescriptionToJsx(channelInfo["description"]) : [...convertDescriptionToJsx(channelInfo["description"]).slice(0,1), "..."] }</Typography>
-          { showMore ? "" : <Button variant="text" onClick={onClickShowMore}><Typography variant="subtitle2">もっと見る</Typography></Button> }
-          { showMore ? <Button variant="text" onClick={onClickShowLess}><Typography variant="subtitle2">一部を表示</Typography></Button> : "" }
-        </Box>
-        <Divider />
-        { /* チャンネル動画一覧 */ }
-        <Box m={2}>
-          <Grid container spacing={2}>
-            {searchVideoInfosJsx}
-          </Grid>
-        </Box>
-      </>);
-      setChannelDetailJsx(channelDetailJsxRef.current)
     }
   }, [searchVideoInfos])
 
@@ -305,7 +325,7 @@ const FollowPage: React.VFC = () => {
   useEffect(() => {
     if( channelInfo !== undefined ) {
       // チャンネル詳細 body の JSX 設定
-      channelDetailJsxRef.current = (<>
+      const channelDetailJsx_ = (<>
         { /* バナー画像 */ }
         <Box>
           <img src={channelInfo["bannerExternalUrl"]} className={style.bannerImg} />
@@ -338,16 +358,54 @@ const FollowPage: React.VFC = () => {
           { showMore ? <Button variant="text" onClick={onClickShowLess}><Typography variant="subtitle2">一部を表示</Typography></Button> : "" }
         </Box>
         <Divider />
-        { /* チャンネル動画一覧 */ }
+        { /* チャンネル動画一覧（配信中） */ }
         <Box m={2}>
+          <Box m={1}>
+            <Typography variant="subtitle2">配信中</Typography>
+            <Box my={1}>
+              <Divider/>
+            </Box>
+          </Box>
           <Grid container spacing={2}>
-            {searchVideoInfosJsx}
+            {searchVideoInfosLiveJsx}
           </Grid>
         </Box>
+        { /* チャンネル動画一覧（配信予定） */ }
+        <Box m={2}>
+          <Box m={1}>
+            <Typography variant="subtitle2">配信予定</Typography>
+            <Box my={1}>
+              <Divider/>
+            </Box>
+          </Box>
+          <Grid container spacing={2}>
+            {searchVideoInfosUpcomingJsx}
+          </Grid>
+        </Box>
+        { /* チャンネル動画一覧（アーカイブ） */ }
+        <Box m={2}>
+          <Box m={1}>
+            <Typography variant="subtitle2">アーカイブ</Typography>
+            <Box my={1}>
+              <Divider/>
+            </Box>
+          </Box>
+          <InfiniteScroll
+            pageStart={0}
+            loadMore={onHandleLoadMoreArchive}                            // 項目を読み込む際に処理するコールバック関数
+            hasMore={true}                                                // 読み込みを行うかどうかの判定
+            loader={<Box className="loader" key={0}>{""}</Box>}           // ロード中の表示
+            initialLoad={false}
+          >
+            <Grid container spacing={2}>
+              {searchVideoInfosJsx}
+            </Grid>
+          </InfiniteScroll>
+        </Box>
       </>);
-      setChannelDetailJsx(channelDetailJsxRef.current)
+      setChannelDetailJsx(channelDetailJsx_)
     }
-  }, [channelInfo, showMore, searchVideoInfosJsx])
+  }, [channelInfo, showMore, searchVideoInfosJsx, searchVideoInfosLiveJsx, searchVideoInfosUpcomingJsx])
 
   //------------------------
   // イベントハンドラ
@@ -367,38 +425,58 @@ const FollowPage: React.VFC = () => {
   })
 
   const onClickChannelListAll = ((event: any) => {
-    let searchVideoInfosAll_: any[] = [];
-    for (let i = 0; i < channelInfosRef.current.length; i++) {    
-      // チャンネル ID を取得
-      const channelId = channelInfosRef.current[i]["channelId"]
+    nextPageTokenRef.current = ""
+    let searchVideoInfosAll_: any = []
 
-      // チャンネル ID からチャンネルの動画一覧取得
-      searchVideos(getAPIKey(), "", FollowPageConfig.maxResultsAll, FollowPageConfig.iterSearchVideo, "", channelId, "date")
-        .then( ([searchVideoInfos_, totalNumber_, searchNumber_, nextPageToken_]) => {
-          //searchVideoInfosAll_.push(searchVideoInfos_)
-          searchVideoInfosAll_[searchVideoInfosAll_.length] = searchVideoInfos_
-          //searchVideoInfosAll_ = [...searchVideoInfosAll_]
-          searchVideoInfosAllRef.current.push(searchVideoInfos_)
-        })
-        .catch(err => {
-          console.log(err);
-          setMessage("チャンネルの動画検索に失敗しました" )
-        })    
+    // Youtube API の非同期 API に await でリクエスト
+    const async = async () => {
+      for (let i = 0; i < channelInfosRef.current.length; i++) {    
+        // チャンネル ID を取得
+        const channelId = channelInfosRef.current[i]["channelId"]
+  
+        // チャンネル ID からチャンネルの動画一覧取得
+        let searchVideoInfos_ = undefined
+        let totalNumber_ = undefined
+        let searchNumber_ = undefined
+        let nextPageToken_ = undefined
+        try {
+          [searchVideoInfos_, totalNumber_, searchNumber_, nextPageToken_] = await searchVideos(getAPIKey(), "", FollowPageConfig.maxResultsAll, FollowPageConfig.iterSearchVideo, "", channelId, "date")
+          searchVideoInfosAll_.push(searchVideoInfos_)
+          setSearchVideoInfosAll(searchVideoInfosAll_)
+        }
+        catch (err) {
+          console.error(err);
+          setMessage("コメントの取得に失敗しました")
+        }
+      }
     }
 
+    // 非同期処理実行
+    async()
     console.log( "searchVideoInfosAll_ : ", searchVideoInfosAll_ )
-    console.log( "searchVideoInfosAll_[0] : ", searchVideoInfosAll_[0] )
-    console.log( "searchVideoInfosAll_.length : ", searchVideoInfosAll_.length )
-    console.log( "searchVideoInfosAll_[0].length : ", searchVideoInfosAll_[0].length )
+
+    // 投稿日順に sort
+    searchVideoInfosAll.sort( function(a: any, b: any){
+      console.log( "a.props : ", a.props )
+      console.log( "b.props : ", b.props )
+      /*
+      if(a.props.publishTime >= b.props.publishTime){
+        return -1
+      }
+      else {
+        return 1
+      }
+      */
+    })
+
     //setSearchVideoInfosAll(searchVideoInfosAll_)
-    setSearchVideoInfosAll(searchVideoInfosAllRef.current)
-    //setSearchVideoInfosAll([...searchVideoInfosAll, searchVideoInfosAllRef.current][0])
   })
 
   const onClickChannelList = ((event: any) => {
     //console.log( "[onClickChannelList] event : ", event )
     //console.log( "[onClickChannelList] event.currentTarget : ", event.currentTarget )
     //console.log( "[onClickChannelList] event.currentTarget.innerText : ", event.currentTarget.innerText )
+    nextPageTokenRef.current = ""
 
     // クリックされたリストのチャンネルタイトルからリスト番号を取得
     let index = 0
@@ -433,14 +511,13 @@ const FollowPage: React.VFC = () => {
       searchVideos(getAPIKey(), "", FollowPageConfig.maxResults, FollowPageConfig.iterSearchVideo, "", channelId, "date")
         .then( ([searchVideoInfos_, totalNumber_, searchNumber_, nextPageToken_]) => {
           //console.log( "[onClickChannelList] searchVideoInfos_ : ", searchVideoInfos_ )          
+          nextPageTokenRef.current = nextPageToken_
           setSearchVideoInfos(searchVideoInfos_)
         })
         .catch(err => {
           console.log(err);
           setMessage("チャンネルの動画検索に失敗しました" )
-        })    
-        .finally( () => {
-        })      
+        })
     }
   })
 
@@ -458,6 +535,37 @@ const FollowPage: React.VFC = () => {
     scrollShowMoreRef?.current?.scrollIntoView({block: "center",});
   })
 
+  // 全チャンネルのアーカイブ動画一覧の無限スクロール発生時のイベントハンドラ
+  const onHandleLoadMoreArchiveAll = (page: any) => {
+    console.log( "[onHandleLoadMoreArchiveAll] page : ", page )
+    if(page === 0 ){ return }
+
+  }
+
+  // 各チャンネルのアーカイブ動画一覧の無限スクロール発生時のイベントハンドラ
+  const onHandleLoadMoreArchive = (page: any) => {
+    console.log( "[onHandleLoadMoreArchive] page : ", page )
+    if(page === 0 ){ return }
+    if(page === 2 ){ return }
+    if(page === 4 ){ return }
+
+    if( channelInfosRef.current.length > 0 ) {
+      // チャンネル ID を取得
+      const channelId = channelInfosRef.current[selectedChannelIndex]["channelId"]
+
+      // チャンネル ID からチャンネルの動画一覧取得
+      searchVideos(getAPIKey(), "", FollowPageConfig.maxResultsScroll, 1, nextPageTokenRef.current, channelId, "date")
+        .then( ([searchVideoInfos_, totalNumber_, searchNumber_, nextPageToken_]) => {
+          nextPageTokenRef.current = nextPageToken_
+          setSearchVideoInfos([...searchVideoInfos, ...searchVideoInfos_])
+        })
+        .catch(err => {
+          console.log(err);
+          setMessage("チャンネルの動画検索に失敗しました" )
+        })
+    }
+  }
+
   //------------------------
   // JSX での表示処理
   //------------------------
@@ -465,9 +573,7 @@ const FollowPage: React.VFC = () => {
   //console.log("channelListJsx : ", channelListJsx )
   //console.log("searchVideoInfosJsx : ", searchVideoInfosJsx )
   console.log("searchVideoInfosAll : ", searchVideoInfosAll )
-  console.log("searchVideoInfosAllRef.current : ", searchVideoInfosAllRef.current )
-  console.log("searchVideoInfosAllRef.current.length : ", searchVideoInfosAllRef.current.length )
-
+  
   if( authCurrentUser !== null ) {
     return (
       <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>

@@ -16,10 +16,11 @@ export const VideoSearchPageConfig = {
   collectionNameSearchWord: "search-word-database",
   imageHeight: "300px",
   imageWidth: "2000px",
-  //maxResults: 10,
-  maxResults: 50,
-  //iterSearchVideo: 1,
-  iterSearchVideo: 2,  
+  maxResults: 5,          // 動画検索数（最大50）
+  //maxResults: 50,
+  iterSearchVideo: 1,     // 動画検索の繰り返し回数
+  //iterSearchVideo: 2,  
+  maxResultsScroll: 4,    // 無限スクロール時の追加検索数
 };
 
 export const VideoWatchPageConfig = {
@@ -50,10 +51,11 @@ export const FavPageConfig = {
 
 export const FollowPageConfig = {
   collectionNameFollow: 'follow-database',
-  maxResults: 5,        // 各チャンネル詳細 body での動画一覧数
+  maxResults: 5,            // 各チャンネル詳細 body での動画一覧数（最大50）
   //maxResults: 50,
-  maxResultsAll: 1,     // 全チャンネル詳細 body での各チャンネルの動画一覧数
-  iterSearchVideo: 1,
+  iterSearchVideo: 1,       // 動画検索の繰り返し回数
+  maxResultsScroll: 1,      // 無限スクロール時の追加検索数
+  maxResultsAll: 1,         // 全チャンネル詳細 body での各チャンネルの動画一覧数
   //iterSearchVideo: 10,  
   imageHeight: "300px",
   imageWidth: "2000px",

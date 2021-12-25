@@ -54,6 +54,8 @@ npm install --save @types/youtube                         # for IFrame Player AP
 npm install --save html2canvas                            # スクリーンショット用
 npm install --save @types/html2canvas                     # スクリーンショット用（TypeScript用）
 npm install --save gsap                                   # アニメーション用
+npm install --save --legacy-peer-deps react-infinite-scroller                # 無限スクロール用
+npm install --save-dev @types/react-infinite-scroller
 npm ls --depth=0
 
 #----------------------------- 

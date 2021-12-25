@@ -1,6 +1,6 @@
 /* eslint-disable */
 import React from 'react';
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Link } from "react-router-dom";
 
@@ -19,6 +19,8 @@ import SearchIcon from "@material-ui/icons/Search";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import Divider from '@material-ui/core/Divider';
 import { LensTwoTone } from '@material-ui/icons';
+
+import InfiniteScroll from "react-infinite-scroller"
 
 import AppConfig, { VideoSearchPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
@@ -56,8 +58,10 @@ const VideoSearchPage: React.VFC = () => {
   // 検索結果メッセージ
   const [searchMessage, setSearchMessage] = useState("")
   
-  // 検索ヒット画像のリスト 
+  // 検索ヒット動画情報のリスト 
+  const nextPageTokenRef = React.useRef<string>("");  
   const [seachResultsJsx, setSeachResultsJsx] = useState([] as any);
+
   const [seachResultsLiveJsx, setSeachResultsLiveJsx] = useState([] as any);
   const [seachResultsUpcomingJsx, setSeachResultsUpcomingJsx] = useState([] as any);
 
@@ -126,6 +130,7 @@ const VideoSearchPage: React.VFC = () => {
       // 検索ワードから動画を検索
       searchVideos(getAPIKey(), searchWord, VideoSearchPageConfig.maxResults, VideoSearchPageConfig.iterSearchVideo)
         .then( ([searchVideoInfos_, totalNumber_, searchNumber_, nextPageToken_]) => {
+          nextPageTokenRef.current = nextPageToken_
           setSearchMessage("件数 : " + totalNumber_)
           //console.log( "searchVideoInfos_ : ", searchVideoInfos_ )
 
@@ -240,6 +245,90 @@ const VideoSearchPage: React.VFC = () => {
     }
   }
 
+  // アーカイブ動画検索結果の無限スクロール発生時のイベントハンドラ
+  const onHandleLoadMoreArchive = (page: any) => {
+    console.log( "[onHandleLoadMoreArchive] page : ", page )
+    if(page === 0 ){ return }
+
+    searchVideos(getAPIKey(), searchWord, VideoSearchPageConfig.maxResultsScroll, 1, nextPageTokenRef.current)
+      .then( ([searchVideoInfos_, totalNumber_, searchNumber_, nextPageToken_]) => {
+        nextPageTokenRef.current = nextPageToken_
+
+        // 各動画に対しての処理
+        let seachResultsJsx_: any[] = []
+        let seachResultsLiveJsx_: any[] = []
+        let seachResultsUpcomingJsx_: any[] = []
+        
+        searchVideoInfos_.forEach((searchVideoInfo_: any)=> {
+          let channelInfo: any  = undefined
+          let videoInfo: any = undefined
+          let videoCategoryInfo: any = undefined
+
+          // チャンネル情報を取得
+          getChannelInfo(getAPIKey(), searchVideoInfo_["channelId"])
+            .then( (channelInfo_) => {
+              channelInfo = channelInfo_
+              //console.log( "channelInfo_ : ", channelInfo_ )
+
+              // 動画情報を取得
+              getVideoInfo(getAPIKey(), searchVideoInfo_["videoId"])
+                .then( (videoInfo_) => {
+                  videoInfo = videoInfo_
+                  //console.log( "videoInfo_ : ", videoInfo_ )
+
+                  // 動画カテゴリ情報の取得
+                  getVideoCategoryInfo(getAPIKey(), videoInfo_["categoryId"])
+                    .then( (videoCategoryInfo_) => {
+                      videoCategoryInfo = videoCategoryInfo_
+                      //console.log( "videoCategoryInfo_ : ", videoCategoryInfo_ )   
+                      const seachResultJsx_ = (
+                        <Grid item xs={3}>
+                          <YouTubeVideoInfoCard 
+                            channelId={channelInfo["channelId"]} channelTitle={channelInfo["title"]} profileImageUrl={channelInfo["profileImageUrl"]} subscriberCount={channelInfo["subscriberCount"]}
+                            videoId={videoInfo["videoId"]} title={videoInfo["title"]} publishTime={videoInfo["publishedAt"]} description={videoInfo["description"]} categoryTitle={videoCategoryInfo["title"]}
+                            thumbnailsUrl={searchVideoInfo_["thumbnailsHightUrl"]} imageHeight={VideoSearchPageConfig.imageHeight} imageWidth={VideoSearchPageConfig.imageWidth}
+                            viewCount={videoInfo["viewCount"]} likeCount={videoInfo["likeCount"]} dislikeCount={videoInfo["dislikeCount"]} favoriteCount={videoInfo["favoriteCount"]}
+                            tags={videoInfo["tags"]}
+                          />
+                        </Grid>
+                      );
+
+                      // Youtube Card コンポーネントを追加
+                      if ( searchVideoInfo_["liveBroadcastContent"] == "live" ) {
+                        setSeachResultsLiveJsx([...seachResultsLiveJsx, seachResultJsx_])
+                        seachResultsLiveJsx_.push(seachResultJsx_)
+                      }
+                      else if ( searchVideoInfo_["liveBroadcastContent"] == "upcoming" ) {
+                        setSeachResultsUpcomingJsx([...seachResultsUpcomingJsx, seachResultJsx_])
+                        seachResultsUpcomingJsx_.push(seachResultJsx_)
+                      }
+                      else {
+                        setSeachResultsJsx([...seachResultsJsx, seachResultJsx_])
+                        seachResultsJsx_.push(seachResultJsx_)
+                      }
+
+                    })
+                    .catch(err => {
+                      console.log(err);
+                      setSearchMessage("動画カテゴリ情報の取得に失敗しました" )
+                    })
+                })
+                .catch(err => {
+                  console.log(err);
+                  setSearchMessage("動画情報の取得に失敗しました" )
+                })
+            })
+            .catch(err => {
+              console.log(err);
+            })   
+        })
+      })
+      .catch(err => {
+        console.log(err);
+        setSearchMessage("動画検索に失敗しました" )
+      })    
+  }
+
   //------------------------
   // JSX での表示処理
   //------------------------
@@ -316,20 +405,28 @@ const VideoSearchPage: React.VFC = () => {
           {seachResultsUpcomingJsx}
         </Grid>
       </Box>
-      {/* 検索ヒットカード（アーカイブ） */}
-      <Box m={1}>
+      { /* 検索ヒットカード（アーカイブ）| react-infinite-scroller を使用した無限スクロールを行う */ }
+      <InfiniteScroll
+        pageStart={0}
+        loadMore={onHandleLoadMoreArchive}                            // 項目を読み込む際に処理するコールバック関数
+        hasMore={true}                                                // 読み込みを行うかどうかの判定
+        loader={<Box className="loader" key={0}>{""}</Box>}           // ロード中の表示
+        initialLoad={false}
+      >
         <Box m={1}>
-          <Box mt={2}>
-            <Typography variant="subtitle2">アーカイブ</Typography>
+          <Box m={1}>
+            <Box mt={2}>
+              <Typography variant="subtitle2">アーカイブ</Typography>
+            </Box>
+            <Box my={1}>
+              <Divider/>
+            </Box>
           </Box>
-          <Box my={1}>
-            <Divider/>
-          </Box>
+          <Grid container spacing={2}>
+            {seachResultsJsx}
+          </Grid>
         </Box>
-        <Grid container spacing={2}>
-          {seachResultsJsx}
-        </Grid>
-      </Box>
+      </InfiniteScroll>
     </ThemeProvider>
   );
 }
