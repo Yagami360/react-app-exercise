@@ -50,8 +50,9 @@ export const FavPageConfig = {
 
 export const FollowPageConfig = {
   collectionNameFollow: 'follow-database',
-  maxResults: 20,
+  maxResults: 5,        // 各チャンネル詳細 body での動画一覧数
   //maxResults: 50,
+  maxResultsAll: 1,     // 全チャンネル詳細 body での各チャンネルの動画一覧数
   iterSearchVideo: 1,
   //iterSearchVideo: 10,  
   imageHeight: "300px",

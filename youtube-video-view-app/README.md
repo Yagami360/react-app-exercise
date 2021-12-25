@@ -13,13 +13,38 @@
     1. 「[GCP コンソール画面](https://console.cloud.google.com/apis/credentials?hl=ja&project=my-project2-303004)」から、作成した API キーの編集アイコンをクリックし、「アプリケーションの制限」項目に「HTTP リファラー（ウェブサイト）」を選択する。また「ウェブサイトの制限」項目のリファラーに、本アプリのトップページの URL 以下 `http://localhost:3000/*`, `https://video-view-app-684c0.web.app/*` を設定する。
     1. 作成した API キーを React アプリ用環境変数のファイル `youtube-video-view-app/.env` に設定する<br>
         ```sh
-        REACT_APP_YOUTUBE_DATA_API_KEY=${API_KEY}
+        REACT_APP_YOUTUBE_DATA_API_KEY1=${API_KEY1}
         ```
 
         > JavaScript のコードで直接 API キーの値を設定すると、GitHub で外部公開する際に値がリークするので、環境変数で管理する。(この .env ファイルは GitHub 管理しないようにする）
 
-        > YouTube Data API の１日の利用上限は、10,000 Queries / day になっている。各エンドポイント旅のクエリポイント使用量は、https://developers.google.com/youtube/v3/determine_quota_cost に記載されている。
-        > 利用上限に達してしまう場合は、割当て量の増加申請するか、別の GCP プロジェクトで別の API キーを作成してそれを利用すればよい。
+        YouTube Data API の１日の利用上限は、10,000 Queries / day になっている。各エンドポイント旅のクエリポイント使用量は、https://developers.google.com/youtube/v3/determine_quota_cost に記載されている。<br>
+        API の利用上限に達してしまう場合は、割り当て量の増加申請するか、別の GCP プロジェクトで別の API キーを作成してそれを利用すればよい。<br>
+
+        複数の API キーを利用する場合は、React アプリ用環境変数のファイル `youtube-video-view-app/.env` にそれぞれ異なる環境変数を設定する<br>
+        ```sh
+        REACT_APP_YOUTUBE_DATA_API_KEY1=${API_KEY1}
+        REACT_APP_YOUTUBE_DATA_API_KEY2=${API_KEY2}
+        REACT_APP_YOUTUBE_DATA_API_KEY3=${API_KEY3}
+        ...
+        ```
+
+    1. `youtube_api/YouTubeDataAPI.tsx` の `YOUTUBE_DATA_API_KEYS` 定数に `youtube-video-view-app/.env` で定義した環境変数を登録する
+        ```python
+        const YOUTUBE_DATA_API_KEYS: any[] = [
+            process.env["REACT_APP_YOUTUBE_DATA_API_KEY_1"],
+        ]
+        ```
+
+        複数の　API キーを作成している場合は、以下のように設定すればよい。
+        ```python
+        const YOUTUBE_DATA_API_KEYS: any[] = [
+            process.env["REACT_APP_YOUTUBE_DATA_API_KEY_1"],
+            process.env["REACT_APP_YOUTUBE_DATA_API_KEY_2"],
+            process.env["REACT_APP_YOUTUBE_DATA_API_KEY_3"],
+            ...
+        ]
+        ```
 
 1. Firebase プロジェクトを作成する<br>
     「[Firebase のコンソール画面](https://console.firebase.google.com/?hl=ja)」から `video-view-app-684c0` のプロジェクト ID でプロジェクトを作成する。
