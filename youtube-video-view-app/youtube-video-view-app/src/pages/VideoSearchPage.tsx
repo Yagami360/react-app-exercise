@@ -52,9 +52,6 @@ const VideoSearchPage: React.VFC = () => {
   const [searchWord, setSearchWord] = useLocalPersist(AppConfig.appName, "searchWord", "")
   const [seachHistorys, setSeachHistorys] = useState([]);
 
-  // 検索オプション
-  const [seachOptionLive, setSeachOptionLive] = useState(false);
-
   // 検索結果メッセージ
   const [searchMessage, setSearchMessage] = useState("")
   

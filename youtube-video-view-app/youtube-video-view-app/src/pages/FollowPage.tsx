@@ -122,6 +122,12 @@ const FollowPage: React.VFC = () => {
   const [showMore, setShowMore] = useState(false)
   const scrollShowMoreRef = useRef<HTMLDivElement>(null);  // useRef() : HTML の ref属性への参照
 
+  // 無限スクロール用
+  const [hasMoreScroll, setHasMoreScroll] = useState(true);
+  const scrollLoadModeRef = useRef<HTMLDivElement>(null);
+  const [searchVideoInfosMore, setSearchVideoInfosMore] = useState([] as any)
+  const [searchVideoInfosMoreJsx, setSearchVideoInfosMoreJsx] = useState([] as any)           // ↑
+
   // ログイン確認の副作用フック
   useEffect(() => {
     // Firebase Auth のログイン情報の初期化処理は、onAuthStateChanged 呼び出し時に行われる（このメソッドを呼び出さないと、ページ読み込み直後に firebase.auth().currentUser の値が null になることに注意）
@@ -321,6 +327,39 @@ const FollowPage: React.VFC = () => {
     }
   }, [searchVideoInfos])
 
+  // 各チャンネルの動画一覧を設定する副作用フック
+  useEffect(() => {
+    if( channelInfo !== undefined ) {
+      // 動画一覧設定
+      let searchVideoInfosMoreJsx_: any[] = []
+      searchVideoInfosMore.forEach((searchVideoInfo: any)=> {
+        getVideoInfo(getAPIKey(), searchVideoInfo["videoId"])
+          .then( (videoInfo_:any) => {
+            const searchVideoInfoMoreJsx_ = (
+              <Grid item xs={3}>
+                <YouTubeVideoInfoCard 
+                  channelId={channelInfo["channelId"]} channelTitle={channelInfo["title"]} profileImageUrl={channelInfo["profileImageUrl"]} subscriberCount={channelInfo["subscriberCount"]}
+                  videoId={searchVideoInfo["videoId"]} title={searchVideoInfo["title"]} publishTime={searchVideoInfo["publishTime"]} description={searchVideoInfo["description"]} categoryTitle={""}
+                  thumbnailsUrl={searchVideoInfo["thumbnailsHightUrl"]} imageHeight={FollowPageConfig.imageHeight} imageWidth={FollowPageConfig.imageWidth}
+                  viewCount={videoInfo_["viewCount"]} likeCount={videoInfo_["likeCount"]} dislikeCount={videoInfo_["dislikeCount"]} favoriteCount={videoInfo_["favoriteCount"]}
+                  tags={[]}
+                />
+              </Grid>
+            );
+
+            if ( videoInfo_["liveBroadcastContent"] == "none" ) {
+              setSearchVideoInfosMoreJsx([...searchVideoInfosMoreJsx_, searchVideoInfoMoreJsx_])
+              searchVideoInfosMoreJsx_.push(searchVideoInfoMoreJsx_)              
+            }
+          })
+          .catch(err => {
+            console.log(err);
+            setMessage("チャンネル詳細情報の取得に失敗しました" )
+          })    
+      })
+    }
+  }, [searchVideoInfosMore])
+
   // 各チャンネルのチャンネル詳細 body の副作用フック
   useEffect(() => {
     if( channelInfo !== undefined ) {
@@ -393,19 +432,24 @@ const FollowPage: React.VFC = () => {
           <InfiniteScroll
             pageStart={0}
             loadMore={onHandleLoadMoreArchive}                            // 項目を読み込む際に処理するコールバック関数
-            hasMore={true}                                                // 読み込みを行うかどうかの判定
+            hasMore={hasMoreScroll}                                       // 読み込みを行うかどうかの判定
             loader={<Box className="loader" key={0}>{""}</Box>}           // ロード中の表示
             initialLoad={false}
           >
             <Grid container spacing={2}>
               {searchVideoInfosJsx}
+              <div ref={scrollLoadModeRef} />   { /* useRef() で作成した scrollLoadModeRef を <div> の ref 属性に設定することで DOM 属性を取得できる */ }
+              {searchVideoInfosMoreJsx}
             </Grid>
           </InfiniteScroll>
         </Box>
       </>);
       setChannelDetailJsx(channelDetailJsx_)
+
+      // 無限スクロールのイベント処理受付ON
+      //setHasMoreScroll(true)
     }
-  }, [channelInfo, showMore, searchVideoInfosJsx, searchVideoInfosLiveJsx, searchVideoInfosUpcomingJsx])
+  }, [channelInfo, showMore, searchVideoInfosJsx, searchVideoInfosMoreJsx, searchVideoInfosLiveJsx, searchVideoInfosUpcomingJsx])
 
   //------------------------
   // イベントハンドラ
@@ -546,24 +590,34 @@ const FollowPage: React.VFC = () => {
   const onHandleLoadMoreArchive = (page: any) => {
     console.log( "[onHandleLoadMoreArchive] page : ", page )
     if(page === 0 ){ return }
-    if(page === 2 ){ return }
-    if(page === 4 ){ return }
+    if( channelInfosRef.current.length <= 0 ) { return }
 
-    if( channelInfosRef.current.length > 0 ) {
-      // チャンネル ID を取得
-      const channelId = channelInfosRef.current[selectedChannelIndex]["channelId"]
+    // イベント処理中のイベント処理禁止
+    setHasMoreScroll(false)
 
-      // チャンネル ID からチャンネルの動画一覧取得
-      searchVideos(getAPIKey(), "", FollowPageConfig.maxResultsScroll, 1, nextPageTokenRef.current, channelId, "date")
-        .then( ([searchVideoInfos_, totalNumber_, searchNumber_, nextPageToken_]) => {
-          nextPageTokenRef.current = nextPageToken_
-          setSearchVideoInfos([...searchVideoInfos, ...searchVideoInfos_])
-        })
-        .catch(err => {
-          console.log(err);
-          setMessage("チャンネルの動画検索に失敗しました" )
-        })
+    // チャンネル ID を取得
+    const channelId = channelInfosRef.current[selectedChannelIndex]["channelId"]
+
+    // チャンネル ID からチャンネルの動画一覧取得
+    const async = async () => {
+      try {
+        const [searchVideoInfos_, totalNumber_, searchNumber_, nextPageToken_] = await searchVideos(getAPIKey(), "", FollowPageConfig.maxResultsScroll, 1, nextPageTokenRef.current, channelId, "date")
+        nextPageTokenRef.current = nextPageToken_
+        //setSearchVideoInfos([...searchVideoInfos, ...searchVideoInfos_])
+        setSearchVideoInfosMore([...searchVideoInfosMore, ...searchVideoInfos_])
+      }
+      catch (err) {
+        console.error(err);
+      }      
     }
+
+    async()
+
+    // 動画一覧を追加されると、自動的に下にスクロールされてこのイベントハンドラが無限に呼び出されるので、追加前の位置にスクロールする
+    scrollLoadModeRef?.current?.scrollIntoView({block: "center",});
+
+    // イベント処理中のイベント処理再開
+    setHasMoreScroll(true)
   }
 
   //------------------------
@@ -571,8 +625,8 @@ const FollowPage: React.VFC = () => {
   //------------------------
   console.log("channelInfos : ", channelInfos )
   //console.log("channelListJsx : ", channelListJsx )
-  //console.log("searchVideoInfosJsx : ", searchVideoInfosJsx )
-  console.log("searchVideoInfosAll : ", searchVideoInfosAll )
+  console.log("searchVideoInfosJsx : ", searchVideoInfosJsx )
+  //console.log("searchVideoInfosAll : ", searchVideoInfosAll )
   
   if( authCurrentUser !== null ) {
     return (

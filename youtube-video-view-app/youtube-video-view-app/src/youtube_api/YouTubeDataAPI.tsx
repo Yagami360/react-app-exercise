@@ -3,14 +3,14 @@
 const YOUTUBE_DATA_API_URL = 'https://www.googleapis.com/youtube/v3/'
 const YOUTUBE_DATA_API_KEYS: any[] = [
   process.env["REACT_APP_YOUTUBE_DATA_API_KEY_1"],
-//  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_2"],
-//  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_3"],
-//  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_4"],
-//  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_5"],
-//  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_6"],
-//  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_7"],
-//  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_8"],
-//  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_9"],
+  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_2"],
+  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_3"],
+  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_4"],
+  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_5"],
+  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_6"],
+  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_7"],
+  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_8"],
+  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_9"],
 //  process.env["REACT_APP_YOUTUBE_DATA_API_KEY_10"],
 ]
 
