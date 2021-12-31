@@ -19,7 +19,9 @@ export const TopPageConfig = {
 export const ImageSearchPageConfig = {
   collectionNameSearchWord: "search-word-database",
   cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweet",
-  searchCount: 100,
+  //cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweetRecursive",
+  searchCount: 100,     // max 100
+  searchIter: 10,       // 
   imageHeight: "300px",
   imageWidth: "2000px",
 };

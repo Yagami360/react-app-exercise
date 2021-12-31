@@ -40,7 +40,7 @@ exports.searchTweet = functions.https.onRequest((request, response) => {
   var params = {
     q: request.body["search_word"],
     count : request.body["count"],
-    max_id: null,                   // ツイートのIDを指定すると、これを含まず、これより過去のツイートを取得できる。
+    max_id: request.body["max_id"],                   // ツイートのIDを指定すると、これを含まず、これより過去のツイートを取得できる。
   };
   client.get('search/tweets', params, function(error, tweets, response_api) {
     if (!error) {
@@ -84,77 +84,54 @@ exports.searchTweetRecursive = functions.https.onRequest((request, response) => 
       response.status(204).send('');
   }
 
-  // 再帰的に Twitter API にリクエストするために関数化
-  let tweets = {
-    "statuses" : [],
-    "search_metadata" : null
-  }
-  function searchTweetRecursive_( q, count, max_id = null ) {
-    client.get('search/tweets', {q:q, count:count, max_id:max_id}, function(error, tweets_, response_api) {
-      if (!error) {
-        // グローバル変数 tweets にデータ追加
-        tweets["statuses"].push(tweets_["statuses"])
-        tweets["search_metadata"] = tweets_["search_metadata"]
-        console.log( "tweets : ", tweets )
+  //
+  const iter = request.body["iter"]
+  const max_id = null
+  const tweets = []
 
-        // 100 件以上の場合は、search_metadata に 100 件以降のツイートの情報が入る      
-        let next_results = tweets_["search_metadata"]["next_results"]
-        console.log( "next_results : ", next_results )
-        if (next_results == undefined) {
-          console.log('---- Complete (no metadata) ----');
-          return 1
+  for (let i = 0; i < iter; i++) {
+    // Twitter API へのリクエスト処理
+    var params = {
+      q: request.body["search_word"],
+      count : request.body["count"],
+      max_id: max_id,                   // ツイートのIDを指定すると、これを含まず、これより過去のツイートを取得できる。
+    };
+
+    client.get('search/tweets', params, function(error, tweets_, response_api) {
+      if (!error) {
+        //tweets.push(tweets_)
+        tweets.push([...tweets, ...tweets_])
+
+        // 100 件以上の場合は、search_metadata に 100 件以降のツイートの情報が入る     
+        const next_results = tweets_["search_metadata"]["next_results"]
+        //console.log( "next_results : ", next_results )
+
+        if (next_results === undefined) {
+          response.send( JSON.stringify({"status": "ok", "tweets" : tweets,}) );
         }
         else if (next_results) {
-          //let maxId = parseInt(next_results.match(/\?max_id=(\d*)/)[1]);
-          let maxId = parseInt(next_results.split("&")[0].split("?max_id=")[1]);
-          console.log( "maxId : ", maxId )
-          if( maxId == null ) {
-            return 1
-          } 
-          /*
-          count = count - 100
-          if( count > 0 ) {
-            // max_id を変更して再帰処理
-            searchTweetRecursive_(q, count, maxId)
+          // max_id を取得
+          max_id = parseInt( next_results.split("&")[0].split("?max_id=")[1] );
+          console.log( "max_id : ", max_id )
+          if( max_id === null ) {
+            response.send( JSON.stringify({"status": "ok", "tweets" : tweets,}) );
           }
-          */
-          // max_id を変更して再帰処理
-          searchTweetRecursive_(q, count, maxId)
         }
         else {
-          console.log('---- Complete ----');
-          return 1
+          response.send( JSON.stringify({"status": "ok", "tweets" : tweets,}) );
         }
       }
       else {
         console.log("error", error);
-        return 0
+        // レスポンス処理
+        response.send( JSON.stringify({"status": "ng", "tweets" : undefined,}) );
       }
     });
   }
 
-  // Twitter API へのリクエスト処理
-  results = searchTweetRecursive_(request.body["search_word"], request.body["count"], null)
-  if(results != 0 ) {
-    // レスポンス処理
-    response.send(
-      JSON.stringify({
-          "status": "ok",
-          "tweets" : tweets,                
-      })
-    );
-  }
-  else {
-    // レスポンス処理
-    response.send(
-      JSON.stringify({
-          "status": "ng",
-          "tweets" : undefined,                
-      })
-    );
-  }
+  // レスポンス処理
+  response.send( JSON.stringify({"status": "ok", "tweets" : tweets,}) );
 });
-
 
 //---------------------------------------------
 // Twitter API を使用して特定のユーザーのツイートを取得する Cloud Funtion

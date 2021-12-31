@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React from 'react';
 import { Link } from "react-router-dom";
 
@@ -180,7 +181,6 @@ const Header: React.FC<Props> = ({ children, title, selectedTabIdx, photoURL, da
             <Tab label="プロフィール検索" component={Link} to={AppRoutes.profileSearchPage.path} />
             <Tab label="タイムライン" component={Link} to={AppRoutes.timeLinePage.path} />
             <Tab label="お気に入り" component={Link} to={AppRoutes.favPage.path} />
-            <Tab label="テスト" component={Link} to={AppRoutes.testPage.path} />
           </Tabs>
         </Box>
         { /* ダークモード切り替えボタン */ }

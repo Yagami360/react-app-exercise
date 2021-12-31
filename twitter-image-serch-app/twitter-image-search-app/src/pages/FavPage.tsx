@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React from 'react';
 import { useState, useEffect } from 'react'
 
@@ -29,6 +30,9 @@ const FavPage: React.VFC = () => {
   //------------------------
   // フック
   //------------------------
+  // ログインユーザー
+  const [authCurrentUser, setAuthCurrentUser] = useState(auth.currentUser)
+
   // ダークモード
   const [darkMode, setDarkMode] = useLocalPersist("twitter-image-search-app", "darkMode", false)
 
@@ -38,14 +42,26 @@ const FavPage: React.VFC = () => {
   // お気に入りリスト 
   const [favListJsx, setFavListJsx] = useState([]);
 
+  // ログイン確認の副作用フック  
+  useEffect(() => {
+    // Firebase Auth のログイン情報の初期化処理は、onAuthStateChanged 呼び出し時に行われる（このメソッドを呼び出さないと、ページ読み込み直後に firebase.auth().currentUser の値が null になることに注意）
+    const unregisterAuthObserver = auth.onAuthStateChanged( (user: any) => {
+      setAuthCurrentUser(user)
+    })
+
+    // アンマウント時の処理
+    return () => {
+      unregisterAuthObserver()
+    }
+  }, [])
+
   // FireStore からお気に入りデータを読み込む副作用フック
   useEffect(() => {
-    console.log("auth.currentUser : ", auth.currentUser)
     // ログイン済みに場合のみ表示
-    if (auth.currentUser !== null) {
+    if (authCurrentUser !== null) {
       // firestore.collection(コレクション名) : コレクションにアクセスするためのオブジェクト取得
       // firestore.collection(コレクション名).get() : コレクションにアクセスするためのオブジェクトからコレクションを取得。get() は非同期のメソッドで Promise を返す。そのため、非同期処理が完了した後 then() で非同期完了後の処理を定義する
-      firestore.collection(FavPageConfig.collectionNameFav).doc(auth.currentUser.email).collection(FavPageConfig.collectionNameFav).get().then(
+      firestore.collection(FavPageConfig.collectionNameFav).doc(authCurrentUser.email).collection(FavPageConfig.collectionNameFav).get().then(
         // snapshot には、Firestore のコレクションに関連するデータやオブジェクトが入る
         (snapshot)=> {
           let favListJsx_: any = []
@@ -59,8 +75,7 @@ const FavPage: React.VFC = () => {
             favListJsx_.push(
               <TweetCard userId={field.userId} userName={field.userName} userScreenName={field.userScreenName} profileImageUrl={field.userImageUrl} tweetTime={field.tweetTime} tweetId={field.tweetId} imageFileUrl={field.tweetImageFileUrl} imageHeight={FavPageConfig.imageHeight} imageWidth={FavPageConfig.imageWidth} contentsText={field.tweetText} />
             )
-          })
-          
+          })        
           setFavListJsx(favListJsx_)
         }
       )
@@ -69,12 +84,12 @@ const FavPage: React.VFC = () => {
     else {
       setMessage("Please login")
     }
-  }, [])
+  }, [authCurrentUser])
 
   // 更新されたお気に入りデータを FireStore に書き込む副作用フック
   useEffect(() => {
     // ログイン済みに場合のみ表示
-    if (auth.currentUser !== null) {
+    if (authCurrentUser !== null) {
     }
   }, [favListJsx])
 
@@ -116,7 +131,7 @@ const FavPage: React.VFC = () => {
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
       <CssBaseline />
       {/* ヘッダー表示 */}
-      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.favPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
+      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.favPage.index} photoURL={authCurrentUser !== null ? authCurrentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
       {/* ボディ表示 */}
       <Typography variant="h6">{message}</Typography>
       <Box m={2}>

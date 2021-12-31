@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React from 'react';
 import { useState, useEffect } from 'react'
 
@@ -60,6 +61,9 @@ const TimelinePage: React.VFC = () => {
   //------------------------
   // フック
   //------------------------
+  // ログインユーザー
+  const [authCurrentUser, setAuthCurrentUser] = useState(auth.currentUser)
+
   // ダークモード
   const [darkMode, setDarkMode] = useLocalPersist("twitter-image-search-app", "darkMode", false)
 
@@ -70,18 +74,31 @@ const TimelinePage: React.VFC = () => {
   const [message, setMessage] = useState('loading')
 
   // フォローユーザーのツイートのタイムライン 
-  const [timelineJsx, setTimelineJsx] = useState([]);                 // １人のユーザーのタイムライン
-  const [timelineListJsx, setTimelineListJsx] = useState([]);         // 各ユーザーのタイムラインをリストで保管
-  const [allUsertimelineJsx, setAllUsertimelineJsx] = useState([]);   // 全ユーザーのタイムライン（時系列順）
+  const [timelineJsx, setTimelineJsx] = useState([] as any);                 // １人のユーザーのタイムライン
+  const [timelineListJsx, setTimelineListJsx] = useState([] as any);         // 各ユーザーのタイムラインをリストで保管
+  const [allUsertimelineJsx, setAllUsertimelineJsx] = useState([] as any);   // 全ユーザーのタイムライン（時系列順）
+
+  // ログイン確認の副作用フック  
+  useEffect(() => {
+    // Firebase Auth のログイン情報の初期化処理は、onAuthStateChanged 呼び出し時に行われる（このメソッドを呼び出さないと、ページ読み込み直後に firebase.auth().currentUser の値が null になることに注意）
+    const unregisterAuthObserver = auth.onAuthStateChanged( (user: any) => {
+      setAuthCurrentUser(user)
+    })
+
+    // アンマウント時の処理
+    return () => {
+      unregisterAuthObserver()
+    }
+  }, [])
 
   // 副作用フック
   useEffect(() => {
-    if( auth.currentUser !== null ) {
+    if( authCurrentUser !== null ) {
       let timelineListJsx_: any = []          
       let allUsertimelineJsx_: any = []
 
       // フォロー済みユーザーを取得
-      firestore.collection(TimeLinePageConfig.collectionNameFollow).doc(auth.currentUser.email).collection(TimeLinePageConfig.collectionNameFollow).get().then( (snapshot)=> {
+      firestore.collection(TimeLinePageConfig.collectionNameFollow).doc(authCurrentUser.email).collection(TimeLinePageConfig.collectionNameFollow).get().then( (snapshot)=> {
         snapshot.forEach((document)=> {
           // document.data() : ドキュメント内のフィールド
           const field = document.data()
@@ -137,29 +154,50 @@ const TimelinePage: React.VFC = () => {
                   else {
                     return
                   }
-                  
+
+                  /*
                   timelineJsx_.push(
                     <Box className={style.twitterCard}>
                       <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />
                     </Box>
                   )
+                  */                  
+                  const tweetJsx_ = (
+                    <Box className={style.twitterCard}>
+                      <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />
+                    </Box>                    
+                  )
+                  setTimelineJsx([...timelineJsx_, tweetJsx_])
+                  timelineJsx_.push(tweetJsx_)
+
+                  /*
                   allUsertimelineJsx_.push(
                     <Box className={style.twitterCard}>
                       <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />                    
                     </Box>
                   )
+                  */
+                  const allUsertweetJsx_ = (
+                    <Box className={style.twitterCard}>
+                      <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />                    
+                    </Box>                    
+                  )
+                  setAllUsertimelineJsx([...allUsertimelineJsx_, allUsertweetJsx_])
+                  allUsertimelineJsx_.push(allUsertweetJsx_)                            
                 })
 
                 // １人のユーザーのタイムライン
                 console.log( "timelineJsx_ : ", timelineJsx_ )
-                setTimelineJsx(timelineJsx_)
+                //setTimelineJsx(timelineJsx_)
                 
                 // 各ユーザーのタイムラインのリストに追加
-                timelineListJsx_.push(
+                const timelineListJsx__ = (
                   <Box className={style.timeLine}>
                     {timelineJsx_}
-                  </Box>
+                  </Box>                  
                 )
+                timelineListJsx_.push(timelineListJsx__)
+                setTimelineListJsx([...timelineListJsx_, timelineListJsx__])
               })
               .catch((reason) => {
                 console.log("ツイートの取得に失敗しました", reason)
@@ -173,7 +211,7 @@ const TimelinePage: React.VFC = () => {
       })
       
       // 各ユーザーのタイムラインのリスト
-      setTimelineListJsx(timelineListJsx_)
+      //setTimelineListJsx(timelineListJsx_)
 
       // 全ユーザーのタイムライン
       //setAllUsertimelineJsx(allUsertimelineJsx_)      
@@ -195,7 +233,7 @@ const TimelinePage: React.VFC = () => {
       // メッセージ更新
       setMessage("")
     }
-  }, [])
+  }, [authCurrentUser])
 
   //------------------------
   // イベントハンドラ
@@ -226,7 +264,7 @@ const TimelinePage: React.VFC = () => {
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
       <CssBaseline />
       {/* ヘッダー表示 */}
-      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.timeLinePage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
+      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.timeLinePage.index} photoURL={authCurrentUser !== null ? authCurrentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}></Header>
       {/* ボディ表示 */}
       <Typography variant="subtitle1">{message}</Typography>
       {/* タイムライン表示 */}

@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React from 'react';
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
@@ -34,6 +35,9 @@ const TopPage: React.VFC = () => {
   //------------------------
   // フック
   //------------------------
+  // ログインユーザー
+  const [authCurrentUser, setAuthCurrentUser] = useState(auth.currentUser)
+
   // ダークモード
   const [darkMode, setDarkMode] = useLocalPersist("twitter-image-search-app", "darkMode", false)
 
@@ -49,11 +53,24 @@ const TopPage: React.VFC = () => {
   const [seachResultsUsers, setSeachResultsUsers] = useState([]);
   const [seachHistorys, setSeachHistorys] = useState([]);
 
+  // ログイン確認の副作用フック  
+  useEffect(() => {
+    // Firebase Auth のログイン情報の初期化処理は、onAuthStateChanged 呼び出し時に行われる（このメソッドを呼び出さないと、ページ読み込み直後に firebase.auth().currentUser の値が null になることに注意）
+    const unregisterAuthObserver = auth.onAuthStateChanged( (user: any) => {
+      setAuthCurrentUser(user)
+    })
+
+    // アンマウント時の処理
+    return () => {
+      unregisterAuthObserver()
+    }
+  }, [])
+
   // 副作用フック
   useEffect(() => {
     // 検索履歴
-    if( auth.currentUser !== null && searchWord != "" ) {
-      firestore.collection(TopPageConfig.collectionNameSearchWord).doc(auth.currentUser.email).collection(TopPageConfig.collectionNameSearchWord).get().then( (snapshot)=> {
+    if( authCurrentUser !== null && searchWord != "" ) {
+      firestore.collection(TopPageConfig.collectionNameSearchWord).doc(authCurrentUser.email).collection(TopPageConfig.collectionNameSearchWord).get().then( (snapshot)=> {
         let id = 1
         let seachHistorys_: any = []
         snapshot.forEach((document)=> {
@@ -95,13 +112,13 @@ const TopPage: React.VFC = () => {
     // プロフィール検索入力に対しての処理
     if( searchWordProfile != "" ) {
       // 検索履歴のデータベースに追加
-      if( auth.currentUser !== null ) {
+      if( authCurrentUser !== null ) {
         // 新規に追加するドキュメントデータ
         const document = {
           searchWord: searchWordProfile, 
           time: new Date(),   
         }
-        firestore.collection(TopPageConfig.collectionNameSearchWord).doc(auth.currentUser.email).collection(TopPageConfig.collectionNameSearchWord).doc(searchWordProfile).set(document).then((ref: any) => {
+        firestore.collection(TopPageConfig.collectionNameSearchWord).doc(authCurrentUser.email).collection(TopPageConfig.collectionNameSearchWord).doc(searchWordProfile).set(document).then((ref: any) => {
           console.log("added search word in ", TopPageConfig.collectionNameSearchWord)
         })
       }
@@ -155,13 +172,13 @@ const TopPage: React.VFC = () => {
     // ツイート検索入力に対しての処理
     if( searchWord != "" ) {
       // 検索履歴のデータベースに追加
-      if( auth.currentUser !== null ) {
+      if( authCurrentUser !== null ) {
         // 新規に追加するドキュメントデータ
         const document = {
           searchWord: searchWord, 
           time: new Date(),   
         }
-        firestore.collection(TopPageConfig.collectionNameSearchWord).doc(auth.currentUser.email).collection(TopPageConfig.collectionNameSearchWord).doc(searchWord).set(document).then((ref: any) => {
+        firestore.collection(TopPageConfig.collectionNameSearchWord).doc(authCurrentUser.email).collection(TopPageConfig.collectionNameSearchWord).doc(searchWord).set(document).then((ref: any) => {
           console.log("added search word in ", TopPageConfig.collectionNameSearchWord)
         })
       }
@@ -269,7 +286,7 @@ const TopPage: React.VFC = () => {
   //------------------------
   // JSX での表示処理
   //------------------------
-  console.log( "auth.currentUser : ", auth.currentUser )
+  console.log( "authCurrentUser : ", authCurrentUser )
   console.log( "searchWord : ", searchWord )
   console.log( "searchWordProfile : ", searchWordProfile )
   //console.log("seachResultsJsx : ", seachResultsJsx)
@@ -279,7 +296,7 @@ const TopPage: React.VFC = () => {
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
       <CssBaseline />
       {/* ヘッダー表示 */}      
-      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.topPage.index} photoURL={auth.currentUser !== null ? auth.currentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
+      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.topPage.index} photoURL={authCurrentUser !== null ? authCurrentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
       {/* 検索ワード入力 */}
       <Box m={2}>
         <form onSubmit={onSubmitSearchWord}>

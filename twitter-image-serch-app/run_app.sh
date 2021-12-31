@@ -8,6 +8,7 @@ cd ${ROOT_DIR}/${PROJECT_NAME}
 
 # Cloud Funtion をデプロイ
 #firebase deploy --project ${FIREBASE_PROJECT_ID} --only functions
+#firebase functions:log --only searchTweetRecursive
 
 # 作成した React のプロジェクトのサーバーを起動する
 npm start
