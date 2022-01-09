@@ -139,7 +139,6 @@ const ImageSearchPage: React.VFC = () => {
           const tweets = data["tweets"]
           const statuses = tweets["statuses"]
           let nTweetsImage = 0
-          //console.log("tweets : ", tweets)
           //console.log("statuses : ", statuses)
 
           let seachResultsJsx_: any = []

@@ -77,19 +77,20 @@ exports.searchTweetRecursive = functions.https.onRequest((request, response) => 
   // CORS 設定（この処理を入れないと Cloud Funtion 呼び出さ元で No 'Access-Control-Allow-Origin' のエラーが出る）
   response.set('Access-Control-Allow-Origin', '*');
   if (request.method === 'OPTIONS') {
-      // Send response to OPTIONS requests
-      response.set('Access-Control-Allow-Methods', 'GET');
-      response.set('Access-Control-Allow-Headers', 'Content-Type');
-      response.set('Access-Control-Max-Age', '3600');
-      response.status(204).send('');
+    // Send response to OPTIONS requests
+    response.set('Access-Control-Allow-Methods', 'GET');
+    response.set('Access-Control-Allow-Headers', 'Content-Type');
+    response.set('Access-Control-Max-Age', '3600');
+    //response.status(204).send('');
   }
 
-  //
-  const iter = request.body["iter"]
-  const max_id = null
-  const tweets = []
-
-  for (let i = 0; i < iter; i++) {
+  // 再帰的にリクエスト
+  let tweets = {
+    "statuses": [],
+    "search_metadata": null,
+  }
+  let max_id = null
+  for (let i = 0; i < request.body["iter"]; i++) {
     // Twitter API へのリクエスト処理
     var params = {
       q: request.body["search_word"],
@@ -99,38 +100,39 @@ exports.searchTweetRecursive = functions.https.onRequest((request, response) => 
 
     client.get('search/tweets', params, function(error, tweets_, response_api) {
       if (!error) {
-        //tweets.push(tweets_)
-        tweets.push([...tweets, ...tweets_])
+        //console.log( "tweets_ : ", tweets_ )
+        tweets["statuses"] = tweets["statuses"].concat(tweets_["statuses"])
+        tweets["search_metadata"] = tweets_["search_metadata"]
+        console.log( "tweets : ", tweets )
 
         // 100 件以上の場合は、search_metadata に 100 件以降のツイートの情報が入る     
         const next_results = tweets_["search_metadata"]["next_results"]
-        //console.log( "next_results : ", next_results )
+        console.log( "next_results : ", next_results )
 
-        if (next_results === undefined) {
+        if( i > request.body["iter"] ) {
           response.send( JSON.stringify({"status": "ok", "tweets" : tweets,}) );
-        }
-        else if (next_results) {
-          // max_id を取得
-          max_id = parseInt( next_results.split("&")[0].split("?max_id=")[1] );
-          console.log( "max_id : ", max_id )
-          if( max_id === null ) {
-            response.send( JSON.stringify({"status": "ok", "tweets" : tweets,}) );
-          }
         }
         else {
-          response.send( JSON.stringify({"status": "ok", "tweets" : tweets,}) );
+          if ( next_results === undefined || next_results === "" ) {
+            response.send( JSON.stringify({"status": "ok", "tweets" : tweets,}) );
+          }
+          else {
+            // max_id を取得
+            max_id = parseInt( next_results.split("&")[0].split("?max_id=")[1] );
+            console.log( "max_id : ", max_id )
+            if( max_id === null ) {
+              response.send( JSON.stringify({"status": "ok", "tweets" : tweets,}) );
+            }
+          }
         }
       }
       else {
         console.log("error", error);
         // レスポンス処理
-        response.send( JSON.stringify({"status": "ng", "tweets" : undefined,}) );
+        response.send( JSON.stringify({"status": "ng", "tweets" : tweets,}) );
       }
     });
   }
-
-  // レスポンス処理
-  response.send( JSON.stringify({"status": "ok", "tweets" : tweets,}) );
 });
 
 //---------------------------------------------

@@ -21,7 +21,7 @@ export const ImageSearchPageConfig = {
   cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweet",
   //cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweetRecursive",
   searchCount: 100,     // max 100
-  searchIter: 10,       // 
+  searchIter: 1,       // 
   imageHeight: "300px",
   imageWidth: "2000px",
 };
