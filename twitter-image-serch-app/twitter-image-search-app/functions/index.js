@@ -81,22 +81,42 @@ exports.searchTweetRecursive = functions.https.onRequest((request, response) => 
     response.set('Access-Control-Allow-Methods', 'GET');
     response.set('Access-Control-Allow-Headers', 'Content-Type');
     response.set('Access-Control-Max-Age', '3600');
-    //response.status(204).send('');
+    response.status(204).send('');
   }
 
-  // 再帰的にリクエスト
+  // 非同期 API である client.get() を await して API の結果を返すメソッド
+  /*
+  async function searchTweetsAwait(params) {
+    const tweets = await client.get('search/tweets', params)
+    return tweets
+  }
+  */
+
+  // 再帰的にリクエスト  
   let tweets = {
     "statuses": [],
     "search_metadata": null,
   }
-  let max_id = null
+  let params = {
+    q: request.body["search_word"],
+    count : request.body["count"],
+    max_id: null,                   // ツイートのIDを指定すると、これを含まず、これより過去のツイートを取得できる。
+  };
   for (let i = 0; i < request.body["iter"]; i++) {
     // Twitter API へのリクエスト処理
-    var params = {
-      q: request.body["search_word"],
-      count : request.body["count"],
-      max_id: max_id,                   // ツイートのIDを指定すると、これを含まず、これより過去のツイートを取得できる。
-    };
+    /*
+    // client.get() は非同期 API なので、for ループ内で直接呼び出すと先に次のループ処理が行われてしまう。そのため await で API のレスポンスを待って処理する
+    console.log( "params : ", params )
+    const tweets_ = searchTweetsAwait(params)
+    console.log( "tweets_ : ", tweets_ )
+    if (!error) {
+      response.send( JSON.stringify({"status": "ok", "tweets" : tweets,}) );
+    }
+    else {
+      console.log("error", error);
+      response.send( JSON.stringify({"status": "ng", "tweets" : tweets,}) );      
+    }
+    */
 
     client.get('search/tweets', params, function(error, tweets_, response_api) {
       if (!error) {
@@ -109,7 +129,9 @@ exports.searchTweetRecursive = functions.https.onRequest((request, response) => 
         const next_results = tweets_["search_metadata"]["next_results"]
         console.log( "next_results : ", next_results )
 
-        if( i > request.body["iter"] ) {
+        console.log( "i : ", i )
+        console.log( "request.body['iter'] : ", request.body["iter"] )
+        if( i >= request.body["iter"] - 1 ) {
           response.send( JSON.stringify({"status": "ok", "tweets" : tweets,}) );
         }
         else {
@@ -118,9 +140,10 @@ exports.searchTweetRecursive = functions.https.onRequest((request, response) => 
           }
           else {
             // max_id を取得
-            max_id = parseInt( next_results.split("&")[0].split("?max_id=")[1] );
-            console.log( "max_id : ", max_id )
-            if( max_id === null ) {
+            //params["max_id"] = parseInt( next_results.split("&")[0].split("?max_id=")[1] );
+            params["max_id"] = next_results.split("&")[0].split("?max_id=")[1];
+            console.log( "params['max_id'] : ", params["max_id"] )
+            if( params["max_id"] === null ) {
               response.send( JSON.stringify({"status": "ok", "tweets" : tweets,}) );
             }
           }
@@ -132,7 +155,7 @@ exports.searchTweetRecursive = functions.https.onRequest((request, response) => 
         response.send( JSON.stringify({"status": "ng", "tweets" : tweets,}) );
       }
     });
-  }
+  } 
 });
 
 //---------------------------------------------

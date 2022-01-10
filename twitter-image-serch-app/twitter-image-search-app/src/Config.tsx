@@ -10,7 +10,8 @@ export default AppRoutes;
 
 export const TopPageConfig = {
   collectionNameSearchWord: "search-word-database",
-  cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweet",
+  //cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweet",
+  cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweetRecursive",
   cloudFunctionSearchUserUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchUser",
   searchCount: 100,
   searchCountProfile: 20,
@@ -18,10 +19,10 @@ export const TopPageConfig = {
 
 export const ImageSearchPageConfig = {
   collectionNameSearchWord: "search-word-database",
-  cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweet",
-  //cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweetRecursive",
-  searchCount: 100,     // max 100
-  searchIter: 1,       // 
+  //cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweet",
+  cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweetRecursive",
+  searchCount: 2,     // max 100
+  searchIter: 2,       // 
   imageHeight: "300px",
   imageWidth: "2000px",
 };
