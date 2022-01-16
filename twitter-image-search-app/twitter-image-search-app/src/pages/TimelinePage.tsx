@@ -20,6 +20,8 @@ import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
 import TweetCard from '../components/TweetCard'
 
+import { getUserTimelineTweetsRecursive } from '../twitter_api/TwitterAPI';
+
 // 独自のスタイル定義
 const useStyles = makeStyles({
   // 全ユーザーのタイムライン全体のスタイル
@@ -109,32 +111,9 @@ const TimelinePage: React.VFC = () => {
           //console.log( "userScreenName : ", userScreenName )          
           if( userScreenName !== undefined ) {
             // フォローユーザーのツイートをタイムラインで取得
-            fetch(
-              TimeLinePageConfig.cloudFunctionGetTimelineUrl,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  "user_id": userId,
-                  "count": TimeLinePageConfig.searchCount,
-                  "include_rts": true,
-                  "exclude_replies": false,
-                })
-              }
-            )
-              .then( (response) => {
-                //console.log("response : ", response)
-                if ( !response.ok) {
-                  throw new Error();
-                }
-                return response.json()
-              })
-              .then((data) => {        
-                //console.log("data : ", data)
-                const tweets = data["tweets"]
-                //console.log("tweets : ", tweets)  
+            getUserTimelineTweetsRecursive(userId, TimeLinePageConfig.searchCount, true, false, TimeLinePageConfig.searchIter)
+              .then((tweets: any) => {     
+                console.log("tweets : ", tweets)  
 
                 let timelineJsx_: any = []
                 tweets.forEach((tweet: any)=> {

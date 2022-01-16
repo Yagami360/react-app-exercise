@@ -12,6 +12,7 @@ import CssBaseline from "@material-ui/core/CssBaseline";
 
 import AppRoutes from './Config'
 import AppTheme from './components/Theme';
+import TopPage from './pages/TopPage'
 import ImageSearchPage from './pages/ImageSearchPage'
 import ProfileSearchPage from './pages/ProfileSearchPage'
 import FavPage from './pages/FavPage'
@@ -42,6 +43,7 @@ const App: React.VFC = () => {
       {/* ルーティング設定 */}
       <BrowserRouter>
         <Routes>
+          <Route path={AppRoutes.topPage.path} element={<TopPage />} />          
           <Route path={AppRoutes.imageSearchPage.path} element={<ImageSearchPage />} />
           <Route path={AppRoutes.profileSearchPage.path} element={<ProfileSearchPage />} />
           <Route path={AppRoutes.favPage.path} element={<FavPage />} />

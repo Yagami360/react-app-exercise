@@ -1,5 +1,7 @@
 const AppRoutes = {
-  topPage: { index : 0, path : "/" },
+  //topPage: { index : -1, path : "/" },
+  topPage: { index : -1, path : "/home" },
+  //imageSearchPage: { index : 0, path : "/image_search"}, 
   imageSearchPage: { index : 0, path : "/"}, 
   profileSearchPage: { index : 1, path : "/profile_search" },
   timeLinePage: { index : 2, path : "/timeline" },  
@@ -10,36 +12,33 @@ export default AppRoutes;
 
 export const TopPageConfig = {
   collectionNameSearchWord: "search-word-database",
-  //cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweet",
-  cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweetRecursive",
-  cloudFunctionSearchUserUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchUser",
-  searchCount: 100,
-  searchCountProfile: 20,
+  searchCount: 100,              // max 100
+  searchIter: 10,                // 
+  searchCountProfile: 20,        // max 20
+  searchIterProfile: 100,        // 
 };
 
 export const ImageSearchPageConfig = {
   collectionNameSearchWord: "search-word-database",
-  //cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweet",
-  cloudFunctionSearchTweetUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchTweetRecursive",
-  searchCount: 2,     // max 100
-  searchIter: 2,       // 
+  searchCount: 100,       // max 100
+  searchIter: 10,         // 
   imageHeight: "300px",
   imageWidth: "2000px",
 };
 
 export const ProfileSearchPageConfig = {
   collectionNameSearchWord: "search-word-database",
-  cloudFunctionSearchUserUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/searchUser",
-  searchCount: 20,
+  searchCount: 20,        // max 20
+  searchIter: 10,         // 
   imageHeight: 300,
   imageWidth: 2000,
 };
 
 export const TimeLinePageConfig = {
   collectionNameFollow: 'follow-database',
-  cloudFunctionGetTimelineUrl: "https://us-central1-twitter-image-search-app.cloudfunctions.net/getUserTimelineTweet",
   searchCount: 50,
   //searchCount: 200,
+  searchIter: 2,         // 
   imageHeight: "250px",
   imageWidth: "300px",
 };

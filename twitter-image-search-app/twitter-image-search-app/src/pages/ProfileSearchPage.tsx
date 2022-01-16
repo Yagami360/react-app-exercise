@@ -22,6 +22,8 @@ import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
 import TwitterProfileCard from '../components/TwitterProfileCard'
 
+import { searchUsersRecursive } from '../twitter_api/TwitterAPI';
+
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
 
@@ -113,28 +115,8 @@ const ProfileSearchPage: React.VFC = () => {
       }
 
       // Cloud Function 経由で TwitterAPI を叩いてツイート検索
-      fetch(
-        ProfileSearchPageConfig.cloudFunctionSearchUserUrl,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            "search_word" : searchWordProfile,
-            "count": ProfileSearchPageConfig.searchCount,
-          })
-        }
-      )
-        .then( (response) => {
-          //console.log("response : ", response)
-          if ( !response.ok) {
-            throw new Error();
-          }
-          return response.json()
-        })
-        .then((data) => {        
-          const users = data["users"]
+      searchUsersRecursive(searchWordProfile, ProfileSearchPageConfig.searchCount, ProfileSearchPageConfig.searchIter)
+        .then((users: any) => {        
           let seachResultsUsers_: any = []
           let seachResultsUsersJsx_: any = []
           users.forEach((user: any)=> {

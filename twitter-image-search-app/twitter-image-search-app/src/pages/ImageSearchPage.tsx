@@ -1,8 +1,6 @@
 /* eslint-disable */
 import React from 'react';
-import { useState, useEffect } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from 'react'
 
 import firebase from "firebase";
 import '../firebase/initFirebase'
@@ -18,11 +16,13 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 import SearchIcon from "@material-ui/icons/Search";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
-import AppRoutes, { TopPageConfig } from '../Config'
+import AppRoutes, { ImageSearchPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
 import Header from '../components/Header'
 import TweetCard from '../components/TweetCard'
+
+import { searchImageTweetsRecursive } from '../twitter_api/TwitterAPI';
 
 // Auth オブジェクトの作成
 const auth: any = firebase.auth()
@@ -30,8 +30,8 @@ const auth: any = firebase.auth()
 // Firestore にアクセスするためのオブジェクト作成
 const firestore = firebase.firestore()
 
-// トップページを表示するコンポーネント
-const TopPage: React.VFC = () => {
+// 画像検索ページを表示するコンポーネント
+const ImageSearchPage: React.VFC = () => {  
   //------------------------
   // フック
   //------------------------
@@ -43,15 +43,13 @@ const TopPage: React.VFC = () => {
 
   // 検索フォームの入力テキスト
   const [searchWord, setSearchWord] = useLocalPersist("twitter-image-search-app", "searchWord", "")
-  const [searchWordProfile, setSearchWordProfile] = useLocalPersist("twitter-image-search-app", "searchWordProfile", "")
 
   // 検索結果メッセージ
   const [searchMessage, setSearchMessage] = useState("")
   
   // 検索ヒット画像のリスト 
-  const [seachResultsJsx, setSeachResultsJsx] = useState([]);
-  const [seachResultsUsers, setSeachResultsUsers] = useState([]);
-  const [seachHistorys, setSeachHistorys] = useState([]);
+  const [seachResultsJsx, setSeachResultsJsx] = useState([] as any);
+  const [seachHistorys, setSeachHistorys] = useState([] as any);
 
   // ログイン確認の副作用フック  
   useEffect(() => {
@@ -70,7 +68,7 @@ const TopPage: React.VFC = () => {
   useEffect(() => {
     // 検索履歴
     if( authCurrentUser !== null && searchWord != "" ) {
-      firestore.collection(TopPageConfig.collectionNameSearchWord).doc(authCurrentUser.email).collection(TopPageConfig.collectionNameSearchWord).get().then( (snapshot)=> {
+      firestore.collection(ImageSearchPageConfig.collectionNameSearchWord).doc(authCurrentUser.email).collection(ImageSearchPageConfig.collectionNameSearchWord).get().then( (snapshot)=> {
         let id = 1
         let seachHistorys_: any = []
         snapshot.forEach((document)=> {
@@ -83,7 +81,7 @@ const TopPage: React.VFC = () => {
         setSeachHistorys(seachHistorys_)
       })
     }
-  }, [searchWord, searchWordProfile])
+  }, [searchWord])
 
   //------------------------
   // イベントハンドラ
@@ -97,77 +95,9 @@ const TopPage: React.VFC = () => {
     setSearchWord(values)
   }
 
-  const onChangeSearchWordProfileTextField = (event: any) => {
-    setSearchWordProfile(event.currentTarget.value)
-  }
-
-  const onChangeSearchWordProfileAutocomplete = (event: any, values: any) => {
-    setSearchWordProfile(values)
-  }
-
   const onSubmitSearchWord = (event: React.FormEvent<HTMLFormElement>)=> {
     // submit イベント e の発生元であるフォームが持つデフォルトのイベント処理をキャンセル
     event.preventDefault(); 
-
-    // プロフィール検索入力に対しての処理
-    if( searchWordProfile != "" ) {
-      // 検索履歴のデータベースに追加
-      if( authCurrentUser !== null ) {
-        // 新規に追加するドキュメントデータ
-        const document = {
-          searchWord: searchWordProfile, 
-          time: new Date(),   
-        }
-        firestore.collection(TopPageConfig.collectionNameSearchWord).doc(authCurrentUser.email).collection(TopPageConfig.collectionNameSearchWord).doc(searchWordProfile).set(document).then((ref: any) => {
-          console.log("added search word in ", TopPageConfig.collectionNameSearchWord)
-        })
-      }
-
-      // Cloud Function 経由で TwitterAPI を叩いてツイート検索
-      fetch(
-        TopPageConfig.cloudFunctionSearchUserUrl,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            "search_word" : searchWordProfile,
-            "count": TopPageConfig.searchCountProfile,
-          })
-        }
-      )
-        .then( (response) => {
-          //console.log("response : ", response)
-          if ( !response.ok) {
-            throw new Error();
-          }
-          return response.json()
-        })
-        .then((data) => {        
-          const users = data["users"]
-          let seachResultsUsers_: any = []
-          users.forEach((user: any)=> {
-            //const userId = user["id_str"]
-            //const userName = user["name"]
-            //const userScreenName = user["screen_name"]
-            //const description = user["description"]
-            //console.log("userId : ", userId)            
-            //console.log("userName : ", userName)
-            //console.log("userScreenName : ", userScreenName)
-            //console.log("description : ", description)
-            seachResultsUsers_.push(user)
-          })
-          setSeachResultsUsers(seachResultsUsers_)
-        })
-        .catch((reason) => {
-          console.log("プロフィールの取得に失敗しました", reason)
-          setSearchMessage("プロフィールの取得に失敗しました : " + reason )
-        });      
-    }
-    else {
-      setSeachResultsUsers([])
-    }
 
     // ツイート検索入力に対しての処理
     if( searchWord != "" ) {
@@ -178,38 +108,17 @@ const TopPage: React.VFC = () => {
           searchWord: searchWord, 
           time: new Date(),   
         }
-        firestore.collection(TopPageConfig.collectionNameSearchWord).doc(authCurrentUser.email).collection(TopPageConfig.collectionNameSearchWord).doc(searchWord).set(document).then((ref: any) => {
-          console.log("added search word in ", TopPageConfig.collectionNameSearchWord)
+        firestore.collection(ImageSearchPageConfig.collectionNameSearchWord).doc(authCurrentUser.email).collection(ImageSearchPageConfig.collectionNameSearchWord).doc(searchWord).set(document).then((ref: any) => {
+          console.log("added search word in ", ImageSearchPageConfig.collectionNameSearchWord)
         })
       }
 
-      // Cloud Function 経由で TwitterAPI を叩いてツイート検索
-      fetch(
-        TopPageConfig.cloudFunctionSearchTweetUrl,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            "search_word" : searchWord + " filter:images",
-            "count": TopPageConfig.searchCount,
-          })
-        }
-      )
-        .then( (response) => {
-          //console.log("response : ", response)
-          if ( !response.ok) {
-            throw new Error();
-          }
-          return response.json()
-        })
-        .then((data) => {        
-          const tweets = data["tweets"]
+      // Twitter API を用いて画像ツイートを取得する
+      searchImageTweetsRecursive(searchWord, ImageSearchPageConfig.searchCount, ImageSearchPageConfig.searchIter)
+        .then((tweets: any) => {        
+          console.log("tweets : ", tweets)
           const statuses = tweets["statuses"]
           let nTweetsImage = 0
-          //console.log("tweets : ", tweets)
-          //console.log("statuses : ", statuses)
 
           let seachResultsJsx_: any = []
           statuses.forEach((statuse: any)=> {
@@ -242,32 +151,19 @@ const TopPage: React.VFC = () => {
               return
             }
 
-            console.log( "seachResultsUsers.length : ", seachResultsUsers.length )
-            if( seachResultsUsers.length > 0 ) {
-              // プロフィール検索結果とユーザー名が一致するツイートのみ表示
-              seachResultsUsers.forEach((user: any)=> {
-                if(userScreenName == user.screen_name) {
-                  seachResultsJsx_.push(
-                    <Grid item xs={2}>
-                      <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="300px" imageWidth="2000px" contentsText={tweetText} />
-                    </Grid>
-                  )
-                  nTweetsImage += 1
-                }
-              })          
-            }
-            else {
-              seachResultsJsx_.push(
-                <Grid item xs={2}>
-                  <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight="300px" imageWidth="2000px" contentsText={tweetText} />
-                </Grid>
-              )        
-              nTweetsImage += 1    
-            }
+            const seachResultJsx_ = (
+              <Grid item xs={2}>
+                <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={ImageSearchPageConfig.imageHeight} imageWidth={ImageSearchPageConfig.imageWidth} contentsText={tweetText} />
+              </Grid>              
+            )
+            //setSeachResultsJsx([...seachResultsJsx_, seachResultJsx_])
+            seachResultsJsx_.push(seachResultJsx_)
+
+            nTweetsImage += 1    
+          })
 
           setSeachResultsJsx(seachResultsJsx_)
           setSearchMessage("画像つきツイート数 : " + nTweetsImage)
-          })
         })
         .catch((reason) => {
           console.log("ツイートの取得に失敗しました", reason)
@@ -286,17 +182,15 @@ const TopPage: React.VFC = () => {
   //------------------------
   // JSX での表示処理
   //------------------------
-  console.log( "authCurrentUser : ", authCurrentUser )
   console.log( "searchWord : ", searchWord )
-  console.log( "searchWordProfile : ", searchWordProfile )
-  //console.log("seachResultsJsx : ", seachResultsJsx)
-  console.log( "seachResultsUsers : ", seachResultsUsers )
+  console.log("seachResultsJsx : ", seachResultsJsx)
+  //console.log( "seachHistorys : ", seachHistorys )
   return (
     <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
       <CssBaseline />
       {/* ヘッダー表示 */}      
-      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.topPage.index} photoURL={authCurrentUser !== null ? authCurrentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
+      <Header title="Twitter Image Search App" selectedTabIdx={AppRoutes.imageSearchPage.index} photoURL={authCurrentUser !== null ? authCurrentUser.photoURL : ''} darkMode={darkMode} setDarkMode={setDarkMode}/>
       {/* 検索ワード入力 */}
       <Box m={2}>
         <form onSubmit={onSubmitSearchWord}>
@@ -324,31 +218,7 @@ const TopPage: React.VFC = () => {
                   />            
                 )}
               />
-            </Grid>
-            {/* プロフィール検索ワード入力 */}
-            <Grid item xs={2}>
-              <Autocomplete 
-                freeSolo
-                disableClearable
-                onChange={onChangeSearchWordProfileAutocomplete}
-                id="プロフィール検索"
-                options={seachHistorys.map((option: any) => option.name)}
-                renderInput={ (params: any) => (
-                  <TextField 
-                    {...params}
-                    onChange={onChangeSearchWordProfileTextField} 
-                    value={searchWordProfile} 
-                    label="プロフィール検索"
-                    variant="outlined"
-                    InputProps={{
-                      ...params.InputProps,
-                      type: 'search',
-                      startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>)
-                    }}
-                  />            
-                )}
-              />
-            </Grid>            
+            </Grid>          
             { /* 検索ボタン　*/ }
             <Grid item xs={1}>
               <Button type="submit" variant="contained" style={{ borderRadius: 25 }}>
@@ -369,4 +239,4 @@ const TopPage: React.VFC = () => {
     );
 }
 
-export default TopPage;
+export default ImageSearchPage;
