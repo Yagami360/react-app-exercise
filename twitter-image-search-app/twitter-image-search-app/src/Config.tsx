@@ -38,7 +38,7 @@ export const TimeLinePageConfig = {
   collectionNameFollow: 'follow-database',
   searchCount: 50,
   //searchCount: 200,
-  searchIter: 2,         // 
+  searchIter: 1,         // 
   imageHeight: "250px",
   imageWidth: "300px",
 };

@@ -140,19 +140,19 @@ export async function getUserTimelineTweetsRecursive(userId: string, searchCount
 
       // レスポンスデータ取得
       const data = await response.json()
-      console.log( "data : ", data )
+      //console.log( "data : ", data )
       if( data["status"] == "ng" ) {
         break
       }
 
       const tweets_ = data["tweets"]
-      console.log( "tweets_ : ", tweets_ )
+      //console.log( "tweets_ : ", tweets_ )
       tweets = tweets.concat(tweets_)
 
       // max_id を取得して繰り返し検索
       maxId = tweets_[tweets_.length - 1]["id"]
       //maxId = tweets_[tweets_.length - 1]["id_str"]
-      console.log( "maxId : ", maxId )
+      //console.log( "maxId : ", maxId )
       if( maxId === null || maxId === "" ) {
         break
       }

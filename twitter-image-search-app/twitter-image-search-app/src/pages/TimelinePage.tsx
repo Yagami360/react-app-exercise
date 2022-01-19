@@ -1,6 +1,6 @@
 /* eslint-disable */
 import React from 'react';
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 import { ThemeProvider} from '@material-ui/core/styles';
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -76,9 +76,11 @@ const TimelinePage: React.VFC = () => {
   const [message, setMessage] = useState('loading')
 
   // フォローユーザーのツイートのタイムライン 
-  const [timelineJsx, setTimelineJsx] = useState([] as any);                 // １人のユーザーのタイムライン
   const [timelineListJsx, setTimelineListJsx] = useState([] as any);         // 各ユーザーのタイムラインをリストで保管
   const [allUsertimelineJsx, setAllUsertimelineJsx] = useState([] as any);   // 全ユーザーのタイムライン（時系列順）
+  let timelineJsxRef = React.useRef<any>([]);
+  let timelineListJsxRef = React.useRef<any>([]);
+  let allUsertimelineJsxRef = React.useRef<any>([]);
 
   // ログイン確認の副作用フック  
   useEffect(() => {
@@ -96,26 +98,20 @@ const TimelinePage: React.VFC = () => {
   // 副作用フック
   useEffect(() => {
     if( authCurrentUser !== null ) {
-      let timelineListJsx_: any = []          
-      let allUsertimelineJsx_: any = []
-
       // フォロー済みユーザーを取得
       firestore.collection(TimeLinePageConfig.collectionNameFollow).doc(authCurrentUser.email).collection(TimeLinePageConfig.collectionNameFollow).get().then( (snapshot)=> {
+        console.log("start firestore.collection.then()")        
         snapshot.forEach((document)=> {
-          // document.data() : ドキュメント内のフィールド
           const field = document.data()
-          //console.log( "field : ", field )
           const userId = field.userId
           const userScreenName = field.userScreenName
-          //console.log( "userId : ", userId )
-          //console.log( "userScreenName : ", userScreenName )          
           if( userScreenName !== undefined ) {
             // フォローユーザーのツイートをタイムラインで取得
             getUserTimelineTweetsRecursive(userId, TimeLinePageConfig.searchCount, true, false, TimeLinePageConfig.searchIter)
               .then((tweets: any) => {     
-                console.log("tweets : ", tweets)  
-
-                let timelineJsx_: any = []
+                console.log("start getUserTimelineTweetsRecursive.then()")
+                console.log("tweets : ", tweets)
+                timelineJsxRef.current = []
                 tweets.forEach((tweet: any)=> {
                   //console.log("tweet : ", tweet)  
                   const userId = tweet["user"]["id_str"]
@@ -134,49 +130,31 @@ const TimelinePage: React.VFC = () => {
                     return
                   }
 
-                  /*
-                  timelineJsx_.push(
+                  timelineJsxRef.current.push(
                     <Box className={style.twitterCard}>
                       <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />
-                    </Box>
+                    </Box>                                        
                   )
-                  */                  
-                  const tweetJsx_ = (
-                    <Box className={style.twitterCard}>
-                      <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />
-                    </Box>                    
-                  )
-                  setTimelineJsx([...timelineJsx_, tweetJsx_])
-                  timelineJsx_.push(tweetJsx_)
 
-                  /*
-                  allUsertimelineJsx_.push(
+                  allUsertimelineJsxRef.current.push(
                     <Box className={style.twitterCard}>
                       <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />                    
-                    </Box>
-                  )
-                  */
-                  const allUsertweetJsx_ = (
-                    <Box className={style.twitterCard}>
-                      <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />                    
-                    </Box>                    
-                  )
-                  setAllUsertimelineJsx([...allUsertimelineJsx_, allUsertweetJsx_])
-                  allUsertimelineJsx_.push(allUsertweetJsx_)                            
+                    </Box>                                        
+                  )                           
+                  setAllUsertimelineJsx([...allUsertimelineJsx, ...allUsertimelineJsxRef.current])
                 })
-
-                // １人のユーザーのタイムライン
-                console.log( "timelineJsx_ : ", timelineJsx_ )
-                //setTimelineJsx(timelineJsx_)
                 
                 // 各ユーザーのタイムラインのリストに追加
-                const timelineListJsx__ = (
-                  <Box className={style.timeLine}>
-                    {timelineJsx_}
-                  </Box>                  
-                )
-                timelineListJsx_.push(timelineListJsx__)
-                setTimelineListJsx([...timelineListJsx_, timelineListJsx__])
+                if( timelineJsxRef.current.length !== 0 ) {
+                  timelineListJsxRef.current.push(
+                    <Box className={style.timeLine}>
+                      {timelineJsxRef.current}
+                    </Box>                                    
+                  )
+                  setTimelineListJsx([...timelineListJsx, ...timelineListJsxRef.current])
+                }
+
+                console.log("end getUserTimelineTweetsRecursive.then()")
               })
               .catch((reason) => {
                 console.log("ツイートの取得に失敗しました", reason)
@@ -187,16 +165,16 @@ const TimelinePage: React.VFC = () => {
             setMessage("please login")
           }
         })
+        console.log("end firestore.collection.then()")
       })
-      
+
+      console.log("start useEffect end firestore.collection")
+
       // 各ユーザーのタイムラインのリスト
-      //setTimelineListJsx(timelineListJsx_)
+      //setTimelineListJsx(timelineListJsxRef.current)
 
       // 全ユーザーのタイムライン
-      //setAllUsertimelineJsx(allUsertimelineJsx_)      
-      //let allUsertimelineJsx__ = Array.from(allUsertimelineJsx); // deep copy した配列で操作
-      //console.log( "[before] allUsertimelineJsx_ : ", allUsertimelineJsx_ )
-      allUsertimelineJsx_.sort( function(a: any, b: any){
+      allUsertimelineJsxRef.current.sort( function(a: any, b: any){
         // ツイート時間順にソート
         //console.log( "a.props.tweetTime : ", a.props.tweetTime )
         //console.log( "b.props.tweetTime : ", b.props.tweetTime )
@@ -207,10 +185,11 @@ const TimelinePage: React.VFC = () => {
           return 1
         }
       })
-      setAllUsertimelineJsx(allUsertimelineJsx_)
+      setAllUsertimelineJsx(allUsertimelineJsxRef.current)
 
       // メッセージ更新
       setMessage("")
+      console.log("end useEffect")
     }
   }, [authCurrentUser])
 
@@ -235,9 +214,12 @@ const TimelinePage: React.VFC = () => {
   //------------------------
   // JSX での表示処理
   //------------------------
-  //console.log( "timelineJsx : ", timelineJsx )
+  console.log( "timelineJsxRef.current : ", timelineJsxRef.current )
+  console.log( "timelineListJsxRef.current : ", timelineListJsxRef.current )
+  console.log( "allUsertimelineJsxRef.current : ", allUsertimelineJsxRef.current )
   console.log( "timelineListJsx : ", timelineListJsx )
   console.log( "allUsertimelineJsx : ", allUsertimelineJsx )
+
   return (
     <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
