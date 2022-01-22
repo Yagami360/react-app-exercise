@@ -51,6 +51,8 @@ npm install -D typescript ts-node --save @types/twitter   # Twitter-API (TypeScr
 npm install --save firebase@8.10.0  
 npm install --save @types/react-beautiful-dnd             # ドラック＆ドロップ用ライブラリ
 npm install --save react-beautiful-dnd
+npm install --save --legacy-peer-deps react-infinite-scroller                # 無限スクロール用
+npm install --save-dev @types/react-infinite-scroller
 npm ls --depth=0
 
 #----------------------------- 

@@ -16,6 +16,8 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 import SearchIcon from "@material-ui/icons/Search";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
+import InfiniteScroll from "react-infinite-scroller"
+
 import AppRoutes, { ImageSearchPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
@@ -48,6 +50,7 @@ const ImageSearchPage: React.VFC = () => {
   const [searchMessage, setSearchMessage] = useState("")
   
   // 検索ヒット画像のリスト 
+  const maxIdRef = React.useRef<string>("");
   const [seachResultsJsx, setSeachResultsJsx] = useState([] as any);
   const [seachHistorys, setSeachHistorys] = useState([] as any);
 
@@ -114,14 +117,14 @@ const ImageSearchPage: React.VFC = () => {
       }
 
       // Twitter API を用いて画像ツイートを取得する
-      searchImageTweetsRecursive(searchWord, ImageSearchPageConfig.searchCount, ImageSearchPageConfig.searchIter)
-        .then((tweets: any) => {        
-          console.log("tweets : ", tweets)
-          const statuses = tweets["statuses"]
+      maxIdRef.current = ""
+      searchImageTweetsRecursive(searchWord, ImageSearchPageConfig.searchCount, ImageSearchPageConfig.searchIter, maxIdRef.current)
+        .then(([tweets, maxId]) => {
+          maxIdRef.current = maxId
           let nTweetsImage = 0
 
           let seachResultsJsx_: any = []
-          statuses.forEach((statuse: any)=> {
+          tweets["statuses"].forEach((statuse: any)=> {
             const userId = statuse["user"]["id_str"]
             const userName = statuse["user"]["name"]
             const userScreenName = statuse["user"]["screen_name"]
@@ -179,6 +182,58 @@ const ImageSearchPage: React.VFC = () => {
     //setSearchWord("")
   }
 
+  const onHandleLoadMoreTweet = (page: any) => {
+    console.log( "[onHandleLoadMoreTweet] page : ", page )
+    if(page === 0 ){ return }
+
+    // Twitter API を用いて画像ツイートを取得する
+    searchImageTweetsRecursive(searchWord, ImageSearchPageConfig.searchCountScroll, 1, maxIdRef.current)
+      .then(([tweets, maxId]) => {
+        maxIdRef.current = maxId
+        tweets["statuses"].forEach((statuse: any)=> {
+          const userId = statuse["user"]["id_str"]
+          const userName = statuse["user"]["name"]
+          const userScreenName = statuse["user"]["screen_name"]
+          const profileImageUrl = statuse["user"]["profile_image_url"]
+          const tweetTime = statuse["created_at"].replace("+0000","")
+          const tweetText = statuse["text"]
+          const tweetId = statuse["id_str"]
+
+          let imageUrl = ""
+          if (statuse["entities"]["media"] && statuse["entities"]["media"].indexOf(0)) {
+            if(statuse["entities"]["media"][0]["media_url"]) {
+              imageUrl = statuse["entities"]["media"][0]["media_url"]
+            }
+            else if(statuse["entities"]["media"][0]["media_url_https"]) {
+              imageUrl = statuse["entities"]["media"][0]["media_url_https"]
+            }
+          }
+          else if (statuse["extended_entities"] && statuse["extended_entities"]["media"] && statuse["extended_entities"]["media"].indexOf(0)) {
+            if(statuse["extended_entities"]["media"][0]["media_url"]) {
+              imageUrl = statuse["extended_entities"]["media"][0]["media_url"]
+            }
+            else if(statuse["extended_entities"]["media"][0]["media_url_https"]) {
+              imageUrl = statuse["extended_entities"]["media"][0]["media_url_https"]
+            }
+          }
+          else {
+            return
+          }
+
+          const seachResultJsx_ = (
+            <Grid item xs={2}>
+              <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={ImageSearchPageConfig.imageHeight} imageWidth={ImageSearchPageConfig.imageWidth} contentsText={tweetText} />
+            </Grid>              
+          )
+          setSeachResultsJsx([...seachResultsJsx, seachResultJsx_])
+        })
+      })
+      .catch((reason: any) => {
+      console.log("ツイートの取得に失敗しました", reason)
+      setSearchMessage("ツイートの取得に失敗しました : " + reason )
+      });
+  }
+
   //------------------------
   // JSX での表示処理
   //------------------------
@@ -229,12 +284,20 @@ const ImageSearchPage: React.VFC = () => {
           <Typography variant="subtitle2">{searchMessage}</Typography>
         </form>
       </Box>
-      {/* 検索ヒット画像 */}
-      <Box m={1}>
-        <Grid container spacing={2}>
-          {seachResultsJsx}
-        </Grid>
-      </Box>
+      {/* 検索ヒット画像 | react-infinite-scroller を使用した無限スクロールを行う */}
+      <InfiniteScroll
+        pageStart={0}
+        loadMore={onHandleLoadMoreTweet}                              // 項目を読み込む際に処理するコールバック関数
+        hasMore={true}                                                // 読み込みを行うかどうかの判定
+        loader={<Box className="loader" key={0}>{""}</Box>}           // ロード中の表示
+        initialLoad={false}
+      >
+        <Box m={1}>
+          <Grid container spacing={2}>
+            {seachResultsJsx}
+          </Grid>
+        </Box>
+      </InfiniteScroll>
     </ThemeProvider>
     );
 }

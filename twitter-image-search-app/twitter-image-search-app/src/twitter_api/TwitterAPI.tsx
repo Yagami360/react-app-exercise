@@ -7,12 +7,11 @@ const CLOUDFUNTION_GET_USER_TIMELINE_TWEET_URL = "https://us-central1-twitter-im
 // 指定の文字列を含む画像つきツイートを再帰的に取得する
 // searchCount : （max 100）
 //--------------------------------------------------------
-export async function searchImageTweetsRecursive(searchWord: string, searchCount: number = 100, searchIter: number = 1) {
-  let tweets = {
+export async function searchImageTweetsRecursive(searchWord: string, searchCount: number = 100, searchIter: number = 1, maxId: string = "") {
+  let tweets: any = {
     "statuses": [],
     "search_metadata": undefined,
   }
-  let maxId = ""
 
   for (let i = 0; i < searchIter; i++) {
     try {
@@ -61,7 +60,7 @@ export async function searchImageTweetsRecursive(searchWord: string, searchCount
     }
   }
 
-  return tweets
+  return [tweets, maxId]
 }
 
 //--------------------------------------------------------
@@ -162,5 +161,5 @@ export async function getUserTimelineTweetsRecursive(userId: string, searchCount
     }      
   }
 
-  return tweets
+  return [tweets,maxId]
 }

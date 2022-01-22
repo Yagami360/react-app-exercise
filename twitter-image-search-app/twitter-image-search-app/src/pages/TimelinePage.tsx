@@ -8,11 +8,13 @@ import Box from '@material-ui/core/Box';
 import { Grid } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles'
+import Paper from '@material-ui/core/Paper';
 
 import firebase from "firebase";
 import '../firebase/initFirebase'
 
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import InfiniteScroll from "react-infinite-scroller"
 
 import AppRoutes, { TimeLinePageConfig } from '../Config'
 import AppTheme from '../components/Theme';
@@ -28,13 +30,17 @@ const useStyles = makeStyles({
   timeLineList: {
     overflowX: "scroll",      // 水平スクロール有効化
     whiteSpace: "nowrap",     // 折り返さない
+    height: "950px",          // 縦のサイズ固定
+    overflowY: "scroll",      // 縦スクロールバー    
   },
   // 各ユーザーのタイムラインのスタイル
   timeLine: {
     display: "inline-block",  // 横に配置（折り返さない）
     verticalAlign: "top",     // 上に配置
     width: TimeLinePageConfig.imageWidth,
-    margin: "2px",
+    margin: "2px",  
+    height: "950px",          // 縦のサイズ固定
+    overflowY: "scroll",      // 縦スクロールバー
   },
   // 各ツイートのスタイル
   twitterCard: {
@@ -76,6 +82,7 @@ const TimelinePage: React.VFC = () => {
   const [message, setMessage] = useState('loading')
 
   // フォローユーザーのツイートのタイムライン 
+  const maxIdListRef = React.useRef<any>([]);
   const [timelineListJsx, setTimelineListJsx] = useState([] as any);         // 各ユーザーのタイムラインをリストで保管
   const [allUsertimelineJsx, setAllUsertimelineJsx] = useState([] as any);   // 全ユーザーのタイムライン（時系列順）
   let timelineJsxRef = React.useRef<any>([]);
@@ -108,9 +115,9 @@ const TimelinePage: React.VFC = () => {
           if( userScreenName !== undefined ) {
             // フォローユーザーのツイートをタイムラインで取得
             getUserTimelineTweetsRecursive(userId, TimeLinePageConfig.searchCount, true, false, TimeLinePageConfig.searchIter)
-              .then((tweets: any) => {     
+              .then(([tweets, maxId]) => {     
                 console.log("start getUserTimelineTweetsRecursive.then()")
-                console.log("tweets : ", tweets)
+                //console.log("tweets : ", tweets)
                 timelineJsxRef.current = []
                 tweets.forEach((tweet: any)=> {
                   //console.log("tweet : ", tweet)  
@@ -141,14 +148,30 @@ const TimelinePage: React.VFC = () => {
                       <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />                    
                     </Box>                                        
                   )                           
-                  setAllUsertimelineJsx([...allUsertimelineJsx, ...allUsertimelineJsxRef.current])
+                  //setAllUsertimelineJsx([...allUsertimelineJsx, ...allUsertimelineJsxRef.current])
+
+                  allUsertimelineJsxRef.current.sort( function(a: any, b: any){
+                    // ツイート時間順にソート
+                    //console.log( "a.props : ", a.props )
+                    //console.log( "b.props : ", b.props )
+                    //console.log( "a.props.children.props.tweetTime : ", a.props.children.props.tweetTime )
+                    //console.log( "b.props.children.props.tweetTime : ", b.props.children.props.tweetTime )
+                    if(a.props.children.props.tweetTime >= b.props.children.props.tweetTime){
+                      return -1
+                    }
+                    else {
+                      return 1
+                    }
+                  })
                 })
                 
                 // 各ユーザーのタイムラインのリストに追加
                 if( timelineJsxRef.current.length !== 0 ) {
                   timelineListJsxRef.current.push(
                     <Box className={style.timeLine}>
-                      {timelineJsxRef.current}
+                      <Paper elevation={1} variant="outlined" square>
+                        {timelineJsxRef.current}
+                      </Paper>
                     </Box>                                    
                   )
                   setTimelineListJsx([...timelineListJsx, ...timelineListJsxRef.current])
@@ -174,17 +197,21 @@ const TimelinePage: React.VFC = () => {
       //setTimelineListJsx(timelineListJsxRef.current)
 
       // 全ユーザーのタイムライン
+      /*
       allUsertimelineJsxRef.current.sort( function(a: any, b: any){
         // ツイート時間順にソート
-        //console.log( "a.props.tweetTime : ", a.props.tweetTime )
-        //console.log( "b.props.tweetTime : ", b.props.tweetTime )
-        if(a.props.tweetTime >= b.props.tweetTime){
+        //console.log( "a.props : ", a.props )
+        //console.log( "b.props : ", b.props )
+        console.log( "a.props.children.props.tweetTime : ", a.props.children.props.tweetTime )
+        console.log( "b.props.children.props.tweetTime : ", b.props.children.props.tweetTime )
+        if(a.props.children.props.tweetTime >= b.props.children.props.tweetTime){
           return -1
         }
         else {
           return 1
         }
       })
+      */
       setAllUsertimelineJsx(allUsertimelineJsxRef.current)
 
       // メッセージ更新
@@ -211,13 +238,19 @@ const TimelinePage: React.VFC = () => {
     setTimelineListJsx(timelineListJsx__)
   })
 
+  // 無限スクロール発生時のイベントハンドラ
+  const onHandleLoadMoreTimeLine = (page: any) => {
+    console.log( "[onHandleLoadMoreTimeLine] page : ", page )
+    if(page === 0 ){ return }
+  }
+
   //------------------------
   // JSX での表示処理
   //------------------------
-  console.log( "timelineJsxRef.current : ", timelineJsxRef.current )
-  console.log( "timelineListJsxRef.current : ", timelineListJsxRef.current )
+  //console.log( "timelineListJsx : ", timelineListJsx )
+  //console.log( "timelineJsxRef.current : ", timelineJsxRef.current )
+  //console.log( "timelineListJsxRef.current : ", timelineListJsxRef.current )
   console.log( "allUsertimelineJsxRef.current : ", allUsertimelineJsxRef.current )
-  console.log( "timelineListJsx : ", timelineListJsx )
   console.log( "allUsertimelineJsx : ", allUsertimelineJsx )
 
   return (
@@ -232,7 +265,9 @@ const TimelinePage: React.VFC = () => {
       <Box className={style.timeLineList}>
         { /* 全フォローユーザーのタイムライン表示 */ }
         <Box className={style.timeLine}>
-          {allUsertimelineJsx}
+          <Paper variant="outlined" square>
+            {allUsertimelineJsx}
+          </Paper>
         </Box>
         { /* 各フォローユーザーのタイムライン表示 */ }
         <DragDropContext onDragEnd={onDragEndTimeLine}>

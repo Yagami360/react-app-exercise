@@ -158,14 +158,13 @@ const TopPage: React.VFC = () => {
 
             // Cloud Function 経由で TwitterAPI を叩いてツイート検索
             searchImageTweetsRecursive(searchWord, TopPageConfig.searchCount, TopPageConfig.searchIter)
-              .then((tweets) => {        
-                const statuses = tweets["statuses"]
+              .then(([tweets, maxId]) => {        
                 let nTweetsImage = 0
                 //console.log("tweets : ", tweets)
                 //console.log("statuses : ", statuses)
 
                 let seachResultsJsx_: any = []
-                statuses.forEach((statuse: any)=> {
+                tweets["statuses"].forEach((statuse: any)=> {
                   const userId = statuse["user"]["id_str"]
                   const userName = statuse["user"]["name"]
                   const userScreenName = statuse["user"]["screen_name"]
