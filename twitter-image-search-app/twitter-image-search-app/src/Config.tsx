@@ -21,7 +21,7 @@ export const TopPageConfig = {
 export const ImageSearchPageConfig = {
   collectionNameSearchWord: "search-word-database",
   searchCount: 100,       // max 100
-  searchIter: 5,          // 
+  searchIter: 2,          // 
   searchCountScroll: 10,  // max 100
   imageHeight: "300px",
   imageWidth: "2000px",
@@ -30,15 +30,15 @@ export const ImageSearchPageConfig = {
 export const ProfileSearchPageConfig = {
   collectionNameSearchWord: "search-word-database",
   searchCount: 20,        // max 20
-  searchIter: 10,         // 
+  searchIter: 2,          // 
+  searchCountScroll: 10,  // max 20
   imageHeight: 300,
   imageWidth: 2000,
 };
 
 export const TimeLinePageConfig = {
   collectionNameFollow: 'follow-database',
-  //searchCount: 10,
-  searchCount: 200,
+  searchCount: 50,      // max 200
   searchIter: 1,         // 
   imageHeight: "250px",
   imageWidth: "300px",

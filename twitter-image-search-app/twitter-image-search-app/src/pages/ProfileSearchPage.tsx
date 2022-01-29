@@ -16,6 +16,8 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 import SearchIcon from "@material-ui/icons/Search";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
+import InfiniteScroll from "react-infinite-scroller"
+
 import AppRoutes, { ProfileSearchPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
 import useLocalPersist from '../components/LocalPersist';
@@ -48,7 +50,9 @@ const ProfileSearchPage: React.VFC = () => {
   const [searchMessage, setSearchMessage] = useState("")
   
   // 検索ヒット画像のリスト 
-  const [seachResultsUsers, setSeachResultsUsers] = useState([]);
+  const nProfilesRef = React.useRef<number>(0);  
+  const pageRef = React.useRef<number>(1);
+  const seachResultsUsersJsxRef = React.useRef<any>([]);  
   const [seachResultsUsersJsx, setSeachResultsUsersJsx] = useState([]);
   const [seachHistorys, setSeachHistorys] = useState([]);
 
@@ -115,10 +119,12 @@ const ProfileSearchPage: React.VFC = () => {
       }
 
       // Cloud Function 経由で TwitterAPI を叩いてツイート検索
-      searchUsersRecursive(searchWordProfile, ProfileSearchPageConfig.searchCount, ProfileSearchPageConfig.searchIter)
-        .then((users: any) => {        
-          let seachResultsUsers_: any = []
-          let seachResultsUsersJsx_: any = []
+      pageRef.current = 1
+      searchUsersRecursive(searchWordProfile, ProfileSearchPageConfig.searchCount, ProfileSearchPageConfig.searchIter, pageRef.current)
+        .then(([users, page]) => {        
+          pageRef.current = page
+          nProfilesRef.current = 0
+          seachResultsUsersJsxRef.current = []
           users.forEach((user: any)=> {
             const userId = user["id_str"]
             const userName = user["name"]
@@ -130,13 +136,8 @@ const ProfileSearchPage: React.VFC = () => {
             const profileBannerImageUrl = user["profile_banner_url"]
             const createdAt = user["created_at"].replace("+0000","")
             const description = user["description"]
-            //console.log("userId : ", userId)            
-            //console.log("userName : ", userName)
-            //console.log("userScreenName : ", userScreenName)
-            //console.log("description : ", description)
-            seachResultsUsers_.push(user)
 
-            seachResultsUsersJsx_.push(
+            seachResultsUsersJsxRef.current.push(
               <Grid item xs={4}>
                 <TwitterProfileCard 
                   userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} createdAt={createdAt} 
@@ -146,9 +147,10 @@ const ProfileSearchPage: React.VFC = () => {
                 />
               </Grid>
             )            
+            nProfilesRef.current += 1
           })
-          setSeachResultsUsers(seachResultsUsers_)
-          setSeachResultsUsersJsx(seachResultsUsersJsx_)
+          setSeachResultsUsersJsx(seachResultsUsersJsxRef.current)
+          setSearchMessage("ユーザー数 : " + nProfilesRef.current)
         })
         .catch((reason) => {
           console.log("プロフィールの取得に失敗しました", reason)
@@ -156,7 +158,6 @@ const ProfileSearchPage: React.VFC = () => {
         });      
     }
     else {
-      setSeachResultsUsers([])
       setSeachResultsUsersJsx([])
       setSearchMessage("検索ワードを入力してください" ) 
     }
@@ -164,11 +165,54 @@ const ProfileSearchPage: React.VFC = () => {
     //setSearchWord("")
   }
 
+  const onHandleLoadMoreProfile = (page: any) => {
+    console.log( "[onHandleLoadMoreProfile] page : ", page )
+    if(page === 0 ){ return }
+
+    // Twitter API を用いて画像ツイートを取得する
+    searchUsersRecursive(searchWordProfile, ProfileSearchPageConfig.searchCountScroll, 1, pageRef.current)
+    .then(([users, page]) => {        
+      pageRef.current = page
+      users.forEach((user: any)=> {
+        const userId = user["id_str"]
+        const userName = user["name"]
+        const userScreenName = user["screen_name"]
+        const profileImageUrl = user["profile_image_url"]
+        const location = user["location"]
+        const followersCount = user["followers_count"]
+        const followsCount = user["friends_count"]
+        const profileBannerImageUrl = user["profile_banner_url"]
+        const createdAt = user["created_at"].replace("+0000","")
+        const description = user["description"]
+
+        seachResultsUsersJsxRef.current.push(
+          <Grid item xs={4}>
+            <TwitterProfileCard 
+              userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} createdAt={createdAt} 
+              location={location} followersCount={followersCount} followsCount={followsCount}
+              profileBannerImageUrl={profileBannerImageUrl} imageHeight={ProfileSearchPageConfig.imageHeight} imageWidth={ProfileSearchPageConfig.imageWidth} 
+              description={description}
+            />
+          </Grid>
+        )            
+        nProfilesRef.current += 1
+      })
+      setSeachResultsUsersJsx(seachResultsUsersJsxRef.current)
+      setSearchMessage("ユーザー数 : " + nProfilesRef.current)
+    })
+    .catch((reason) => {
+      console.log("プロフィールの取得に失敗しました", reason)
+      setSearchMessage("プロフィールの取得に失敗しました : " + reason )
+    });      
+  }
+
   //------------------------
   // JSX での表示処理
   //------------------------
   console.log( "searchWordProfile : ", searchWordProfile )
-  console.log( "seachResultsUsers : ", seachResultsUsers )
+  console.log( "seachResultsUsersJsxRef.current : ", seachResultsUsersJsxRef.current )
+  console.log( "seachResultsUsersJsx : ", seachResultsUsersJsx )
+  console.log( "pageRef.current : ", pageRef.current )
   return (
     <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
       {/* デフォルトのCSSを適用（ダークモード時に背景が黒くなる）  */}
@@ -213,12 +257,20 @@ const ProfileSearchPage: React.VFC = () => {
           <Typography variant="subtitle2">{searchMessage}</Typography>
         </form>
       </Box>
-      {/* 検索ヒット画像 */}
-      <Box m={1}>
-        <Grid container spacing={2}>
-          {seachResultsUsersJsx}
-        </Grid>
-      </Box>
+      {/* 検索ヒット画像 | react-infinite-scroller を使用した無限スクロールを行う */}
+      <InfiniteScroll
+        pageStart={0}
+        loadMore={onHandleLoadMoreProfile}                            // 項目を読み込む際に処理するコールバック関数
+        hasMore={true}                                                // 読み込みを行うかどうかの判定
+        loader={<Box className="loader" key={0}>{""}</Box>}           // ロード中の表示
+        initialLoad={false}
+      >
+        <Box m={1}>
+          <Grid container spacing={2}>
+            {seachResultsUsersJsx}
+          </Grid>
+        </Box>
+      </InfiniteScroll>
     </ThemeProvider>
     );
 }

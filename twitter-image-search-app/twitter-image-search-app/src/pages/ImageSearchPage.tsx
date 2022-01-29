@@ -50,7 +50,9 @@ const ImageSearchPage: React.VFC = () => {
   const [searchMessage, setSearchMessage] = useState("")
   
   // 検索ヒット画像のリスト 
+  const nTweetsImageRef = React.useRef<number>(0);  
   const maxIdRef = React.useRef<string>("");
+  const seachResultsJsxRef = React.useRef<any>([]);  
   const [seachResultsJsx, setSeachResultsJsx] = useState([] as any);
   const [seachHistorys, setSeachHistorys] = useState([] as any);
 
@@ -121,9 +123,8 @@ const ImageSearchPage: React.VFC = () => {
       searchImageTweetsRecursive(searchWord, ImageSearchPageConfig.searchCount, ImageSearchPageConfig.searchIter, maxIdRef.current)
         .then(([tweets, maxId]) => {
           maxIdRef.current = maxId
-          let nTweetsImage = 0
-
-          let seachResultsJsx_: any = []
+          nTweetsImageRef.current = 0
+          seachResultsJsxRef.current = []
           tweets["statuses"].forEach((statuse: any)=> {
             const userId = statuse["user"]["id_str"]
             const userName = statuse["user"]["name"]
@@ -159,14 +160,13 @@ const ImageSearchPage: React.VFC = () => {
                 <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={ImageSearchPageConfig.imageHeight} imageWidth={ImageSearchPageConfig.imageWidth} contentsText={tweetText} />
               </Grid>              
             )
-            //setSeachResultsJsx([...seachResultsJsx_, seachResultJsx_])
-            seachResultsJsx_.push(seachResultJsx_)
-
-            nTweetsImage += 1    
+            //setSeachResultsJsx([...seachResultsJsxRef.current, seachResultJsx_])
+            seachResultsJsxRef.current.push(seachResultJsx_)
+            nTweetsImageRef.current += 1    
           })
 
-          setSeachResultsJsx(seachResultsJsx_)
-          setSearchMessage("画像つきツイート数 : " + nTweetsImage)
+          setSeachResultsJsx(seachResultsJsxRef.current)
+          setSearchMessage("画像つきツイート数 : " + nTweetsImageRef.current)
         })
         .catch((reason) => {
           console.log("ツイートの取得に失敗しました", reason)
@@ -225,8 +225,12 @@ const ImageSearchPage: React.VFC = () => {
               <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={ImageSearchPageConfig.imageHeight} imageWidth={ImageSearchPageConfig.imageWidth} contentsText={tweetText} />
             </Grid>              
           )
-          setSeachResultsJsx([...seachResultsJsx, seachResultJsx_])
+          //setSeachResultsJsx([...seachResultsJsx, seachResultJsx_])
+          seachResultsJsxRef.current.push(seachResultJsx_)
+          nTweetsImageRef.current += 1
         })
+        setSeachResultsJsx(seachResultsJsxRef.current)
+        setSearchMessage("画像つきツイート数 : " + nTweetsImageRef.current)
       })
       .catch((reason: any) => {
       console.log("ツイートの取得に失敗しました", reason)

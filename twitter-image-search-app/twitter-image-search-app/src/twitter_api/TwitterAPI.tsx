@@ -67,12 +67,10 @@ export async function searchImageTweetsRecursive(searchWord: string, searchCount
 // プロフィール文に指定の文字列を含むユーザー一覧を再帰的に取得する
 // searchCount : （max 20）
 //--------------------------------------------------------
-export async function searchUsersRecursive(searchWord: string, searchCount: number = 20, searchIter: number = 1) {
+export async function searchUsersRecursive(searchWord: string, searchCount: number = 20, searchIter: number = 1, page: number = 1) {
   let users: any = []
-  let page = 0
-
   for (let i = 0; i < searchIter; i++) {
-    page = i + 1
+    console.log( "[searchUsersRecursive] page : ", page )
     try {
       // Promise ではなく aync/await 形式で非同期処理
       const response = await fetch(
@@ -90,6 +88,8 @@ export async function searchUsersRecursive(searchWord: string, searchCount: numb
         }
       )
 
+      page += 1
+
       // レスポンスデータ取得
       const data = await response.json()
       if( data["status"] == "ng" ) {
@@ -105,7 +105,7 @@ export async function searchUsersRecursive(searchWord: string, searchCount: numb
     }
   }
 
-  return users
+  return [users, page]
 }
 
 //--------------------------------------------------------
@@ -161,5 +161,5 @@ export async function getUserTimelineTweetsRecursive(userId: string, searchCount
     }      
   }
 
-  return [tweets,maxId]
+  return [tweets, maxId]
 }

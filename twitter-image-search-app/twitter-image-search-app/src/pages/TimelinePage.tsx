@@ -81,6 +81,12 @@ const TimelinePage: React.VFC = () => {
   // メッセージ
   const [message, setMessage] = useState('loading')
 
+  // フォロー済みユーザー
+  const userIdsRef = React.useRef<any>([]);
+  const userScreenNamesRef = React.useRef<any>([]);
+  const [userIds, setUserIds] = useState([] as any);
+  const [userScreenNames, setUserScreenNames] = useState([] as any);
+
   // フォローユーザーのツイートのタイムライン 
   const maxIdListRef = React.useRef<any>([]);
   const [timelineListJsx, setTimelineListJsx] = useState([] as any);         // 各ユーザーのタイムラインをリストで保管
@@ -102,7 +108,7 @@ const TimelinePage: React.VFC = () => {
     }
   }, [])
 
-  // 副作用フック
+  // フォロー済みユーザーを取得する副作用フック
   useEffect(() => {
     if( authCurrentUser !== null ) {
       // フォロー済みユーザーを取得
@@ -112,89 +118,97 @@ const TimelinePage: React.VFC = () => {
           const field = document.data()
           const userId = field.userId
           const userScreenName = field.userScreenName
-          if( userScreenName !== undefined ) {
-            // フォローユーザーのツイートをタイムラインで取得
-            getUserTimelineTweetsRecursive(userId, TimeLinePageConfig.searchCount, true, false, TimeLinePageConfig.searchIter)
-              .then(([tweets, maxId]) => {     
-                console.log("start getUserTimelineTweetsRecursive.then()")
-                //console.log("tweets : ", tweets)
-                timelineJsxRef.current = []
-                tweets.forEach((tweet: any)=> {
-                  //console.log("tweet : ", tweet)  
-                  const userId = tweet["user"]["id_str"]
-                  const userName = tweet["user"]["name"]
-                  const userScreenName = tweet["user"]["screen_name"]
-                  const profileImageUrl = tweet["user"]["profile_image_url"]
-                  const tweetTime = tweet["created_at"].replace("+0000","")
-                  const tweetText = tweet["text"]
-                  const tweetId = tweet["id_str"]
-                  //console.log("profileImageUrl : ", profileImageUrl)
-                  let imageUrl = "" 
-                  if (tweet["entities"]["media"] && tweet["entities"]["media"].indexOf(0) && tweet["entities"]["media"][0]["media_url"]) {
-                    imageUrl = tweet["entities"]["media"][0]["media_url"]
-                  }
-                  else {
-                    return
-                  }
-
-                  timelineJsxRef.current.push(
-                    <Box className={style.twitterCard}>
-                      <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />
-                    </Box>                                        
-                  )
-
-                  allUsertimelineJsxRef.current.push(
-                    <Box className={style.twitterCard}>
-                      <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />                    
-                    </Box>                                        
-                  )                           
-                  //setAllUsertimelineJsx([...allUsertimelineJsx, ...allUsertimelineJsxRef.current])
-
-                  allUsertimelineJsxRef.current.sort( function(a: any, b: any){
-                    // ツイート時間順にソート
-                    //console.log( "a.props : ", a.props )
-                    //console.log( "b.props : ", b.props )
-                    //console.log( "a.props.children.props.tweetTime : ", a.props.children.props.tweetTime )
-                    //console.log( "b.props.children.props.tweetTime : ", b.props.children.props.tweetTime )
-                    if(a.props.children.props.tweetTime >= b.props.children.props.tweetTime){
-                      return -1
-                    }
-                    else {
-                      return 1
-                    }
-                  })
-                })
-                
-                // 各ユーザーのタイムラインのリストに追加
-                if( timelineJsxRef.current.length !== 0 ) {
-                  timelineListJsxRef.current.push(
-                    <Box className={style.timeLine}>
-                      <Paper elevation={1} variant="outlined" square>
-                        {timelineJsxRef.current}
-                      </Paper>
-                    </Box>                                    
-                  )
-                  setTimelineListJsx([...timelineListJsx, ...timelineListJsxRef.current])
-                }
-
-                console.log("end getUserTimelineTweetsRecursive.then()")
-              })
-              .catch((reason) => {
-                console.log("ツイートの取得に失敗しました", reason)
-                setMessage("ツイートの取得に失敗しました")
-              });
-          }
-          else {
-            setMessage("please login")
-          }
+          //console.log("userScreenName :", userScreenName )        
+          userIdsRef.current.push(userId)
+          userScreenNamesRef.current.push(userScreenName)
+          //setUserIds([...userIds, userId])
+          //setUserScreenNames([...userScreenNames, userScreenName])
         })
+        setUserIds(userIdsRef.current)
+        setUserScreenNames(userScreenNamesRef.current)
         console.log("end firestore.collection.then()")
       })
+    }
+  }, [authCurrentUser])
 
-      console.log("start useEffect end firestore.collection")
+  // フォロー済みユーザーのタイムラインツイートを取得する副作用フック  
+  useEffect(() => {
+    allUsertimelineJsxRef.current = []
+    timelineListJsxRef.current = []
+    userIdsRef.current.forEach((userId: any)=> {
+      // フォローユーザーのツイートをタイムラインで取得
+      getUserTimelineTweetsRecursive(userId, TimeLinePageConfig.searchCount, true, false, TimeLinePageConfig.searchIter)
+        .then(([tweets, maxId]) => {     
+          console.log("start getUserTimelineTweetsRecursive.then()")
+          //console.log("tweets : ", tweets)
+          timelineJsxRef.current = []
+          tweets.forEach((tweet: any)=> {
+            //console.log("tweet : ", tweet)  
+            const userId = tweet["user"]["id_str"]
+            const userName = tweet["user"]["name"]
+            const userScreenName = tweet["user"]["screen_name"]
+            const profileImageUrl = tweet["user"]["profile_image_url"]
+            const tweetTime = tweet["created_at"].replace("+0000","")
+            const tweetText = tweet["text"]
+            const tweetId = tweet["id_str"]
+            //console.log("profileImageUrl : ", profileImageUrl)
+            let imageUrl = "" 
+            if (tweet["entities"]["media"] && tweet["entities"]["media"].indexOf(0) && tweet["entities"]["media"][0]["media_url"]) {
+              imageUrl = tweet["entities"]["media"][0]["media_url"]
+            }
+            else {
+              return
+            }
+
+            timelineJsxRef.current.push(
+              <Box className={style.twitterCard}>
+                <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />
+              </Box>                                        
+            )
+
+            allUsertimelineJsxRef.current.push(
+              <Box className={style.twitterCard}>
+                <TweetCard userId={userId} userName={userName} userScreenName={userScreenName} profileImageUrl={profileImageUrl} tweetTime={tweetTime} tweetId={tweetId} imageFileUrl={imageUrl} imageHeight={TimeLinePageConfig.imageHeight} imageWidth={TimeLinePageConfig.imageWidth} contentsText={tweetText} />                    
+              </Box>                                        
+            )                           
+            //setAllUsertimelineJsx([...allUsertimelineJsx, ...allUsertimelineJsxRef.current])
+
+            allUsertimelineJsxRef.current.sort( function(a: any, b: any){
+              // ツイート時間順にソート
+              //console.log( "a.props : ", a.props )
+              //console.log( "b.props : ", b.props )
+              //console.log( "a.props.children.props.tweetTime : ", a.props.children.props.tweetTime )
+              //console.log( "b.props.children.props.tweetTime : ", b.props.children.props.tweetTime )
+              if(a.props.children.props.tweetTime >= b.props.children.props.tweetTime){
+                return -1
+              }
+              else {
+                return 1
+              }
+            })
+          })
+          
+          // 各ユーザーのタイムラインのリストに追加
+          if( timelineJsxRef.current.length !== 0 ) {
+            timelineListJsxRef.current.push(
+              <Box className={style.timeLine}>
+                <Paper elevation={1} variant="outlined" square>
+                  {timelineJsxRef.current}
+                </Paper>
+              </Box>                                    
+            )
+            setTimelineListJsx([...timelineListJsx, ...timelineListJsxRef.current])
+          }
+
+          console.log("end getUserTimelineTweetsRecursive.then()")
+        })
+        .catch((reason) => {
+          console.log("ツイートの取得に失敗しました", reason)
+          setMessage("ツイートの取得に失敗しました")
+        });
 
       // 各ユーザーのタイムラインのリスト
-      //setTimelineListJsx(timelineListJsxRef.current)
+      setTimelineListJsx(timelineListJsxRef.current)
 
       // 全ユーザーのタイムライン
       /*
@@ -217,8 +231,8 @@ const TimelinePage: React.VFC = () => {
       // メッセージ更新
       setMessage("")
       console.log("end useEffect")
-    }
-  }, [authCurrentUser])
+    })
+  }, [userIds])
 
   //------------------------
   // イベントハンドラ
@@ -247,11 +261,14 @@ const TimelinePage: React.VFC = () => {
   //------------------------
   // JSX での表示処理
   //------------------------
-  //console.log( "timelineListJsx : ", timelineListJsx )
+  console.log( "userIds : ", userIds )
+  console.log( "userScreenNames : ", userScreenNames )
   //console.log( "timelineJsxRef.current : ", timelineJsxRef.current )
-  //console.log( "timelineListJsxRef.current : ", timelineListJsxRef.current )
-  console.log( "allUsertimelineJsxRef.current : ", allUsertimelineJsxRef.current )
-  console.log( "allUsertimelineJsx : ", allUsertimelineJsx )
+  console.log( "timelineListJsx : ", timelineListJsx )
+  console.log( "timelineListJsxRef.current : ", timelineListJsxRef.current )
+  console.log( "timelineListJsxRef.current[0] : ", timelineListJsxRef.current[0] )
+  //console.log( "allUsertimelineJsxRef.current : ", allUsertimelineJsxRef.current )
+  //console.log( "allUsertimelineJsx : ", allUsertimelineJsx )
 
   return (
     <ThemeProvider theme={darkMode ? AppTheme.darkTheme : AppTheme.lightTheme}>
