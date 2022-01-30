@@ -112,10 +112,8 @@ export async function searchUsersRecursive(searchWord: string, searchCount: numb
 // ユーザーのタイムラインツイートを再帰的に取得する
 // searchCount : （max 20）
 //--------------------------------------------------------
-export async function getUserTimelineTweetsRecursive(userId: string, searchCount: number = 20, include_rts:boolean = true, exclude_replies:boolean = false, searchIter: number = 1) {
+export async function getUserTimelineTweetsRecursive(userId: string, searchCount: number = 20, include_rts:boolean = true, exclude_replies:boolean = false, searchIter: number = 1, maxId: any = undefined) {
   let tweets: any = []
-  let maxId: any = undefined
-
   for (let i = 0; i < searchIter; i++) {
     try {
       // Promise ではなく aync/await 形式で非同期処理

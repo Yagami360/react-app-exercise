@@ -38,10 +38,12 @@ export const ProfileSearchPageConfig = {
 
 export const TimeLinePageConfig = {
   collectionNameFollow: 'follow-database',
-  searchCount: 50,      // max 200
-  searchIter: 1,         // 
+  searchCount: 100,        // max 200
+  searchIter: 1,           // 
+  searchCountScroll: 10,   // max 200
   imageHeight: "250px",
   imageWidth: "300px",
+  enableDragDrop: true,   // 各フォローユーザーのタイムラインのドラッグ＆ドロップを可能にする
 };
 
 export const FavPageConfig = {
