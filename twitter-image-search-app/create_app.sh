@@ -29,13 +29,22 @@ if [ ${OS} = "Mac" ] ; then
         brew install node
     fi
 fi
-npm -v
+sudo npm install -g n
+sudo n stable
+echo "NPM_VERSION=`npm -v`"
+echo "NODEJS_VERSION=`node -v`"
 
 #-----------------------------
 # React のプロジェクトを作成し、起動する
 #-----------------------------
 # React のプロジェクトを作成
 if [ ! -e ${ROOT_DIR}/${PROJECT_NAME} ] ; then
+  # 以下のエラー対策のため npxのキャッシュをクリア。
+  # You are running `create-react-app` 4.0.3, which is behind the latest release (5.0.0). We no longer support global installation of Create React App.
+  npm uninstall -g create-react-app
+  rm -rf ~/.npm/_npx
+
+  # React のプロジェクトを作成
   npx -y create-react-app ${PROJECT_NAME} --template typescript 
 fi
 cd ${ROOT_DIR}/${PROJECT_NAME}
