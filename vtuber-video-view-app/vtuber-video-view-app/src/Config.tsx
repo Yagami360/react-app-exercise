@@ -17,6 +17,7 @@ export const TopPageConfig = {
 export const VTuberSearchPageConfig = {
   collectionNameVTuber: "vtuber-database",
   collectionNameSearchWord: "vtuber-search-word-database",
+  collectionNameFavVTuber: 'fav-vtuber-database',
   maxResults: 5,          // VTuber 検索数（最大50）
   //maxResults: 50,
   iterSearchVideo: 1,     // VTuber 検索の繰り返し回数

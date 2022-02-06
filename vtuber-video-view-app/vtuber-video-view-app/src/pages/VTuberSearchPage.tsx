@@ -2,7 +2,6 @@
 import React from 'react';
 import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { Link } from "react-router-dom";
 
 import firebase from "firebase";
 import '../firebase/initFirebase'
@@ -18,9 +17,18 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 import SearchIcon from "@material-ui/icons/Search";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import Divider from '@material-ui/core/Divider';
-import { LensTwoTone } from '@material-ui/icons';
-
-import InfiniteScroll from "react-infinite-scroller"
+import Link from '@material-ui/core/Link';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import ListItemAvatar from '@material-ui/core/ListItemAvatar';
+import Avatar from '@material-ui/core/Avatar'
+import IconButton from '@material-ui/core/IconButton';
+import YouTubeIcon from '@material-ui/icons/YouTube';
+import TwitterIcon from '@material-ui/icons/Twitter';
+import FavoriteBorderOutlinedIcon from '@material-ui/icons/FavoriteBorderOutlined';
+import StarBorderOutlinedIcon from '@material-ui/icons/StarBorderOutlined';
+import StarIcon from '@material-ui/icons/Star';
 
 import AppConfig, { VTuberSearchPageConfig } from '../Config'
 import AppTheme from '../components/Theme';
@@ -47,6 +55,11 @@ const VTuberSearchPage: React.VFC = () => {
 
   // ログインユーザー
   const [authCurrentUser, setAuthCurrentUser] = useState(auth.currentUser)
+
+  // お気に入り追加状態
+  //const collectionNameFavVTuber = 'fav-vtuber-database'
+  //const [savedFavVTuber, setSavedFavVTuber] = useLocalPersist( AppConfig.appName + ":fav_vtuber", channelId, false)  
+  const savedFavVTuber = false
 
   // 検索フォームの入力テキスト
   const [searchWord, setSearchWord] = useLocalPersist(AppConfig.appName, "searchWord", "")
@@ -80,13 +93,58 @@ const VTuberSearchPage: React.VFC = () => {
   useEffect(() => {
     firestore.collection(VTuberSearchPageConfig.collectionNameVTuber).get().then( (snapshot)=> {
       snapshot.forEach((document)=> {
-        // document.data() : ドキュメント内のフィールド
         const field = document.data()
-        console.log( "field : ", field )
+        const youtubeURL = "https://www.youtube.com/channel/" + field.youtube_channel_id
+        const twitterURL = "https://twitter.com/" + field.twitter_user_id
+        //console.log( "field : ", field )
 
-        vtuberListJsxRef.current.push(field)
+        // YouTube Data API を使用してチャンネル情報を取得        
+        getChannelInfo(getAPIKey(), field.youtube_channel_id)
+          .then( (channelInfo) => {
+            //console.log( "channelInfo : ", channelInfo )
+
+            // JSX 形式に変換
+            const vtuberListJsx_ = (<>
+              <ListItem button component="a" href={youtubeURL}>
+                { /* アイコン画像 */ }
+                <ListItemAvatar>
+                  <Avatar aria-label="avatar" src={channelInfo["profileImageUrl"]} style={{ width: 80, height: 80 }} />
+                </ListItemAvatar>
+                <ListItemText 
+                  primary={<>
+                    <Box mx={1} style={{display:"flex"}}>
+                      { /* YouTuber 名 */ }
+                      <Typography variant="h5">{field.name}</Typography>
+                    </Box>
+                  </>}
+                  secondary={<>
+                    <Box mx={1}>
+                      { /* 所属 */ }
+                      <Typography variant="subtitle1">{field.organization}</Typography>
+                      { /* チャンネル登録者数 */ }
+                      <Typography variant="subtitle2">{"登録者数 : "+channelInfo["subscriberCount"]+" 人"}</Typography>
+                    </Box>
+                  </>}
+                />
+                { /* YouTube */ }                
+                <Link href={youtubeURL}><YouTubeIcon style={{ width: 50, height: 50 }} fontSize="large" /></Link>
+                { /* Twitter */ }                
+                <Link href={twitterURL}><TwitterIcon style={{ width: 50, height: 50 }} fontSize="large" /></Link>
+                { /* お気に入り */ }
+                <IconButton aria-label="settings" onClick={onClickFavVTuber} >
+                  { (savedFavVTuber ===  false) ? <StarBorderOutlinedIcon style={{ width: 40, height: 40 }} fontSize="large" /> : <StarIcon style={{ width: 50, height: 50 }} fontSize="large" /> }
+                </IconButton>
+              </ListItem>
+              <Divider variant="inset" component="li" />            
+            </>)
+
+            setVtuberListJsx([...vtuberListJsxRef.current, vtuberListJsx_])            
+            vtuberListJsxRef.current.push(vtuberListJsx_)
+          })
+          .catch(err => {
+            console.log(err);
+          })
       })         
-      setVtuberListJsx(vtuberListJsxRef.current)
     })
   }, [])
 
@@ -147,12 +205,49 @@ const VTuberSearchPage: React.VFC = () => {
     }
   }
 
+  // お気に入り追加ボタンクリック時のイベントハンドラ
+  const onClickFavVTuber = ((event: any)=> {
+    console.log("savedFavVTuber : ", savedFavVTuber )
+
+    if( auth.currentUser === null ) {
+      return
+    }
+
+    // 未フォローの場合
+    /*
+    if( savedFavVTuber === false ) {
+      //setSavedFavVTuber(true)
+
+      // 新規に追加するドキュメントデータ
+      const document = {
+        channelId: channelId,
+        channelTitle: channelTitle,     
+        profileImageUrl: profileImageUrl,
+      }
+
+      // firestore.collection(コレクション名).doc(ドキュメントID).set(ドキュメントデータ) で、コレクションに新たなドキュメントを追加する
+      firestore.collection(VTuberSearchPageConfig.collectionNameFavVTuber).doc(auth.currentUser.email).collection(VTuberSearchPageConfig.collectionNameFavVTuber).doc(AppConfig.appName+":follow:"+channelId).set(document).then((ref: any) => {
+        console.log("added tweet in ", VTuberSearchPageConfig.collectionNameFavVTuber)
+      })
+    }
+    // 既にお気に入りに追加している場合
+    else {
+      //setSavedFavVTuber(false)
+      // firestore.collection(コレクション名).doc(ドキュメントID).delete() で、ドキュメントを削除する
+      firestore.collection(VTuberSearchPageConfig.collectionNameFavVTuber).doc(auth.currentUser.email).collection(VTuberSearchPageConfig.collectionNameFavVTuber).doc(AppConfig.appName+":follow:"+channelId).delete().then((ref: any)=> {
+        console.log("deleted tweet in ", VTuberSearchPageConfig.collectionNameFavVTuber)
+      })
+    }
+    */
+  })
+
   //------------------------
   // JSX での表示処理
   //------------------------
   //console.log( "auth.currentUser : ", auth.currentUser )
   //console.log( "authCurrentUser : ", authCurrentUser )
   //console.log( "seachResultsJsx : ", seachResultsJsx )
+  console.log( "vtuberListJsxRef.current : ", vtuberListJsxRef.current )
   console.log( "vtuberListJsx : ", vtuberListJsx )
 
   return (
@@ -199,6 +294,10 @@ const VTuberSearchPage: React.VFC = () => {
         </form>
       </Box>
       <Typography variant="subtitle2">{searchMessage}</Typography>
+      {/* VTuberリスト表示 */}
+      <List component="div">
+        {vtuberListJsx}
+      </List>      
     </ThemeProvider>
   );
 }
